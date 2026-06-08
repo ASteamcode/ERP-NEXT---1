@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-06-08 16:18:57.261764",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "date",
+  "user",
+  "assigned_to",
+  "log_type",
+  "prefix",
+  "first_name",
+  "last_name",
+  "company_name",
+  "mobile",
+  "tel",
+  "email",
+  "description",
+  "updates",
+  "site_location",
+  "google_maps_url",
+  "attachments"
+ ],
+ "fields": [
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nScheduled\nViewed\nCancelled\nDone"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Created"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "To",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "log_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Inbound call\nQuotation\nField\nJob\nTransport\nYard"
+  },
+  {
+   "fieldname": "prefix",
+   "fieldtype": "Select",
+   "label": "Pre",
+   "options": "Mr\nMs\nMrs\nDr"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Text",
+   "label": "Name"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Text",
+   "label": "Surname"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Phone",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "tel",
+   "fieldtype": "Phone",
+   "label": "Tel"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "updates",
+   "fieldtype": "Text Editor",
+   "label": "Update(s)"
+  },
+  {
+   "fieldname": "site_location",
+   "fieldtype": "Text",
+   "label": "Site Location"
+  },
+  {
+   "fieldname": "google_maps_url",
+   "fieldtype": "Data",
+   "label": "Maps"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Data",
+   "label": "Files"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-08 16:31:49.504631",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "CRM Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
