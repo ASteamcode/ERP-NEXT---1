@@ -113,14 +113,15 @@
   },
   {
    "fieldname": "attachments",
-   "fieldtype": "Data",
-   "label": "Files"
+   "fieldtype": "Table",
+   "label": "Files",
+   "options": "CRM Log Attachment"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-08 16:31:49.504631",
+ "modified": "2026-06-09 10:45:16.009700",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "CRM Log",

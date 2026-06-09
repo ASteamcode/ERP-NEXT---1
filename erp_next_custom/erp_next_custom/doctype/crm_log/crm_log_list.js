@@ -670,21 +670,35 @@ function crm_open_attachments_dialog(listview, docname) {
 				if (label || url) collected.push({ label, url });
 			});
 
+			// `frappe.client.set_value` cannot handle child table fields — it expects
+			// a scalar and throws "str object does not support item assignment" on the
+			// Python side when given a list. We save the full doc instead so Frappe's
+			// normal child-table reconciliation runs correctly.
 			frappe.call({
-				method: "frappe.client.set_value",
-				args: {
-					doctype: "CRM Log",
-					name: docname,
-					fieldname: CRM_ATTACH_TABLE_FIELD,
-					value: collected.map(r => ({ doctype: CRM_ATTACH_DOCTYPE, label: r.label, url: r.url })),
-				},
-				callback: ({ exc }) => {
-					if (exc) return;
-					frappe.show_alert({ message: __("Attachments saved"), indicator: "green" }, 1.0);
-					const localDoc = (listview.data || []).find(d => d.name === docname);
-					if (localDoc) localDoc[CRM_ATTACH_TABLE_FIELD] = collected;
-					crm_render_grid(listview);
-					dialog.hide();
+				method: "frappe.client.get",
+				args: { doctype: "CRM Log", name: docname },
+				callback: ({ exc: getExc, message: doc }) => {
+					if (getExc || !doc) {
+						frappe.show_alert({ message: __("Could not load document for save."), indicator: "red" }, 2);
+						return;
+					}
+					doc[CRM_ATTACH_TABLE_FIELD] = collected.map(r => ({
+						doctype: CRM_ATTACH_DOCTYPE,
+						label:   r.label,
+						url:     r.url,
+					}));
+					frappe.call({
+						method: "frappe.client.save",
+						args: { doc },
+						callback: ({ exc }) => {
+							if (exc) return;
+							frappe.show_alert({ message: __("Attachments saved"), indicator: "green" }, 1.0);
+							const localDoc = (listview.data || []).find(d => d.name === docname);
+							if (localDoc) localDoc[CRM_ATTACH_TABLE_FIELD] = collected;
+							crm_render_grid(listview);
+							dialog.hide();
+						},
+					});
 				},
 			});
 		},
