@@ -260,6 +260,6 @@ doctype_list_js = {"Contact": "public/js/contacts_list.js"}
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {"doctype": "Workspace", "filters": [["name", "in", ["CRM"]]]},
-    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM"]]]},
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
 ]

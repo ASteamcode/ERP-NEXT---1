@@ -78,11 +78,27 @@
     container.addEventListener("mouseleave", scheduleCollapse);
   }
 
+  // ─── Home button → Overview ───────────────────────────────────────────────
+
+  function wireHomeButton() {
+    // Frappe renders the breadcrumb home as an <a> wrapping a home icon.
+    // Select any breadcrumb home link that points to /app or /app/ (the desk root).
+    document.querySelectorAll('.breadcrumb-container a[href="/app"], .breadcrumb-container a[href="/app/"]').forEach(a => {
+      if (a.dataset.ovWired) return;
+      a.dataset.ovWired = "1";
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        frappe.set_route("overview");
+      });
+    });
+  }
+
   // ─── Bootstrap ────────────────────────────────────────────────────────────
 
   function init() {
     const container = document.querySelector(CONTAINER_SEL);
     if (container) wireSidebar(container);
+    wireHomeButton();
   }
 
   document.addEventListener("DOMContentLoaded", init);
