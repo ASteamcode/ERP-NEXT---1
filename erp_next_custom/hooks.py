@@ -26,7 +26,10 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+app_include_js = [
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+]
+        
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -257,10 +260,6 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {
-        "dt": "Workspace",
-        "filters": [
-            ["module", "=", "CRM"]
-        ]
-    }
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM"]]]},
 ]

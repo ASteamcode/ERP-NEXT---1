@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "status",
+  "category",
   "date",
   "user",
   "assigned_to",
@@ -15,14 +16,21 @@
   "first_name",
   "last_name",
   "company_name",
+  "column_break_wxee",
+  "site_location",
+  "loc_country",
+  "loc_district",
+  "loc_city",
+  "loc_street",
+  "google_maps_url",
+  "attachments",
+  "section_break_chwt",
+  "column_break_5jgr",
   "mobile",
   "tel",
   "email",
   "description",
-  "updates",
-  "site_location",
-  "google_maps_url",
-  "attachments"
+  "updates"
  ],
  "fields": [
   {
@@ -32,6 +40,7 @@
    "options": "Open\nScheduled\nViewed\nCancelled\nDone"
   },
   {
+   "default": "Now",
    "fieldname": "date",
    "fieldtype": "Datetime",
    "label": "Created"
@@ -58,16 +67,16 @@
    "fieldname": "prefix",
    "fieldtype": "Select",
    "label": "Pre",
-   "options": "Mr\nMs\nMrs\nDr"
+   "options": "Mr\nMs\nMrs\nDr\nEng\nArch"
   },
   {
    "fieldname": "first_name",
-   "fieldtype": "Text",
+   "fieldtype": "Data",
    "label": "Name"
   },
   {
    "fieldname": "last_name",
-   "fieldtype": "Text",
+   "fieldtype": "Data",
    "label": "Surname"
   },
   {
@@ -116,12 +125,51 @@
    "fieldtype": "Table",
    "label": "Files",
    "options": "CRM Log Attachment"
+  },
+  {
+   "fieldname": "column_break_5jgr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wxee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_chwt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Lebanon",
+   "fieldname": "loc_country",
+   "fieldtype": "Data",
+   "label": "Country"
+  },
+  {
+   "fieldname": "loc_district",
+   "fieldtype": "Data",
+   "label": "District"
+  },
+  {
+   "fieldname": "loc_city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "loc_street",
+   "fieldtype": "Data",
+   "label": "Street"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Lead\nSite Surveys\nMeasurements Take Off\nEstimation\nQuotation"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-09 10:45:16.009700",
+ "modified": "2026-06-10 09:33:42.213696",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "CRM Log",

@@ -9,11 +9,12 @@
 /** Single source of truth for column layout. `type` drives cell rendering. */
 const CRM_COLUMNS = [
 	{ field: "status",          label: "Status",        type: "select",  width: 120, options: ["Open", "Scheduled", "Viewed", "Cancelled", "Done"] },
+	{ field: "category",        label: "Category",      type: "select",  width: 150, options: ["Lead", "Site Surveys", "Measurements Take Off", "Estimation", "Quotation"] },
 	{ field: "date",            label: "Created",       type: "date",    width: 130 },
 	{ field: "user",            label: "User",          type: "avatar",  width: 60  },
 	{ field: "assigned_to",     label: "To",            type: "avatar",  width: 60, variant: "grey" },
 	{ field: "log_type",        label: "Type",          type: "select",  width: 130, options: ["Inbound call", "Quotation", "Field", "Job", "Transport", "Yard"] },
-	{ field: "prefix",          label: "Pre",           type: "select",  width: 64,  options: ["Mr", "Ms", "Mrs", "Dr"] },
+	{ field: "prefix",          label: "Pre",           type: "select",  width: 64,  options: ["Mr", "Ms", "Mrs", "Dr", "Eng", "Arch"] },
 	{ field: "first_name",      label: "Name",          type: "text",    width: 120 },
 	{ field: "last_name",       label: "Surname",       type: "text",    width: 120 },
 	{ field: "company_name",    label: "Company",       type: "text",    width: 140 },
@@ -30,7 +31,7 @@ const CRM_COLUMNS = [
 const CRM_ATTACH_DOCTYPE    = "CRM Log Attachment";
 const CRM_ATTACH_TABLE_FIELD = "attachments";
 const CRM_COL_WIDTH_KEY     = "crm_log_col_widths";
-const CRM_STYLE_VERSION     = "v9"; // bump whenever styles change
+const CRM_STYLE_VERSION     = "v12"; // bump whenever styles change
 
 /**
  * Fields to pass to `add_fields`. Excludes `attachments` (child table fetched
@@ -108,11 +109,13 @@ function crm_suppress_native_refresh(listview) {
 	}
 }
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GRID RENDERING
 // ─────────────────────────────────────────────────────────────────────────────
 
 function crm_render_grid(listview) {
+	_CRM_CURRENT_LISTVIEW = listview; // used by lazy link-name resolution
 	const $result = listview.$result;
 	if (!$result?.length) return;
 
@@ -222,27 +225,72 @@ function crm_render_cell(col, doc) {
 }
 
 function _render_select(col, name, raw) {
-	const opts = col.options.map(o =>
+	const hasValue = col.options.includes(raw);
+	// When nothing valid is stored, prepend a selected blank option so the cell
+	// shows empty instead of defaulting to the first option (which would be
+	// misleading and risk an accidental save of that first value).
+	const blank = hasValue ? "" : `<option value="" selected></option>`;
+	const opts  = col.options.map(o =>
 		`<option value="${o}"${o === raw ? " selected" : ""}>${__(o)}</option>`
 	).join("");
-	return `<select class="crm-cell-input crm-cell-select" data-name="${name}" data-field="${col.field}">${opts}</select>`;
+	return `<select class="crm-cell-input crm-cell-select" data-name="${name}" data-field="${col.field}">${blank}${opts}</select>`;
+}
+
+// Link-target id → readable name cache. `user`/`assigned_to` are Link fields,
+// so the row stores an id like "HR-EMP-0001". We resolve it to a name for
+// display. The cache is filled by the autocomplete dropdown and lazily by
+// _resolve_link_name below; misses trigger a one-off fetch then a repaint.
+const _CRM_LINK_NAMES = new Map();
+const _CRM_LINK_PENDING = new Set();
+let _CRM_CURRENT_LISTVIEW = null; // set each render so resolvers can repaint
+
+// Per-field config for resolving a stored id to its display name.
+const CRM_LINK_FIELDS = {
+	user:        { doctype: "User",     namefield: "full_name" },
+	assigned_to: { doctype: "Employee", namefield: "employee_name" },
+};
+
+/**
+ * Returns the readable name for a stored link id, or null if not yet known.
+ * On a cache miss, fires a single fetch and re-renders the grid when it lands.
+ */
+function _resolve_link_name(fieldname, id) {
+	const cfg = CRM_LINK_FIELDS[fieldname];
+	if (!cfg || !id) return null;
+
+	const key = `${cfg.doctype}::${id}`;
+	if (_CRM_LINK_NAMES.has(key)) return _CRM_LINK_NAMES.get(key);
+
+	if (!_CRM_LINK_PENDING.has(key)) {
+		_CRM_LINK_PENDING.add(key);
+		frappe.db.get_value(cfg.doctype, id, cfg.namefield, (r) => {
+			_CRM_LINK_PENDING.delete(key);
+			_CRM_LINK_NAMES.set(key, r?.[cfg.namefield] || id);
+			if (_CRM_CURRENT_LISTVIEW) crm_render_grid(_CRM_CURRENT_LISTVIEW); // repaint
+		});
+	}
+	return null; // unknown for now → show id this pass, repaint follows
 }
 
 function _render_avatar(col, name, raw) {
-	const initial     = raw ? raw.charAt(0).toUpperCase() : "?";
-	const hue         = raw ? [...raw].reduce((a, c) => a + c.charCodeAt(0), 0) % 360 : 210;
+	// `raw` is the stored Link id. Resolve it to a readable name for display.
+	const display     = raw ? (_resolve_link_name(col.field, raw) || raw) : "";
+	const initial     = display ? display.charAt(0).toUpperCase() : "?";
+	const hue         = display ? [...display].reduce((a, c) => a + c.charCodeAt(0), 0) % 360 : 210;
 	const isGrey      = col.variant === "grey";
 	const avatarClass = isGrey ? "crm-avatar crm-avatar--grey" : "crm-avatar";
 	const hueStyle    = isGrey ? "" : `style="--h:${hue}"`;
-	const placeholder = isGrey ? "employee..." : "user...";
+	const placeholder = isGrey ? "employee…" : "user…";
+	// data-link tells the autocomplete binder which doctype to search.
+	const linkType    = isGrey ? "Employee" : "User";
 
 	return `
 		<div class="crm-avatar-wrap">
-			<div class="${avatarClass}" ${hueStyle} title="${frappe.utils.escape_html(raw || "")}">${initial}</div>
+			<div class="${avatarClass}" ${hueStyle} title="${frappe.utils.escape_html(display)}">${initial}</div>
 			<input type="text" class="crm-cell-input crm-avatar-input"
-				data-name="${name}" data-field="${col.field}"
-				value="${frappe.utils.escape_html(raw || "")}"
-				placeholder="${placeholder}">
+				data-name="${name}" data-field="${col.field}" data-link="${linkType}"
+				value="${frappe.utils.escape_html(display)}"
+				placeholder="${placeholder}" autocomplete="off">
 		</div>`;
 }
 
@@ -253,7 +301,7 @@ function _render_date(raw) {
 const SVG = {
 	map: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
 	pen: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
-	clip: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`,
+	clip: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`,
 	file: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
 };
 
@@ -280,10 +328,24 @@ function _render_area(col, name, raw) {
 		rows="1" placeholder="…">${frappe.utils.escape_html(raw || "")}</textarea>`;
 }
 
+// Attachment counts survive list refreshes here. `add_fields` does NOT return
+// child table data, so `doc.attachments` is often undefined after a native
+// re-fetch — which made the badge vanish. We cache the last-known count per
+// docname (updated on dialog open and on save) and fall back to it at render.
+const _CRM_ATTACH_COUNTS = new Map();
+
+function _attach_count(name, raw) {
+	if (Array.isArray(raw)) {
+		_CRM_ATTACH_COUNTS.set(name, raw.length);
+		return raw.length;
+	}
+	return _CRM_ATTACH_COUNTS.get(name) ?? 0;
+}
+
 function _render_attach(name, raw) {
-	const count = Array.isArray(raw) ? raw.length : 0;
+	const count = _attach_count(name, raw);
 	const badge = count ? `<span class="crm-attach-badge">${count}</span>` : "";
-	return `<button class="crm-attach-btn" data-name="${name}" title="${count} attachment(s)">${SVG.clip}${badge}</button>`;
+	return `<button class="crm-icon-btn crm-attach-btn" data-name="${name}" title="${count} attachment(s)">${SVG.clip}${badge}</button>`;
 }
 
 function _render_text(col, name, raw) {
@@ -311,12 +373,13 @@ function crm_bind_events(listview, shell, $host) {
 
 	const handle_update = _make_update_handler(listview);
 	$shell.on("change.crm", ".crm-cell-select", handle_update);
-	$shell.on("blur.crm",   ".crm-cell-input:not(.crm-cell-select)", handle_update);
+	$shell.on("blur.crm",   ".crm-cell-input:not(.crm-cell-select):not([data-inline])", handle_update);
 	$shell.on("keydown.crm", "input.crm-cell-input", (e) => {
 		if (e.key === "Enter") { e.preventDefault(); $(e.currentTarget).blur(); }
 	});
 
 	_bind_click_to_edit($shell, listview, handle_update);
+	_bind_link_autocomplete($shell, listview);
 	_bind_add_row($host, listview);
 	_bind_attachments($shell, listview);
 	_bind_maps_toggle($shell);
@@ -381,7 +444,9 @@ function _bind_click_to_edit($shell, listview, handle_update) {
 
 		const $input = $(`<input type="${type}" class="crm-cell-input crm-cell-input--inline">`)
 			.val(typedChar != null ? typedChar : current)
-			.attr({ "data-name": docname, "data-field": fieldname })
+			// data-inline marks this as a click-to-edit input so the shell-level
+			// blur.crm delegation skips it — blur.crminline below is the sole save trigger.
+			.attr({ "data-name": docname, "data-field": fieldname, "data-inline": "1" })
 			.data("last-saved-val", current.trim());
 
 		$span.replaceWith($input);
@@ -406,6 +471,135 @@ function _bind_click_to_edit($shell, listview, handle_update) {
 		else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
 			e.preventDefault(); activate($(this), e.key);
 		}
+	});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LINK-FIELD AUTOCOMPLETE (User / Employee)
+// A lightweight typeahead. As the user types into a [data-link] input we query
+// frappe.client.get_list for matching records and show a dropdown. Picking a
+// suggestion fills the input and commits via the existing blur handler. The
+// last item is always "+ Add «typed»", which creates a new record through the
+// existing upsert path (the upsert fns already link-or-create on the typed text).
+// ─────────────────────────────────────────────────────────────────────────────
+function _bind_link_autocomplete($shell, listview) {
+	let $menu = null;
+	let activeInput = null;
+	let debounceTimer = null;
+
+	const closeMenu = () => {
+		if ($menu) { $menu.remove(); $menu = null; }
+		activeInput = null;
+	};
+
+	// Maps the avatar field to its source doctype.
+	//   primary = what gets saved/displayed (the readable name)
+	//   sub     = secondary line shown in grey (email / id) for disambiguation
+	//   id      = the Link target stored in the field (record name / PK)
+	const linkConfig = {
+		User: {
+			doctype: "User",
+			fields: ["name", "full_name", "email"],
+			searchfield: "full_name",
+			primary: "full_name", sub: "email", id: "name",
+		},
+		Employee: {
+			doctype: "Employee",
+			fields: ["name", "employee_name", "company_email", "personal_email", "user_id"],
+			searchfield: "employee_name",
+			primary: "employee_name", sub: "company_email", id: "name",
+		},
+	};
+
+	const positionMenu = ($input) => {
+		const rect = $input[0].getBoundingClientRect();
+		$menu.css({
+			top:   `${rect.bottom + window.scrollY}px`,
+			left:  `${rect.left + window.scrollX}px`,
+			width: `${Math.max(rect.width, 220)}px`,
+		});
+	};
+
+	const renderMenu = ($input, results) => {
+		if (!$menu) {
+			$menu = $(`<div class="crm-ac-menu"></div>`).appendTo(document.body);
+		}
+		const items = results.map(r => {
+			const primary = frappe.utils.escape_html(r.primary);
+			const sub     = r.sub ? `<span class="crm-ac-sub">${frappe.utils.escape_html(r.sub)}</span>` : "";
+			// data-value = readable name (what we display), data-id = link target (what we store)
+			return `<div class="crm-ac-item"
+				data-value="${frappe.utils.escape_html(r.primary)}"
+				data-id="${frappe.utils.escape_html(r.id)}">
+				<span class="crm-ac-primary">${primary}</span>${sub}
+			</div>`;
+		}).join("");
+
+		if (!items) { closeMenu(); return; }
+
+		$menu.html(items);
+		positionMenu($input);
+	};
+
+	const search = ($input, typed) => {
+		const cfg = linkConfig[$input.attr("data-link")];
+		if (!cfg) return;
+
+		const filters = typed.trim()
+			? { [cfg.searchfield]: ["like", `%${typed.trim()}%`] }
+			: {};
+
+		frappe.call({
+			method: "frappe.client.get_list",
+			args: {
+				doctype: cfg.doctype,
+				fields: cfg.fields,
+				filters,
+				limit_page_length: 8,
+				order_by: `${cfg.searchfield} asc`,
+			},
+			callback: ({ message }) => {
+				if (activeInput !== $input[0]) return; // input changed/blurred meanwhile
+				const results = (message || []).map(row => {
+					const primary = row[cfg.primary] || row.name;
+					const id      = row[cfg.id] || row.name;
+					// Cache id→name so the cell can show the readable name on render.
+					_CRM_LINK_NAMES.set(`${cfg.doctype}::${id}`, primary);
+					return { primary, sub: row[cfg.sub] || "", id };
+				});
+				renderMenu($input, results);
+			},
+		});
+	};
+
+	$shell.on("input.crmac focus.crmac", ".crm-avatar-input[data-link]", function () {
+		activeInput = this;
+		const $input = $(this);
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => search($input, $input.val() || ""), 180);
+	});
+
+	// Pick a suggestion: the field is a Link, so we save the record ID. We push
+	// the ID into the input and commit via blur — the existing upsert resolves it
+	// and stores the ID. Display-as-name is handled by the renderer via the cache.
+	$(document).off("mousedown.crmac").on("mousedown.crmac", ".crm-ac-item", function (e) {
+		e.preventDefault(); // keep focus until we commit
+		if (!activeInput) return;
+		const $input = $(activeInput);
+		const id     = $(this).attr("data-id");
+		const name   = $(this).attr("data-value");
+		const cfg    = linkConfig[$input.attr("data-link")];
+		// Cache id→name now so the immediate re-render shows the readable name.
+		if (cfg) _CRM_LINK_NAMES.set(`${cfg.doctype}::${id}`, name);
+		$input.val(id); // upsert path matches an existing record by id → stores id
+		closeMenu();
+		$input.trigger("blur");
+	});
+
+	// Close the menu on outside click or when the input loses focus.
+	$shell.on("blur.crmac", ".crm-avatar-input[data-link]", () => setTimeout(closeMenu, 120));
+	$(document).off("click.crmacout").on("click.crmacout", (e) => {
+		if ($menu && !$(e.target).closest(".crm-ac-menu, .crm-avatar-input").length) closeMenu();
 	});
 }
 
@@ -512,16 +706,28 @@ function crm_delete_row(listview, docname) {
 	});
 }
 
+// Tracks in-flight saves keyed by "docname::fieldname".
+// Any call that arrives while a save is already in flight for the same field
+// is dropped — the value will be correct because crm_apply_local_update writes
+// it into listview.data and re-renders immediately on the first response.
+const _CRM_SAVING = new Set();
+
 function crm_fast_save(listview, docname, fieldname, val, $el) {
+	const key = `${docname}::${fieldname}`;
+	if (_CRM_SAVING.has(key)) return;
+	_CRM_SAVING.add(key);
+
 	frappe.call({
 		method: "frappe.client.set_value",
 		args: { doctype: "CRM Log", name: docname, fieldname, value: val },
 		callback: ({ exc }) => {
+			_CRM_SAVING.delete(key);
 			if (exc) return;
 			if ($el) $el.data("last-saved-val", val);
 			frappe.show_alert({ message: __("Saved"), indicator: "green" }, 0.8);
 			crm_apply_local_update(listview, docname, fieldname, val);
 		},
+		error: () => _CRM_SAVING.delete(key),
 	});
 }
 
@@ -571,66 +777,83 @@ function crm_upsert_company_and_save(crm_docname, company_value, listview, $el, 
 }
 
 function crm_upsert_user_and_save(crm_docname, user_value, listview, $el) {
-	const filter = user_value.includes("@") ? { name: user_value } : { full_name: user_value };
-
-	frappe.db.get_value("User", filter, "name", (r) => {
-		if (r?.name) {
-			crm_save_linked_field(listview, crm_docname, "user", r.name, user_value, $el);
+	// The value may be: a User id (picked from the dropdown), an email, or a typed
+	// full name. Try an exact id match first so dropdown picks link instantly and
+	// never create a duplicate.
+	frappe.db.get_value("User", { name: user_value }, "name", (byId) => {
+		if (byId?.name) {
+			crm_save_linked_field(listview, crm_docname, "user", byId.name, user_value, $el);
 			return;
 		}
 
-		frappe.show_alert({ message: __("Creating user '{0}'...", [user_value]), indicator: "orange" }, 1.0);
-		const is_email  = user_value.includes("@");
-		const email     = is_email ? user_value : `${user_value.toLowerCase().replace(/\s+/g, "")}@example.com`;
-		const full_name = is_email ? user_value.split("@")[0] : user_value;
+		const filter = user_value.includes("@") ? { name: user_value } : { full_name: user_value };
+		frappe.db.get_value("User", filter, "name", (r) => {
+			if (r?.name) {
+				crm_save_linked_field(listview, crm_docname, "user", r.name, user_value, $el);
+				return;
+			}
 
-		frappe.call({
-			method: "frappe.client.insert",
-			args: { doc: { doctype: "User", email, first_name: full_name, send_welcome_email: 0 } },
-			callback: ({ exc, message }) => {
-				if (!exc && message) {
-					frappe.show_alert({ message: __("User '{0}' Created", [user_value]), indicator: "green" }, 1.2);
-					crm_save_linked_field(listview, crm_docname, "user", message.name, user_value, $el);
-				}
-			},
+			frappe.show_alert({ message: __("Creating user '{0}'...", [user_value]), indicator: "orange" }, 1.0);
+			const is_email  = user_value.includes("@");
+			const email     = is_email ? user_value : `${user_value.toLowerCase().replace(/\s+/g, "")}@example.com`;
+			const full_name = is_email ? user_value.split("@")[0] : user_value;
+
+			frappe.call({
+				method: "frappe.client.insert",
+				args: { doc: { doctype: "User", email, first_name: full_name, send_welcome_email: 0 } },
+				callback: ({ exc, message }) => {
+					if (!exc && message) {
+						frappe.show_alert({ message: __("User '{0}' Created", [user_value]), indicator: "green" }, 1.2);
+						crm_save_linked_field(listview, crm_docname, "user", message.name, user_value, $el);
+					}
+				},
+			});
 		});
 	});
 }
 
 function crm_upsert_employee_and_save(crm_docname, employee_value, listview, $el) {
-	frappe.db.get_value("Employee", { first_name: employee_value }, "name", (r) => {
-		if (r?.name) {
-			crm_save_linked_field(listview, crm_docname, "assigned_to", r.name, employee_value, $el);
+	// Try exact id match first (dropdown pick), then employee_name (typed), else create.
+	frappe.db.get_value("Employee", { name: employee_value }, "name", (byId) => {
+		if (byId?.name) {
+			crm_save_linked_field(listview, crm_docname, "assigned_to", byId.name, employee_value, $el);
 			return;
 		}
 
-		frappe.show_alert({ message: __("Creating employee '{0}'...", [employee_value]), indicator: "orange" }, 1.0);
-		const row_company = listview.data.find(d => d.name === crm_docname)?.company_name || "";
+		frappe.db.get_value("Employee", { employee_name: employee_value }, "name", (r) => {
+			if (r?.name) {
+				crm_save_linked_field(listview, crm_docname, "assigned_to", r.name, employee_value, $el);
+				return;
+			}
 
-		const insert_employee = (company) => {
-			frappe.call({
-				method: "frappe.client.insert",
-				args: { doc: {
-					doctype: "Employee",
-					first_name: employee_value,
-					company: company || frappe.defaults.get_default("company") || "",
-				}},
-				callback: ({ exc, message }) => {
-					if (!exc && message) {
-						frappe.show_alert({ message: __("Employee '{0}' Created", [employee_value]), indicator: "green" }, 1.2);
-						crm_save_linked_field(listview, crm_docname, "assigned_to", message.name, employee_value, $el);
-					}
-				},
-			});
-		};
+			frappe.show_alert({ message: __("Creating employee '{0}'...", [employee_value]), indicator: "orange" }, 1.0);
+			const row_company = listview.data.find(d => d.name === crm_docname)?.company_name || "";
 
-		if (row_company) {
-			frappe.db.get_value("Company", { company_name: row_company }, "name",
-				(comp) => insert_employee(comp?.name || "")
-			);
-		} else {
-			insert_employee("");
-		}
+			const insert_employee = (company) => {
+				frappe.call({
+					method: "frappe.client.insert",
+					args: { doc: {
+						doctype: "Employee",
+						first_name: employee_value,
+						company: company || frappe.defaults.get_default("company") || "",
+					}},
+					callback: ({ exc, message }) => {
+						if (!exc && message) {
+							frappe.show_alert({ message: __("Employee '{0}' Created", [employee_value]), indicator: "green" }, 1.2);
+							crm_save_linked_field(listview, crm_docname, "assigned_to", message.name, employee_value, $el);
+						}
+					},
+				});
+			};
+
+			if (row_company) {
+				frappe.db.get_value("Company", { company_name: row_company }, "name",
+					(comp) => insert_employee(comp?.name || "")
+				);
+			} else {
+				insert_employee("");
+			}
+		});
 	});
 }
 
@@ -695,6 +918,7 @@ function crm_open_attachments_dialog(listview, docname) {
 							frappe.show_alert({ message: __("Attachments saved"), indicator: "green" }, 1.0);
 							const localDoc = (listview.data || []).find(d => d.name === docname);
 							if (localDoc) localDoc[CRM_ATTACH_TABLE_FIELD] = collected;
+							_CRM_ATTACH_COUNTS.set(docname, collected.length);
 							crm_render_grid(listview);
 							dialog.hide();
 						},
@@ -718,6 +942,11 @@ function crm_open_attachments_dialog(listview, docname) {
 			const rows = Array.isArray(message[CRM_ATTACH_TABLE_FIELD])
 				? message[CRM_ATTACH_TABLE_FIELD].map(row => ({ label: row.label || "", url: row.url || "" }))
 				: [];
+			// Refresh the cached count from the authoritative server copy. If it
+			// differs from what's on screen, repaint so the badge is accurate.
+			const prev = _CRM_ATTACH_COUNTS.get(docname);
+			_CRM_ATTACH_COUNTS.set(docname, rows.length);
+			if (prev !== rows.length) crm_render_grid(listview);
 			_render_attach_dialog_body(dialog, rows);
 		},
 	});
@@ -788,7 +1017,14 @@ function _render_attach_dialog_body(dialog, rows) {
 function _attach_preview_item(r) {
 	const escapedUrl   = frappe.utils.escape_html(r.url);
 	const escapedLabel = frappe.utils.escape_html(r.label || r.url);
-	const isImage      = /\.(jpe?g|png|gif|webp|svg)(\?|$)/i.test(r.url) || /\/(thumbnail|files)\//i.test(r.url);
+	// Catches: explicit image extensions, Frappe's own /files/ & /thumbnail/ paths,
+	// and known image CDN hostnames (Unsplash, Cloudinary, Imgix, ImageKit) whose
+	// URLs never carry a file extension.
+	const isImage = (
+		/\.(jpe?g|png|gif|webp|svg|avif)(\?|$)/i.test(r.url) ||
+		/\/(thumbnail|files)\//i.test(r.url) ||
+		/^https?:\/\/(images\.unsplash\.com|[^/]+\.cloudinary\.com|[^/]+\.imgix\.net|[^/]+\.imagekit\.io)\//i.test(r.url)
+	);
 
 	if (isImage) {
 		return `<a href="${escapedUrl}" target="_blank" class="crm-att-thumb-wrap" title="${escapedLabel}">
@@ -846,16 +1082,15 @@ function crm_inject_styles() {
 			overflow: visible !important; height: auto !important; max-height: none !important;
 		}
 
-		/* Dropdowns / menus must always paint over the grid */
-		.dropdown-menu,
-		.menu-btn-group .dropdown-menu,
-		.page-actions .dropdown-menu { z-index: 1050 !important; }
-
-		/* HOST = single scroll container for both axes.
-		   SHELL = plain CSS Grid with no overflow of its own. */
+		/* Frappe's page menu/dropdowns sit high in the stacking order. We keep our
+		   whole grid host in its own LOW stacking context (position + low z-index)
+		   so its sticky header — even at its local z-index — can never paint over
+		   the page ribbon, menu, or any page-level dropdown. This is the correct
+		   fix: lower the grid rather than chase every menu with !important. */
 		.crm-grid-host {
 			display: block; padding: 8px 0 12px;
 			overflow: auto; max-height: calc(100vh - 200px);
+			position: relative; z-index: 0;
 		}
 		.crm-grid-shell {
 			--crm-border:     var(--border-color,   #e2e6ea);
@@ -964,8 +1199,8 @@ function crm_inject_styles() {
 			white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center;
 		}
 
-		/* Avatar */
-		.crm-avatar-wrap  { position: relative; display: flex; align-items: center; width: 100%; }
+		/* Avatar — centered in its cell so it sits under the centered header label */
+		.crm-avatar-wrap  { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
 		.crm-avatar {
 			width: 30px; height: 30px; border-radius: 50%;
 			background: hsl(var(--h, 210), 58%, 52%);
@@ -995,20 +1230,39 @@ function crm_inject_styles() {
 		.crm-icon-btn--disabled   { opacity: 0.3; cursor: default; pointer-events: none; }
 		.crm-map-open:hover       { color: var(--primary, #2490ef); }
 
-		/* Attachments button */
-		.crm-attach-btn {
-			position: relative; display: inline-flex; align-items: center; justify-content: center;
-			width: 22px; height: 22px; border: 1px solid transparent; border-radius: 5px;
-			background: transparent; cursor: pointer; color: var(--crm-muted);
-			transition: background .12s, border-color .12s, color .12s;
-		}
-		.crm-attach-btn:hover { background: var(--control-bg, #f4f5f6); border-color: var(--crm-border); color: var(--crm-text); }
+		/* Attachments button — shares .crm-icon-btn sizing (matches the maps icon).
+		   Only adds the relative positioning the badge anchors to. */
+		.crm-attach-btn       { position: relative; }
 		.crm-attach-badge {
 			position: absolute; top: -4px; right: -5px;
 			min-width: 14px; height: 14px; padding: 0 3px;
 			background: var(--primary, #2490ef); color: #fff;
 			font-size: 9px; font-weight: 700; line-height: 14px;
 			border-radius: 7px; box-sizing: border-box;
+			pointer-events: none; /* never intercept clicks → never flickers/hides */
+		}
+
+		/* Link-field autocomplete dropdown (User / Employee) */
+		.crm-ac-menu {
+			position: absolute; z-index: 2000;
+			background: var(--fg-color, #fff);
+			border: 1px solid var(--crm-border, #e2e6ea);
+			border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+			max-height: 260px; overflow-y: auto; padding: 4px;
+			font-size: 12.5px; color: var(--crm-text, #1f272e);
+		}
+		.crm-ac-item {
+			display: flex; flex-direction: column; gap: 1px;
+			padding: 6px 10px; border-radius: 5px; cursor: pointer;
+			overflow: hidden;
+		}
+		.crm-ac-item:hover { background: var(--bg-light-gray, #f4f5f6); }
+		.crm-ac-primary {
+			font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+		}
+		.crm-ac-sub {
+			font-size: 10.5px; color: var(--crm-muted, #8d96a0);
+			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 		}
 
 		/* Add-row toolbar */
@@ -1032,7 +1286,7 @@ function crm_inject_styles() {
 			.crm-avatar        { width: 24px; height: 24px; font-size: 11px; }
 			.crm-cell-select   { font-size: 10.5px; padding: 2px 14px 2px 4px; }
 			.crm-grid-rownum   { font-size: 10px; }
-			.crm-attach-btn    { width: 18px; height: 18px; }
+			.crm-icon-btn      { width: 22px; height: 22px; }
 			.crm-stack-main    { font-size: 11px; }
 			.crm-stack-sub     { font-size: 9.5px; }
 		}
