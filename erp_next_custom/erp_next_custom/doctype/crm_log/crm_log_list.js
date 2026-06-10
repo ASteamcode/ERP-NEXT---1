@@ -31,7 +31,7 @@ const CRM_COLUMNS = [
 const CRM_ATTACH_DOCTYPE    = "CRM Log Attachment";
 const CRM_ATTACH_TABLE_FIELD = "attachments";
 const CRM_COL_WIDTH_KEY     = "crm_log_col_widths";
-const CRM_STYLE_VERSION     = "v12"; // bump whenever styles change
+const CRM_STYLE_VERSION     = "v13"; // bump whenever styles change
 
 /**
  * Fields to pass to `add_fields`. Excludes `attachments` (child table fetched
@@ -115,6 +115,7 @@ function crm_suppress_native_refresh(listview) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function crm_render_grid(listview) {
+	_CRM_EDITING_ROW = null; // re-render always starts with no row in edit mode
 	_CRM_CURRENT_LISTVIEW = listview; // used by lazy link-name resolution
 	const $result = listview.$result;
 	if (!$result?.length) return;
@@ -328,6 +329,26 @@ function _render_area(col, name, raw) {
 		rows="1" placeholder="…">${frappe.utils.escape_html(raw || "")}</textarea>`;
 }
 
+// Tracks which row is currently in inline-edit mode.
+// Reset on every grid re-render so stale state never leaks across refreshes.
+let _CRM_EDITING_ROW = null;
+
+function _set_editing_row($shell, docname) {
+	if (_CRM_EDITING_ROW === docname) return;
+	_clear_editing_row($shell);
+	_CRM_EDITING_ROW = docname;
+	if (docname) {
+		$shell.find(`.crm-grid-cell[data-row="${docname}"]`).addClass("crm-row--editing");
+	}
+}
+
+function _clear_editing_row($shell) {
+	if (_CRM_EDITING_ROW) {
+		$shell.find(`.crm-grid-cell[data-row="${_CRM_EDITING_ROW}"]`).removeClass("crm-row--editing");
+	}
+	_CRM_EDITING_ROW = null;
+}
+
 // Attachment counts survive list refreshes here. `add_fields` does NOT return
 // child table data, so `doc.attachments` is often undefined after a native
 // re-fetch — which made the badge vanish. We cache the last-known count per
@@ -385,6 +406,13 @@ function crm_bind_events(listview, shell, $host) {
 	_bind_maps_toggle($shell);
 	_bind_delete_row($shell, listview);
 	_bind_col_resize($shell, shell);
+
+	// Deactivate row editing when user clicks anywhere outside the grid
+	$(document).off("mousedown.crmrow").on("mousedown.crmrow", function (e) {
+		if (!$(e.target).closest(".crm-grid-shell").length) {
+			_clear_editing_row($shell);
+		}
+	});
 }
 
 function _bind_row_hover($shell) {
@@ -444,8 +472,6 @@ function _bind_click_to_edit($shell, listview, handle_update) {
 
 		const $input = $(`<input type="${type}" class="crm-cell-input crm-cell-input--inline">`)
 			.val(typedChar != null ? typedChar : current)
-			// data-inline marks this as a click-to-edit input so the shell-level
-			// blur.crm delegation skips it — blur.crminline below is the sole save trigger.
 			.attr({ "data-name": docname, "data-field": fieldname, "data-inline": "1" })
 			.data("last-saved-val", current.trim());
 
@@ -461,11 +487,30 @@ function _bind_click_to_edit($shell, listview, handle_update) {
 		});
 		$input.on("keydown.crminline", (e) => {
 			if (e.key === "Enter")  { e.preventDefault(); $input.trigger("blur"); }
-			if (e.key === "Escape") { e.preventDefault(); $input.off("blur.crminline"); crm_render_grid(listview); }
+			if (e.key === "Escape") {
+				e.preventDefault();
+				_clear_editing_row($shell);
+				$input.off("blur.crminline");
+				crm_render_grid(listview);
+			}
 		});
 	};
 
-	$shell.on("click.crm",   ".crm-cell-display", function () { activate($(this), null); });
+	// Single click on any data cell → activate row editing state for the whole row
+	$shell.on("click.crm", ".crm-data-cell", function () {
+		_set_editing_row($shell, $(this).attr("data-row"));
+	});
+
+	// Single click on a display span within an editing row → activate inline input
+	$shell.on("click.crm", ".crm-cell-display", function () { activate($(this), null); });
+
+	// Double click on any data cell → navigate to full form view
+	$shell.on("dblclick.crm", ".crm-data-cell", function (e) {
+		e.preventDefault();
+		const docname = $(this).attr("data-row");
+		if (docname) frappe.set_route("Form", "CRM Log", docname);
+	});
+
 	$shell.on("keydown.crm", ".crm-cell-display", function (e) {
 		if (e.key === "Enter") { e.preventDefault(); activate($(this), null); }
 		else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1076,48 +1121,46 @@ function crm_inject_styles() {
 		[data-doctype="CRM Log"] .frappe-list .list-row-head,
 		[data-doctype="CRM Log"] .no-result { display: none !important; }
 
-		/* Prevent a second scrollbar beside our grid */
 		[data-doctype="CRM Log"] .result,
 		[data-doctype="CRM Log"] .frappe-list .result {
 			overflow: visible !important; height: auto !important; max-height: none !important;
 		}
 
-		/* Frappe's page menu/dropdowns sit high in the stacking order. We keep our
-		   whole grid host in its own LOW stacking context (position + low z-index)
-		   so its sticky header — even at its local z-index — can never paint over
-		   the page ribbon, menu, or any page-level dropdown. This is the correct
-		   fix: lower the grid rather than chase every menu with !important. */
+		/* Keep grid host in a low stacking context so it never paints over
+		   Frappe's page ribbon, menus, or page-level dropdowns. */
 		.crm-grid-host {
 			display: block; padding: 8px 0 12px;
 			overflow: auto; max-height: calc(100vh - 200px);
 			position: relative; z-index: 0;
 		}
+
 		.crm-grid-shell {
-			--crm-border:     var(--border-color,   #e2e6ea);
-			--crm-head-bg:    var(--fg-color,        #fff);
-			--crm-row-hover:  var(--bg-light-gray,   #f7f9fa);
-			--crm-text:       var(--text-color,      #1f272e);
-			--crm-muted:      var(--text-muted,      #8d96a0);
+			--crm-border:   var(--border-color,  #e2e6ea);
+			--crm-head-bg:  var(--card-bg,        #fff);
+			--crm-bg-sec:   var(--bg-light-gray,  #f7f9fa);
+			--crm-text:     var(--text-color,     #1f272e);
+			--crm-muted:    var(--text-muted,     #8d96a0);
+			--crm-accent:   #378ADD;
 			display: grid; width: max-content; min-width: 100%;
-			font-size: 11.5px; color: var(--crm-text);
-			border: 1px solid var(--crm-border); border-radius: 10px;
+			font-size: 12px; font-weight: 400; color: var(--crm-text);
+			border: 0.5px solid var(--crm-border); border-radius: 12px;
 			background: var(--card-bg, #fff);
 		}
 
 		.crm-grid-cell {
 			display: flex; align-items: center;
-			padding: 2px 5px;
-			border-right: 1px solid var(--crm-border);
-			border-bottom: 1px solid var(--crm-border);
-			min-height: 30px; min-width: 0; overflow: hidden;
+			padding: 5px 8px;
+			border-right: 0.5px solid var(--crm-border);
+			border-bottom: 0.5px solid var(--crm-border);
+			min-height: 32px; min-width: 0; overflow: hidden;
 		}
+
 		.crm-grid-headcell {
 			position: sticky; top: 0; z-index: 10;
 			justify-content: center; text-align: center;
-			padding: 6px; background: var(--crm-head-bg);
-			font-weight: 600; color: var(--crm-muted);
-			text-transform: uppercase; letter-spacing: 0.03em;
-			font-size: 9.5px; white-space: nowrap;
+			padding: 6px 8px; background: var(--crm-head-bg);
+			font-size: 11px; font-weight: 500; color: var(--crm-muted);
+			white-space: nowrap;
 		}
 
 		/* Column resize handle */
@@ -1125,7 +1168,7 @@ function crm_inject_styles() {
 			position: absolute; top: 0; right: -3px; width: 7px; height: 100%;
 			cursor: col-resize; z-index: 12; user-select: none;
 		}
-		.crm-col-resize:hover          { background: rgba(36,144,239,0.35); }
+		.crm-col-resize:hover          { background: rgba(55,138,221,0.30); }
 		.crm-col-resizing              { cursor: col-resize; }
 		.crm-col-resizing .crm-cell-input { pointer-events: none; }
 
@@ -1138,157 +1181,172 @@ function crm_inject_styles() {
 		}
 		.crm-grid-headcell.crm-grid-rownum { z-index: 11; }
 
-		/* Delete button — hidden until row hover */
+		/* Delete button — fades in on row hover */
 		.crm-row-del {
 			display: none; border: none; background: none; cursor: pointer;
-			color: #c0392b; font-size: 16px; line-height: 1;
+			color: var(--text-danger, #c0392b); font-size: 16px; line-height: 1;
 			padding: 0; width: 100%; text-align: center;
+			opacity: 0; transition: opacity 0.15s;
 		}
-		.crm-row-del:hover                       { color: #e74c3c; }
-		.crm-grid-rownum:hover .crm-rownum-text  { display: none; }
-		.crm-grid-rownum:hover .crm-row-del      { display: block; }
+		.crm-row-del:hover                      { color: var(--text-danger, #e74c3c); }
+		.crm-grid-rownum:hover .crm-rownum-text { display: none; }
+		.crm-grid-rownum:hover .crm-row-del     { display: block; opacity: 1; }
 
-		/* Row hover */
+		/* Row hover — background-secondary, action icons fade in */
 		.crm-grid-cell.crm-row-hover,
-		.crm-grid-rownum.crm-row-hover { background: var(--crm-row-hover); }
+		.crm-grid-rownum.crm-row-hover { background: var(--crm-bg-sec); }
+
+		/* Row editing — background-secondary + 2px left accent on gutter */
+		.crm-grid-cell.crm-row--editing       { background: var(--crm-bg-sec); }
+		.crm-grid-rownum.crm-row--editing     { background: var(--crm-bg-sec); border-left: 2px solid #378ADD; }
 
 		/* Inputs */
 		.crm-cell-input {
 			width: 100%; min-width: 0;
-			border: 1px solid transparent; background: transparent;
-			padding: 3px 5px; font-size: 11px; border-radius: 5px;
+			border: 0.5px solid transparent; background: transparent;
+			padding: 3px 6px; font-size: 12px; font-weight: 400; border-radius: 8px;
 			color: var(--crm-text);
-			transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+			transition: border-color .12s ease, background .12s ease;
 			box-sizing: border-box; font-family: inherit;
 			text-align: center; text-overflow: ellipsis;
 		}
 		.crm-cell-input:hover { border-color: var(--crm-border); }
 		.crm-cell-input:focus {
-			border-color: var(--primary, #2490ef);
-			background: var(--fg-color, #fff);
-			box-shadow: 0 0 0 3px rgba(36,144,239,0.12);
-			outline: none;
+			border-color: #378ADD;
+			background: var(--card-bg, #fff);
+			outline: 1.5px solid #378ADD;
+			outline-offset: -1px;
 		}
 
 		/* Click-to-edit display span */
 		.crm-cell-display {
 			width: 100%; min-width: 0; text-align: center;
 			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-			padding: 4px 6px; border: 1px solid transparent; border-radius: 6px;
-			cursor: text; color: var(--crm-text);
+			padding: 4px 6px; border: 0.5px solid transparent; border-radius: 8px;
+			cursor: text; color: var(--crm-text); font-size: 12px; font-weight: 400;
 		}
-		.crm-cell-display:hover  { border-color: var(--crm-border); }
-		.crm-cell-display:focus  { outline: none; border-color: var(--primary, #2490ef); box-shadow: 0 0 0 3px rgba(36,144,239,0.12); }
-		.crm-cell-placeholder    { color: var(--crm-muted); opacity: 0.55; }
-		.crm-cell-input--inline  { text-align: center; }
+		.crm-cell-display:hover { border-color: var(--crm-border); }
+		.crm-cell-display:focus {
+			outline: 1.5px solid #378ADD;
+			outline-offset: -1px;
+			border-color: #378ADD;
+		}
+		.crm-cell-placeholder   { color: var(--crm-muted); opacity: 0.55; }
+		.crm-cell-input--inline { text-align: center; }
 
 		.crm-cell-select {
-			width: auto; max-width: 100%; font-weight: 500;
+			width: auto; max-width: 100%;
+			font-size: 12px; font-weight: 400;
 			cursor: pointer; appearance: none;
 			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238d96a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
 			background-repeat: no-repeat; background-position: right 6px center; padding-right: 18px;
 		}
 
 		/* Textarea */
-		.crm-cell-area { resize: none; overflow: hidden; line-height: 1.4; min-height: 28px; white-space: pre-wrap; }
+		.crm-cell-area {
+			resize: none; overflow: hidden; line-height: 1.4;
+			min-height: 28px; white-space: pre-wrap;
+			font-size: 12px; font-weight: 400;
+		}
 		.crm-grid-cell:has(.crm-cell-area) { align-items: flex-start; overflow: visible; }
 
-		/* Date */
+		/* Timestamps / meta */
 		.crm-cell-date {
-			padding: 5px 7px; color: var(--crm-muted);
+			padding: 5px 8px; color: var(--crm-muted);
 			white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center;
+			font-size: 11px; font-weight: 400;
 		}
 
-		/* Avatar — centered in its cell so it sits under the centered header label */
-		.crm-avatar-wrap  { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+		/* Avatar — 22×22px circle per spec */
+		.crm-avatar-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
 		.crm-avatar {
-			width: 30px; height: 30px; border-radius: 50%;
+			width: 22px; height: 22px; border-radius: 50%;
 			background: hsl(var(--h, 210), 58%, 52%);
-			color: #fff; font-weight: 700; font-size: 13px;
+			color: #fff; font-weight: 500; font-size: 10px;
 			display: flex; align-items: center; justify-content: center;
 			flex-shrink: 0; cursor: text; user-select: none; transition: opacity .12s ease;
 		}
-		.crm-avatar-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+		.crm-avatar-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; border-radius: 50%; }
 		.crm-avatar--grey { background: var(--gray-500, #8d96a0); }
-		.crm-avatar-input:focus { opacity: 1; box-shadow: 0 0 0 3px rgba(36,144,239,0.12); border-color: var(--primary, #2490ef); background: var(--fg-color,#fff); }
+		.crm-avatar-input:focus {
+			opacity: 1;
+			outline: 1.5px solid #378ADD;
+			outline-offset: -1px;
+			background: var(--card-bg, #fff);
+		}
 		.crm-avatar-wrap:focus-within .crm-avatar { opacity: 0; }
 
 		/* Maps cell */
 		.crm-map-cell    { display: flex; align-items: center; gap: 4px; width: 100%; overflow: hidden; }
-		.crm-map-display { flex: 1; font-size: 12px; color: var(--crm-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
-		.crm-muted-text  { color: var(--crm-muted); font-style: italic; }
-		.crm-map-input   { flex: 1; min-width: 0; }
+		.crm-map-display {
+			flex: 1; color: var(--crm-muted);
+			white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;
+			font-size: 12px; font-weight: 400;
+		}
+		.crm-muted-text { color: var(--crm-muted); font-style: italic; }
+		.crm-map-input  { flex: 1; min-width: 0; }
 
 		/* Shared icon button */
 		.crm-icon-btn {
 			flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-			width: 26px; height: 26px; border: 1px solid transparent; border-radius: 6px;
+			width: 26px; height: 26px; border: 0.5px solid transparent; border-radius: 8px;
 			background: transparent; cursor: pointer; color: var(--crm-muted);
 			transition: background .12s, border-color .12s, color .12s; text-decoration: none;
 		}
-		.crm-icon-btn:hover       { background: var(--control-bg, #f4f5f6); border-color: var(--crm-border); color: var(--crm-text); }
-		.crm-icon-btn--disabled   { opacity: 0.3; cursor: default; pointer-events: none; }
-		.crm-map-open:hover       { color: var(--primary, #2490ef); }
+		.crm-icon-btn:hover     { background: var(--crm-bg-sec); border-color: var(--crm-border); color: var(--crm-text); }
+		.crm-icon-btn--disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+		.crm-map-open:hover     { color: #378ADD; }
 
-		/* Attachments button — shares .crm-icon-btn sizing (matches the maps icon).
-		   Only adds the relative positioning the badge anchors to. */
-		.crm-attach-btn       { position: relative; }
+		/* Attachment button + badge */
+		.crm-attach-btn { position: relative; }
 		.crm-attach-badge {
 			position: absolute; top: -4px; right: -5px;
 			min-width: 14px; height: 14px; padding: 0 3px;
-			background: var(--primary, #2490ef); color: #fff;
-			font-size: 9px; font-weight: 700; line-height: 14px;
+			background: #378ADD; color: #fff;
+			font-size: 9px; font-weight: 500; line-height: 14px;
 			border-radius: 7px; box-sizing: border-box;
-			pointer-events: none; /* never intercept clicks → never flickers/hides */
+			pointer-events: none;
 		}
 
-		/* Link-field autocomplete dropdown (User / Employee) */
+		/* Autocomplete dropdown */
 		.crm-ac-menu {
 			position: absolute; z-index: 2000;
-			background: var(--fg-color, #fff);
-			border: 1px solid var(--crm-border, #e2e6ea);
-			border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+			background: var(--card-bg, #fff);
+			border: 0.5px solid var(--crm-border, #e2e6ea);
+			border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
 			max-height: 260px; overflow-y: auto; padding: 4px;
-			font-size: 12.5px; color: var(--crm-text, #1f272e);
+			font-size: 12px; font-weight: 400; color: var(--crm-text, #1f272e);
 		}
 		.crm-ac-item {
 			display: flex; flex-direction: column; gap: 1px;
-			padding: 6px 10px; border-radius: 5px; cursor: pointer;
-			overflow: hidden;
+			padding: 6px 10px; border-radius: 8px; cursor: pointer; overflow: hidden;
 		}
-		.crm-ac-item:hover { background: var(--bg-light-gray, #f4f5f6); }
-		.crm-ac-primary {
-			font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-		}
-		.crm-ac-sub {
-			font-size: 10.5px; color: var(--crm-muted, #8d96a0);
-			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-		}
+		.crm-ac-item:hover { background: var(--crm-bg-sec, #f4f5f6); }
+		.crm-ac-primary    { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.crm-ac-sub        { font-size: 11px; font-weight: 400; color: var(--crm-muted, #8d96a0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-		/* Add-row toolbar */
-		.crm-grid-toolbar  { display: flex; align-items: center; margin-bottom: 8px; margin-left: 2px; }
-		.crm-add-row-btn   { display: inline-flex; align-items: center; gap: 6px; }
-		.crm-add-icon      { font-size: 14px; line-height: 1; font-weight: 600; }
+		/* Toolbar */
+		.crm-grid-toolbar { display: flex; align-items: center; padding: 9px 12px; }
+		.crm-add-row-btn  { display: inline-flex; align-items: center; gap: 6px; }
+		.crm-add-icon     { font-size: 14px; line-height: 1; font-weight: 500; }
 
 		.crm-grid-empty {
 			padding: 40px 20px; text-align: center; color: var(--crm-muted);
-			position: sticky; left: 0; width: 100%;
+			position: sticky; left: 0; width: 100%; font-size: 12px;
 		}
 
-		/* ── Small screen compact mode (≤ 1280px, typical 13" MacBook) ── */
+		/* ── Small screen compact mode (≤ 1280px) ── */
 		@media (max-width: 1280px) {
-			.crm-grid-shell    { font-size: 10.5px; }
-			.crm-grid-cell     { padding: 1px 4px; min-height: 26px; }
-			.crm-grid-headcell { padding: 5px 4px; font-size: 9px; letter-spacing: 0.02em; }
+			.crm-grid-shell    { font-size: 11px; }
+			.crm-grid-cell     { padding: 4px 6px; min-height: 28px; }
+			.crm-grid-headcell { padding: 5px 6px; font-size: 10px; }
 			.crm-cell-input,
 			.crm-cell-display,
-			.crm-cell-date     { font-size: 10.5px; padding: 2px 4px; }
-			.crm-avatar        { width: 24px; height: 24px; font-size: 11px; }
-			.crm-cell-select   { font-size: 10.5px; padding: 2px 14px 2px 4px; }
-			.crm-grid-rownum   { font-size: 10px; }
+			.crm-cell-area,
+			.crm-cell-date     { font-size: 11px; }
+			.crm-avatar        { width: 20px; height: 20px; font-size: 9px; }
+			.crm-cell-select   { font-size: 11px; }
 			.crm-icon-btn      { width: 22px; height: 22px; }
-			.crm-stack-main    { font-size: 11px; }
-			.crm-stack-sub     { font-size: 9.5px; }
 		}
 	`;
 	document.head.appendChild(style);
