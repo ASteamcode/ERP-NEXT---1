@@ -476,13 +476,27 @@ function _bind_select_change($grid, listview, rows) {
 	});
 }
 
-// ── Photo Click → Upload Dialog ───────────────────────────────────────────────
+// ── Photo Click → Upload Dialog (single) / Form Nav (double) ─────────────────
 function _bind_photo_click($grid, listview, rows) {
-	// Bind on the full cell so the whole column area is clickable, not just the 22px avatar
+	let _photoClickTimer = null;
+
 	$grid.on("click.cg", ".cg-cell[data-field='image']:not(.cg-header-cell)", function () {
+		const $cell = $(this);
+		clearTimeout(_photoClickTimer);
+		_photoClickTimer = setTimeout(() => {
+			const name = $cell.attr("data-name");
+			const doc  = rows.find(r => r.name === name);
+			_open_photo_dialog(name, doc, listview, rows);
+		}, 220);
+	});
+
+	// Double-click on photo cell → navigate to form (cancels the single-click dialog)
+	$grid.on("dblclick.cg", ".cg-cell[data-field='image']:not(.cg-header-cell)", function (e) {
+		clearTimeout(_photoClickTimer);
+		e.preventDefault();
+		e.stopPropagation(); // prevent the generic dblclick handler from also firing
 		const name = $(this).attr("data-name");
-		const doc  = rows.find(r => r.name === name);
-		_open_photo_dialog(name, doc, listview, rows);
+		if (name) frappe.set_route("Form", CONTACT_DOCTYPE, name);
 	});
 }
 

@@ -78,6 +78,26 @@
     container.addEventListener("mouseleave", scheduleCollapse);
   }
 
+  // ─── Simplify "Add {DocType}" → "+ Add" ──────────────────────────────────
+
+  function simplifyAddButton() {
+    document.querySelectorAll(".page-head .btn-primary, .page-head .page-actions .btn").forEach(btn => {
+      const txt = btn.textContent.trim();
+      if (txt === "+ Add") return; // already done
+      if (/\b(Add|New)\s+[A-Z]/.test(txt)) {
+        btn.textContent = "+ Add";
+      }
+    });
+  }
+
+  // Watch for Frappe re-rendering the button after route changes
+  const _addBtnObserver = new MutationObserver(simplifyAddButton);
+  const _watchAddBtn = () => {
+    const actions = document.querySelector(".page-head .page-actions, .page-head .title-area");
+    if (actions) _addBtnObserver.observe(actions, { childList: true, subtree: true, characterData: true });
+    simplifyAddButton();
+  };
+
   // ─── Home button → Overview ───────────────────────────────────────────────
 
   function wireHomeButton() {
@@ -99,6 +119,7 @@
     const container = document.querySelector(CONTAINER_SEL);
     if (container) wireSidebar(container);
     wireHomeButton();
+    _watchAddBtn();
   }
 
   document.addEventListener("DOMContentLoaded", init);
@@ -109,6 +130,7 @@
     const observer = new MutationObserver(() => {
       const container = document.querySelector(CONTAINER_SEL);
       if (container && !container.dataset.hoverWired) wireSidebar(container);
+      simplifyAddButton();
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }

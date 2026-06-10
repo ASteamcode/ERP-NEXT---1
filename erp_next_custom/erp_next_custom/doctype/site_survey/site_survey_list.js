@@ -27,7 +27,7 @@ const SS_ATTACH_TABLE_FIELD  = "attachments";
 const SS_MEASURE_DOCTYPE     = "Site Survey Measurement";
 const SS_MEASURE_TABLE_FIELD = "measurements";
 const SS_COL_WIDTH_KEY       = "ss_col_widths";
-const SS_STYLE_VERSION       = "v4";
+const SS_STYLE_VERSION       = "v5";
 
 const SS_FIELDS = [
 	...SS_COLUMNS.filter(c => !["attachments","drawing","measurements"].includes(c.field)).map(c => c.field),
@@ -1147,6 +1147,9 @@ function ss_inject_styles() {
 		[data-doctype="Site Survey"] .frappe-list .result {
 			overflow:visible !important; height:auto !important; max-height:none !important;
 		}
+		[data-doctype="Site Survey"] .frappe-list .result > *,
+		[data-doctype="Site Survey"] .list-header-subject,
+		[data-doctype="Site Survey"] .checkbox { display:none !important; }
 
 		.ss-grid-host {
 			display:block; padding:8px 0 12px;
