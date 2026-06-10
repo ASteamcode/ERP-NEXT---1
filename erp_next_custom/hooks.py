@@ -262,5 +262,17 @@ fixtures = [
         "filters": [
             ["module", "=", "CRM"]
         ]
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Item"]]
+        ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "in", ["Item"]]
+        ]
     }
 ]
