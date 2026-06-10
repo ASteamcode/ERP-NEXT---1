@@ -23,7 +23,9 @@
   "updates",
   "attachments",
   "has_drawing",
-  "drawing"
+  "drawing",
+  "measurements",
+  "has_measurements"
  ],
  "fields": [
   {
@@ -112,6 +114,20 @@
    "fieldtype": "Table",
    "label": "Files",
    "options": "Site Survey Attachment"
+  },
+  {
+   "fieldname": "measurements",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Measurements",
+   "options": "Site Survey Measurement"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_measurements",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Has Measurements"
   },
   {
    "default": "0",

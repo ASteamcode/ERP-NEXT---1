@@ -18,19 +18,23 @@ const SS_COLUMNS = [
 	{ field: "updates",         label: "Updates",      type: "area",    width: 260 },
 	{ field: "attachments",     label: "Files",        type: "attach",  width: 52  },
 	{ field: "drawing",         label: "Drawing",      type: "drawing", width: 52  },
+	{ field: "measurements",    label: "MTO",          type: "measure", width: 52  },
 ];
 
 const SS_DOCTYPE             = "Site Survey";
 const SS_ATTACH_DOCTYPE      = "Site Survey Attachment";
 const SS_ATTACH_TABLE_FIELD  = "attachments";
+const SS_MEASURE_DOCTYPE     = "Site Survey Measurement";
+const SS_MEASURE_TABLE_FIELD = "measurements";
 const SS_COL_WIDTH_KEY       = "ss_col_widths";
-const SS_STYLE_VERSION       = "v3";
+const SS_STYLE_VERSION       = "v4";
 
 const SS_FIELDS = [
-	...SS_COLUMNS.filter(c => !["attachments","drawing"].includes(c.field)).map(c => c.field),
+	...SS_COLUMNS.filter(c => !["attachments","drawing","measurements"].includes(c.field)).map(c => c.field),
 	"name",
 	"attachments",
 	"has_drawing",
+	"has_measurements",
 ];
 
 // ─── Column-width persistence ─────────────────────────────────────────────────
@@ -166,6 +170,7 @@ function ss_render_cell(col, doc) {
 		case "number":  return _ss_render_number(col, name, raw);
 		case "link":    return _ss_render_link(col, name, raw);
 		case "drawing": return _ss_render_drawing(name, doc);
+		case "measure": return _ss_render_measure(name, doc);
 		default:        return _ss_render_text(col, name, raw);
 	}
 }
@@ -505,6 +510,7 @@ function ss_bind_events(listview, shell, $host) {
 	_ss_bind_link_autocomplete($shell, listview);
 	_ss_bind_add_row($host, listview);
 	_ss_bind_attachments($shell, listview);
+	_ss_bind_measurements($shell, listview);
 	_ss_bind_drawings($shell, listview);
 	_ss_bind_maps_toggle($shell);
 	_ss_bind_delete_row($shell, listview);
@@ -695,6 +701,13 @@ function _ss_bind_add_row($host, listview) {
 	$host.off("click.ssadd").on("click.ssadd", ".ss-add-row-btn", () => ss_add_blank_row(listview));
 }
 
+function _ss_bind_measurements($shell, listview) {
+	$shell.on("click.ss", ".ss-measure-btn", function (e) {
+		e.stopPropagation();
+		ss_open_measure_dialog(listview, $(this).attr("data-name"));
+	});
+}
+
 function _ss_bind_drawings($shell, listview) {
 	$shell.on("click.ss", ".ss-draw-btn", function (e) {
 		e.stopPropagation();
@@ -803,21 +816,176 @@ function ss_fast_save(listview, docname, fieldname, val, $el) {
 	});
 }
 
+// ─── Measurements Take Off ────────────────────────────────────────────────────
+
+const _SS_SVG_RULER = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>`;
+
+const _SS_MEASURE_COUNTS = new Map();
+
+function _ss_measure_count(name, raw) {
+	if (Array.isArray(raw)) { _SS_MEASURE_COUNTS.set(name, raw.length); return raw.length; }
+	return _SS_MEASURE_COUNTS.get(name) ?? 0;
+}
+
+function _ss_render_measure(name, doc) {
+	const count = doc?.has_measurements ? (_SS_MEASURE_COUNTS.get(name) || "✓") : 0;
+	const badge = count ? `<span class="ss-attach-badge">${count}</span>` : "";
+	return `<button class="ss-icon-btn ss-measure-btn" data-name="${name}" title="${__("Measurements")}">${_SS_SVG_RULER}${badge}</button>`;
+}
+
+function ss_open_measure_dialog(listview, docname) {
+	frappe.call({
+		method: "frappe.client.get",
+		args: { doctype: SS_DOCTYPE, name: docname },
+		callback: ({ message }) => {
+			const rows = Array.isArray(message?.[SS_MEASURE_TABLE_FIELD])
+				? message[SS_MEASURE_TABLE_FIELD].map(r => ({ label: r.label || "", value: r.value ?? "", unit: r.unit || "m" }))
+				: [];
+			_ss_show_measure_dialog(listview, docname, rows);
+		},
+	});
+}
+
+const SS_UNITS = ["m", "m²", "m³", "cm", "mm", "ft", "in", "kg", "g", "L", "mL", "pcs", "units"];
+
+function _ss_show_measure_dialog(listview, docname, existing) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Measurements Take Off — {0}", [docname]),
+		size: "large",
+		fields: [{ fieldname: "mto_html", fieldtype: "HTML" }],
+		primary_action_label: __("Save"),
+		primary_action() {
+			const collected = [];
+			dialog.$wrapper.find(".ss-mto-row").each(function () {
+				const label = $(this).find(".ss-mto-label").val().trim();
+				const value = parseFloat($(this).find(".ss-mto-value").val());
+				const unit  = $(this).find(".ss-mto-unit").val();
+				if (label || !isNaN(value)) collected.push({ label, value: isNaN(value) ? null : value, unit });
+			});
+
+			frappe.call({
+				method: "frappe.client.get",
+				args: { doctype: SS_DOCTYPE, name: docname },
+				callback: ({ message: doc }) => {
+					if (!doc) return;
+					doc[SS_MEASURE_TABLE_FIELD] = collected.map(r => ({
+						doctype: SS_MEASURE_DOCTYPE, label: r.label, value: r.value, unit: r.unit,
+					}));
+					frappe.call({
+						method: "frappe.client.save",
+						args: { doc },
+						callback: ({ exc }) => {
+							if (exc) return;
+							frappe.call({
+								method: "frappe.client.set_value",
+								args: { doctype: SS_DOCTYPE, name: docname, fieldname: "has_measurements", value: collected.length ? 1 : 0 },
+								callback: () => {
+									frappe.show_alert({ message: __("Measurements saved"), indicator: "green" }, 1.0);
+									_SS_MEASURE_COUNTS.set(docname, collected.length);
+									const row = (listview.data || []).find(d => d.name === docname);
+									if (row) row.has_measurements = collected.length ? 1 : 0;
+									ss_render_grid(listview);
+									dialog.hide();
+								},
+							});
+						},
+					});
+				},
+			});
+		},
+	});
+
+	dialog.show();
+	const $wrap = dialog.fields_dict.mto_html.$wrapper;
+	const unitOpts = SS_UNITS.map(u => `<option value="${u}">${u}</option>`).join("");
+
+	$wrap.html(`
+		<div class="ss-mto-dialog">
+			<div class="ss-mto-head">
+				<span class="ss-mto-col-label">${__("Description")}</span>
+				<span class="ss-mto-col-value">${__("Value")}</span>
+				<span class="ss-mto-col-unit">${__("Unit")}</span>
+				<span class="ss-mto-col-del"></span>
+			</div>
+			<div class="ss-mto-rows"></div>
+			<button class="btn btn-xs btn-default ss-mto-add">+ ${__("Add measurement")}</button>
+		</div>`);
+
+	const $rows   = $wrap.find(".ss-mto-rows");
+	const add_row = (label = "", value = "", unit = "m") => {
+		const selOpts = SS_UNITS.map(u => `<option value="${u}"${u === unit ? " selected" : ""}>${u}</option>`).join("");
+		const $row = $(`
+			<div class="ss-mto-row">
+				<input type="text"   class="form-control ss-mto-label" placeholder="${__("e.g. Living room width")}" value="${frappe.utils.escape_html(label)}">
+				<input type="number" class="form-control ss-mto-value" placeholder="0" value="${value}" step="any">
+				<select class="form-control ss-mto-unit">${selOpts}</select>
+				<button class="ss-mto-del" title="${__("Remove")}">×</button>
+			</div>`);
+		$row.find(".ss-mto-del").on("click", () => $row.remove());
+		$rows.append($row);
+	};
+
+	existing.forEach(r => add_row(r.label, r.value, r.unit));
+	if (!existing.length) add_row();
+	$wrap.find(".ss-mto-add").on("click", () => add_row());
+}
+
+// ─── File upload helper ───────────────────────────────────────────────────────
+
+function _ss_upload_file(file, docname, onSuccess, onProgress) {
+	const fd = new FormData();
+	fd.append("file", file, file.name);
+	fd.append("is_private", "0");
+	fd.append("folder", "Home/Attachments");
+	fd.append("doctype", SS_DOCTYPE);
+	fd.append("docname", docname);
+
+	const xhr = new XMLHttpRequest();
+	xhr.open("POST", "/api/method/upload_file");
+	xhr.setRequestHeader("X-Frappe-CSRF-Token", frappe.csrf_token);
+
+	xhr.upload.onprogress = (e) => {
+		if (e.lengthComputable) onProgress && onProgress(Math.round(e.loaded / e.total * 100));
+	};
+	xhr.onload = () => {
+		try {
+			const data = JSON.parse(xhr.responseText);
+			if (data.message?.file_url) onSuccess(data.message);
+			else frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2);
+		} catch {
+			frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2);
+		}
+	};
+	xhr.onerror = () => frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2);
+	xhr.send(fd);
+}
+
 // ─── Attachments dialog ───────────────────────────────────────────────────────
 
 function ss_open_attach_dialog(listview, docname) {
+	// Live items array — shared between render, upload callbacks, and save
+	let items = [];
+
+	const repaint = ($wrap) => _ss_render_attach_dialog($wrap, items, docname);
+
 	const dialog = new frappe.ui.Dialog({
 		title: __("Files — {0}", [docname]),
 		size: "large",
 		fields: [{ fieldname: "attach_html", fieldtype: "HTML" }],
 		primary_action_label: __("Save"),
 		primary_action() {
-			const collected = [];
-			dialog.$wrapper.find(".ss-dlg-row").each(function () {
+			// Collect manual-entry rows that may have been edited
+			const $wrap = dialog.fields_dict.attach_html.$wrapper;
+			$wrap.find(".ss-dlg-row").each(function () {
+				const idx   = parseInt($(this).attr("data-idx"), 10);
 				const label = $(this).find(".ss-dlg-label").val().trim();
 				const url   = $(this).find(".ss-dlg-url").val().trim();
-				if (label || url) collected.push({ label, url });
+				if (!isNaN(idx) && items[idx] !== undefined) {
+					items[idx] = { label, url };
+				}
 			});
+			const collected = items.filter(r => r.url);
+
 			frappe.call({
 				method: "frappe.client.get",
 				args: { doctype: SS_DOCTYPE, name: docname },
@@ -852,66 +1020,91 @@ function ss_open_attach_dialog(listview, docname) {
 		callback: ({ exc, message }) => {
 			const $wrap = dialog.fields_dict.attach_html.$wrapper;
 			if (exc || !message) { $wrap.html(`<p style="color:#c0392b">${__("Could not load files.")}</p>`); return; }
-			const rows = Array.isArray(message[SS_ATTACH_TABLE_FIELD])
+			items = Array.isArray(message[SS_ATTACH_TABLE_FIELD])
 				? message[SS_ATTACH_TABLE_FIELD].map(r => ({ label: r.label || "", url: r.url || "" }))
 				: [];
-			_SS_ATTACH_COUNTS.set(docname, rows.length);
-			_ss_render_attach_dialog($wrap, rows);
+			_SS_ATTACH_COUNTS.set(docname, items.length);
+
+			_ss_render_attach_dialog($wrap, items, docname);
+
+			// Wire upload button after render
+			$wrap.on("click", ".ss-dlg-upload-btn", () => $wrap.find(".ss-dlg-file-input")[0].click());
+			$wrap.on("change", ".ss-dlg-file-input", function () {
+				Array.from(this.files).forEach(file => {
+					const tempIdx = items.length;
+					items.push({ label: file.name, url: "", _uploading: true });
+					repaint($wrap);
+
+					_ss_upload_file(
+						file,
+						docname,
+						(result) => {
+							items[tempIdx] = { label: result.file_name || file.name, url: result.file_url };
+							repaint($wrap);
+						},
+						(pct) => {
+							$wrap.find(`.ss-dlg-row[data-idx="${tempIdx}"] .ss-dlg-progress`).css("width", `${pct}%`);
+						},
+					);
+				});
+				this.value = ""; // reset so same file can be re-selected
+			});
 		},
 	});
 }
 
-function _ss_render_attach_dialog($wrap, rows) {
+function _ss_render_attach_dialog($wrap, items, docname) {
+	const savedRows = items.filter(r => r.url && !r._uploading);
+	const previewHtml = savedRows.length
+		? `<div class="ss-att-preview">
+			<div class="ss-att-preview-lbl">${__("Preview")}</div>
+			<div class="ss-att-list">${savedRows.map(_ss_preview_item).join("")}</div>
+		   </div><hr class="ss-att-divider">`
+		: "";
+
 	$wrap.html(`
-		<style>
-			.ss-dlg-head,.ss-dlg-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
-			.ss-dlg-head{font-size:11px;text-transform:uppercase;color:#8d96a0;letter-spacing:.04em;margin-bottom:8px;}
-			.ss-dlg-col-label,.ss-dlg-label{flex:0 0 160px;}
-			.ss-dlg-col-url,.ss-dlg-url{flex:1 1 auto;}
-			.ss-dlg-col-act,.ss-dlg-del{flex:0 0 32px;text-align:center;}
-			.ss-dlg-row input{width:100%;}
-			.ss-dlg-del{cursor:pointer;color:#c0392b;background:none;border:none;font-size:16px;}
-			.ss-dlg-add{margin-top:4px;}
-			.ss-att-preview{margin-bottom:12px;}
-			.ss-att-preview-lbl{font-size:11px;text-transform:uppercase;color:#8d96a0;letter-spacing:.04em;margin-bottom:8px;}
-			.ss-att-list{display:flex;flex-wrap:wrap;gap:10px;}
-			.ss-att-thumb-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:inherit;max-width:90px;}
-			.ss-att-thumb{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e2e6ea;}
-			.ss-att-thumb:hover{opacity:.85;}
-			.ss-att-thumb-lbl{font-size:10.5px;color:#8d96a0;text-align:center;width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-			.ss-att-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;border:1px solid #e2e6ea;background:#f7f9fa;text-decoration:none;color:#1f272e;font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-			.ss-att-chip:hover{background:#eef2f5;border-color:#c8d0d8;}
-			.ss-att-divider{border:none;border-top:1px solid #e2e6ea;margin:12px 0;}
-		</style>
 		<div class="ss-attach-dlg">
-			${rows.filter(r => r.url).length ? `
-				<div class="ss-att-preview">
-					<div class="ss-att-preview-lbl">${__("Preview")}</div>
-					<div class="ss-att-list">${rows.filter(r => r.url).map(_ss_preview_item).join("")}</div>
-				</div><hr class="ss-att-divider">` : ""}
+			${previewHtml}
+			<div class="ss-dlg-upload-area">
+				<button class="ss-dlg-upload-btn">
+					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+					${__("Upload files")}
+				</button>
+				<span class="ss-dlg-upload-or">${__("or paste a URL in the table below")}</span>
+				<input type="file" class="ss-dlg-file-input" multiple style="display:none">
+			</div>
 			<div class="ss-dlg-head">
 				<div class="ss-dlg-col-label">${__("Label")}</div>
-				<div class="ss-dlg-col-url">${__("Link")}</div>
+				<div class="ss-dlg-col-url">${__("URL / Path")}</div>
 				<div class="ss-dlg-col-act"></div>
 			</div>
-			<div class="ss-dlg-rows"></div>
-			<button class="btn btn-xs btn-default ss-dlg-add">+ ${__("Add file")}</button>
+			<div class="ss-dlg-rows">
+				${items.map((r, i) => `
+					<div class="ss-dlg-row" data-idx="${i}">
+						<input type="text" class="form-control ss-dlg-label" placeholder="${__("e.g. Site Photo")}" value="${frappe.utils.escape_html(r.label)}"${r._uploading ? " disabled" : ""}>
+						<div class="ss-dlg-url-wrap">
+							<input type="text" class="form-control ss-dlg-url" placeholder="https://..." value="${frappe.utils.escape_html(r.url)}"${r._uploading ? " disabled" : ""}>
+							${r._uploading ? `<div class="ss-dlg-progress-bar"><div class="ss-dlg-progress" style="width:0%"></div></div>` : ""}
+						</div>
+						<button class="ss-dlg-del" title="${__("Remove")}"${r._uploading ? " disabled" : ""}>×</button>
+					</div>`).join("")}
+			</div>
+			<button class="btn btn-xs btn-default ss-dlg-add-link">+ ${__("Add URL manually")}</button>
 		</div>`);
 
-	const $rows   = $wrap.find(".ss-dlg-rows");
-	const add_row = (label = "", url = "") => {
-		const $row = $(`
-			<div class="ss-dlg-row">
-				<input type="text" class="form-control ss-dlg-label" placeholder="${__("e.g. Site Photo")}" value="${frappe.utils.escape_html(label)}">
-				<input type="text" class="form-control ss-dlg-url"   placeholder="https://..."               value="${frappe.utils.escape_html(url)}">
-				<button class="ss-dlg-del" title="${__("Remove")}">×</button>
-			</div>`);
-		$row.find(".ss-dlg-del").on("click", () => $row.remove());
-		$rows.append($row);
-	};
-	rows.forEach(r => add_row(r.label, r.url));
-	if (!rows.length) add_row();
-	$wrap.find(".ss-dlg-add").on("click", () => add_row());
+	// Delete existing rows
+	$wrap.on("click", ".ss-dlg-del", function () {
+		const idx = parseInt($(this).closest(".ss-dlg-row").attr("data-idx"), 10);
+		items.splice(idx, 1);
+		_ss_render_attach_dialog($wrap, items, docname);
+	});
+
+	// Add manual URL row
+	$wrap.on("click", ".ss-dlg-add-link", () => {
+		items.push({ label: "", url: "" });
+		_ss_render_attach_dialog($wrap, items, docname);
+		$wrap.find(".ss-dlg-row").last().find(".ss-dlg-label").focus();
+	});
 }
 
 function _ss_preview_item(r) {
@@ -1131,6 +1324,62 @@ function ss_inject_styles() {
 			padding:40px 20px; text-align:center; color:var(--ss-muted);
 			position:sticky; left:0; width:100%; font-size:12px;
 		}
+
+		/* ── File upload dialog ── */
+		.ss-dlg-upload-area {
+			display:flex; align-items:center; gap:12px;
+			padding:12px; margin-bottom:12px;
+			background:var(--bg-light-gray,#f7f9fa);
+			border:0.5px dashed var(--border-color,#e2e6ea);
+			border-radius:8px;
+		}
+		.ss-dlg-upload-btn {
+			display:inline-flex; align-items:center; gap:6px;
+			padding:6px 14px; border-radius:8px;
+			border:0.5px solid #378ADD; background:#fff;
+			color:#378ADD; font-size:12px; font-weight:500;
+			cursor:pointer; white-space:nowrap;
+			transition:background .12s;
+		}
+		.ss-dlg-upload-btn:hover { background:#f0f7ff; }
+		.ss-dlg-upload-or { font-size:11px; color:var(--text-muted,#8d96a0); }
+		.ss-dlg-url-wrap  { flex:1; display:flex; flex-direction:column; gap:3px; }
+		.ss-dlg-progress-bar { height:3px; background:#e2e6ea; border-radius:2px; overflow:hidden; }
+		.ss-dlg-progress     { height:100%; background:#378ADD; border-radius:2px; transition:width .15s; }
+		.ss-dlg-head { display:flex; gap:8px; align-items:center; margin-bottom:4px; font-size:11px; text-transform:uppercase; color:#8d96a0; letter-spacing:.04em; }
+		.ss-dlg-col-label { flex:0 0 160px; }
+		.ss-dlg-col-url   { flex:1 1 auto; }
+		.ss-dlg-col-act   { flex:0 0 32px; }
+		.ss-dlg-row { display:flex; gap:8px; align-items:flex-start; margin-bottom:6px; }
+		.ss-dlg-row .ss-dlg-label { flex:0 0 160px; }
+		.ss-dlg-del { flex:0 0 32px; text-align:center; cursor:pointer; color:#c0392b; background:none; border:none; font-size:16px; padding-top:4px; }
+		.ss-dlg-del:disabled { opacity:.35; cursor:default; }
+		.ss-dlg-add-link { margin-top:4px; }
+		.ss-att-preview { margin-bottom:12px; }
+		.ss-att-preview-lbl { font-size:11px; text-transform:uppercase; color:#8d96a0; letter-spacing:.04em; margin-bottom:8px; }
+		.ss-att-list { display:flex; flex-wrap:wrap; gap:10px; }
+		.ss-att-thumb-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:inherit; max-width:90px; }
+		.ss-att-thumb { width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e6ea; }
+		.ss-att-thumb:hover { opacity:.85; }
+		.ss-att-thumb-lbl { font-size:10.5px; color:#8d96a0; text-align:center; width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+		.ss-att-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:6px; border:1px solid #e2e6ea; background:#f7f9fa; text-decoration:none; color:#1f272e; font-size:12px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+		.ss-att-chip:hover { background:#eef2f5; border-color:#c8d0d8; }
+		.ss-att-divider { border:none; border-top:1px solid #e2e6ea; margin:12px 0; }
+
+		/* ── Measurements dialog ── */
+		.ss-mto-dialog { display:flex; flex-direction:column; gap:0; }
+		.ss-mto-head {
+			display:grid; grid-template-columns:1fr 120px 90px 32px;
+			gap:8px; padding:0 0 6px;
+			font-size:11px; text-transform:uppercase; color:#8d96a0; letter-spacing:.04em;
+		}
+		.ss-mto-row {
+			display:grid; grid-template-columns:1fr 120px 90px 32px;
+			gap:8px; align-items:center; margin-bottom:6px;
+		}
+		.ss-mto-value { text-align:right; }
+		.ss-mto-del   { width:32px; text-align:center; cursor:pointer; color:#c0392b; background:none; border:none; font-size:16px; }
+		.ss-mto-add   { margin-top:4px; align-self:flex-start; }
 
 		/* Drawing button — accent when drawing exists */
 		.ss-draw-btn--has { color:#378ADD; }
