@@ -1,14 +1,14 @@
 // contacts_list.js
 // Custom spreadsheet-style list view for the "Contact" doctype.
 // Mirrors crm_log_list.js architecture: CSS Grid, inline editing, column resize,
-// avatar/photo cell, résumé attachment modal, typeahead for link fields.
+// avatar/photo cell, attachment modal, typeahead for link fields.
 
 "use strict";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CONTACT_DOCTYPE         = "Contact";
-const CONTACT_RESUME_TABLE    = "resumes";          // fieldname on Contact
-const CONTACT_RESUME_DOCTYPE  = "Contact Resume";
+const CONTACT_DOCTYPE              = "Contact";
+const CONTACT_RESUME_TABLE         = "attachments";     // fieldname on Contact
+const CONTACT_RESUME_DOCTYPE       = "Contact Attachment";
 
 const CONTACT_TYPE_OPTIONS = [
 	"",
@@ -23,20 +23,20 @@ const CONTACT_TYPE_OPTIONS = [
 // Column definitions — order = display order in grid
 // type: "text" | "email" | "url" | "tel" | "select" | "link" | "photo" | "resume"
 const CONTACT_COLS = [
-	{ field: "image",        label: "Photo",      type: "photo",  width: 64,  fixed: true },
-	{ field: "first_name",   label: "Name",       type: "text",   width: 120 },
-	{ field: "last_name",    label: "Surname",    type: "text",   width: 120 },
-	{ field: "contact_type", label: "Type",       type: "select", width: 110,
+	{ field: "image",        label: "Photo",       type: "photo",  width: 64,  fixed: true },
+	{ field: "first_name",   label: "Name",        type: "text",   width: 120 },
+	{ field: "last_name",    label: "Surname",     type: "text",   width: 120 },
+	{ field: "contact_type", label: "Type",        type: "select", width: 110,
 	  options: CONTACT_TYPE_OPTIONS },
-	{ field: "profession",   label: "Profession", type: "text",   width: 140 },
-	{ field: "company_name", label: "Company",    type: "link",   width: 150,
+	{ field: "profession",   label: "Profession",  type: "text",   width: 140 },
+	{ field: "company_name", label: "Company",     type: "link",   width: 150,
 	  link_doctype: "Company" },
-	{ field: "position",     label: "Position",   type: "text",   width: 140 },
-	{ field: "email_id",     label: "Email",      type: "email",  width: 190 },
-	{ field: "website",      label: "Website",    type: "url",    width: 170 },
-	{ field: "instagram",    label: "Instagram",  type: "text",   width: 150 },
-	{ field: "linkedin",     label: "LinkedIn",   type: "url",    width: 170 },
-	{ field: "resume",       label: "Résumé",     type: "resume", width: 80,  fixed: true },
+	{ field: "position",     label: "Position",    type: "text",   width: 140 },
+	{ field: "email_id",     label: "Email",       type: "email",  width: 190 },
+	{ field: "website",      label: "Website",     type: "url",    width: 170 },
+	{ field: "instagram",    label: "Instagram",   type: "text",   width: 150 },
+	{ field: "linkedin",     label: "LinkedIn",    type: "url",    width: 170 },
+	{ field: "resume",       label: "Attachments", type: "resume", width: 80,  fixed: true },
 ];
 
 // Per-field column widths (persisted in memory, reset on reload)
@@ -66,7 +66,7 @@ function _contacts_clear_editing_row($grid) {
 	_CONTACT_EDITING_ROW = null;
 }
 
-// Résumé attachment count cache  { docname → count }
+// Attachment count cache  { docname → count }
 const _CONTACT_RESUME_COUNTS = {};
 
 // ─── Frappe List View Entry Point ─────────────────────────────────────────────
@@ -317,7 +317,7 @@ function _render_resume_btn(name) {
 	const count = _CONTACT_RESUME_COUNTS[name] || 0;
 	const badge = count ? `<span class="cg-resume-badge">${count}</span>` : "";
 	return (
-		`<button class="cg-resume-btn" data-name="${name}" title="${count} résumé(s)">` +
+		`<button class="cg-resume-btn" data-name="${name}" title="${count} attachment(s)">` +
 		`${SVG.paperclip}${badge}</button>`
 	);
 }
@@ -589,11 +589,11 @@ function _render_resume_dialog(docname, initial, listview) {
 	let items = JSON.parse(JSON.stringify(initial));
 
 	const d = new frappe.ui.Dialog({
-		title: __("Résumés & Files"),
+		title: __("Attachments"),
 		fields: [
 			{ fieldtype: "HTML",   fieldname: "preview",   options: "" },
 			{ fieldtype: "Section Break" },
-			{ fieldtype: "Data",   fieldname: "add_label", label: __("Label"),      placeholder: __("e.g. CV 2025") },
+			{ fieldtype: "Data",   fieldname: "add_label", label: __("Label"),      placeholder: __("e.g. Document 2025") },
 			{ fieldtype: "Attach", fieldname: "add_url",   label: __("File / URL") },
 			{ fieldtype: "Button", fieldname: "add_btn",   label: __("Add"),        btn_size: "xs" },
 		],
@@ -650,7 +650,7 @@ function _render_resume_dialog(docname, initial, listview) {
 }
 
 function _resume_preview_html(items) {
-	if (!items.length) return `<div class="cg-no-resume">${__("No files attached yet.")}</div>`;
+	if (!items.length) return `<div class="cg-no-resume">${__("No attachments yet.")}</div>`;
 	const rows = items.map((r, i) => {
 		const isImage = /\.(jpe?g|png|gif|webp|svg|avif)(\?|$)/i.test(r.url) ||
 			/\/(thumbnail|files)\//i.test(r.url);
@@ -693,7 +693,7 @@ function _save_resumes(docname, items, listview, dialog) {
 				args: { doc },
 				callback({ exc: saveExc }) {
 					if (saveExc) return;
-					frappe.show_alert({ message: __("Résumés saved"), indicator: "green" }, 1.5);
+					frappe.show_alert({ message: __("Attachments saved"), indicator: "green" }, 1.5);
 					_CONTACT_RESUME_COUNTS[docname] = items.length;
 					const $btn = $(`.cg-resume-btn[data-name="${docname}"]`);
 					const badge = items.length ? `<span class="cg-resume-badge">${items.length}</span>` : "";
@@ -908,7 +908,7 @@ function _contacts_css() {
 }
 .cg-cell[data-field="image"]:hover .cg-photo-overlay { opacity: 1; }
 
-/* ── Résumé Button ────────────────────────────────────────────────────────── */
+/* ── Attachment Button ────────────────────────────────────────────────────── */
 .cg-resume-btn {
 	position: relative;
 	background: none;
@@ -945,7 +945,7 @@ function _contacts_css() {
 	border-right: 0.5px solid var(--border-color, #e2e8f0);
 }
 
-/* ── Attachment / Résumé dialog items ─────────────────────────────────────── */
+/* ── Attachment dialog items ──────────────────────────────────────────────── */
 .cg-attach-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
 .cg-attach-row {
 	display: flex; align-items: center; gap: 10px;
