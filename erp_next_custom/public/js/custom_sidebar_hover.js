@@ -90,11 +90,11 @@
     });
   }
 
-  // Watch for Frappe re-rendering the button after route changes
+  // Watch document.body so we catch the button no matter when Frappe renders it
   const _addBtnObserver = new MutationObserver(simplifyAddButton);
   const _watchAddBtn = () => {
-    const actions = document.querySelector(".page-head .page-actions, .page-head .title-area");
-    if (actions) _addBtnObserver.observe(actions, { childList: true, subtree: true, characterData: true });
+    _addBtnObserver.disconnect();
+    _addBtnObserver.observe(document.body, { childList: true, subtree: true });
     simplifyAddButton();
   };
 

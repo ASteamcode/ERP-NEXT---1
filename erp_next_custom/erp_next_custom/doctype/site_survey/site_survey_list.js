@@ -27,7 +27,7 @@ const SS_ATTACH_TABLE_FIELD  = "attachments";
 const SS_MEASURE_DOCTYPE     = "Site Survey Measurement";
 const SS_MEASURE_TABLE_FIELD = "measurements";
 const SS_COL_WIDTH_KEY       = "ss_col_widths";
-const SS_STYLE_VERSION       = "v5";
+const SS_STYLE_VERSION       = "v6";
 
 const SS_FIELDS = [
 	...SS_COLUMNS.filter(c => !["attachments","drawing","measurements"].includes(c.field)).map(c => c.field),
@@ -305,43 +305,59 @@ function _ss_render_drawing(name, doc) {
 
 // ─── Drawing dialog ───────────────────────────────────────────────────────────
 
+const SS_DRAW_GRID = 20; // px between snap/grid points
+
 function ss_open_drawing_dialog(listview, docname) {
-	// Fetch the heavy drawing data only on open, not during list load
 	frappe.db.get_value(SS_DOCTYPE, docname, "drawing", (r) => {
 		_ss_show_drawing_dialog(listview, docname, r?.drawing || "");
 	});
 }
 
+function _ss_parse_drawing(raw) {
+	if (!raw) return { shapes: [] };
+	try {
+		const parsed = JSON.parse(raw);
+		if (parsed?.version === 2 && Array.isArray(parsed.shapes)) return parsed;
+	} catch { /* fall through */ }
+	return { shapes: [], _legacy_jpeg: raw }; // old raster image
+}
+
 function _ss_show_drawing_dialog(listview, docname, existingData) {
+	const saved   = _ss_parse_drawing(existingData);
+	const shapes  = saved.shapes; // mutable array of shape objects
+
+	// ── active measure input tracking ──
+	let _measureInputEl  = null;
+	let _measureShapeIdx = null;
+
+	// ── tool / color state ──
+	let tool  = "line";   // "line" | "freehand" | "eraser" | "measure"
+	let color = "#1f272e";
+
+	// ── line-drawing intermediary state ──
+	let lineStart = null; // {x,y} when first click placed; null otherwise
+	let freeDrawing = false;
+	let freePoints  = [];
+
 	const dialog = new frappe.ui.Dialog({
 		title: __("Drawing — {0}", [docname]),
-		size: "large",
+		size: "extra-large",
 		fields: [{ fieldname: "draw_wrap", fieldtype: "HTML" }],
 		primary_action_label: __("Save"),
 		primary_action() {
-			// Flatten to JPEG for smaller storage
-			const flat = document.createElement("canvas");
-			flat.width  = canvas.width;
-			flat.height = canvas.height;
-			const fctx = flat.getContext("2d");
-			fctx.fillStyle = "#ffffff";
-			fctx.fillRect(0, 0, flat.width, flat.height);
-			fctx.drawImage(canvas, 0, 0);
-			const dataUrl = flat.toDataURL("image/jpeg", 0.85);
-
-			// Save both fields in one call via full-doc save
+			const payload = JSON.stringify({ version: 2, shapes });
 			frappe.call({
 				method: "frappe.client.set_value",
-				args: { doctype: SS_DOCTYPE, name: docname, fieldname: "drawing", value: dataUrl },
+				args: { doctype: SS_DOCTYPE, name: docname, fieldname: "drawing", value: payload },
 				callback: ({ exc }) => {
 					if (exc) return;
 					frappe.call({
 						method: "frappe.client.set_value",
-						args: { doctype: SS_DOCTYPE, name: docname, fieldname: "has_drawing", value: 1 },
+						args: { doctype: SS_DOCTYPE, name: docname, fieldname: "has_drawing", value: shapes.length ? 1 : 0 },
 						callback: () => {
 							frappe.show_alert({ message: __("Drawing saved"), indicator: "green" }, 1.0);
 							const row = (listview.data || []).find(d => d.name === docname);
-							if (row) row.has_drawing = 1;
+							if (row) row.has_drawing = shapes.length ? 1 : 0;
 							ss_render_grid(listview);
 							dialog.hide();
 						},
@@ -353,29 +369,37 @@ function _ss_show_drawing_dialog(listview, docname, existingData) {
 
 	dialog.show();
 
-	const $wrap = dialog.fields_dict.draw_wrap.$wrapper;
+	const $wrap  = dialog.fields_dict.draw_wrap.$wrapper;
+
+	// ── toolbar HTML ──
 	$wrap.html(`
 		<div class="ss-draw-dialog">
 			<div class="ss-draw-toolbar">
 				<div class="ss-draw-tools">
-					<button class="ss-draw-tool ss-draw-color-btn ss-draw-tool--active" data-tool="pen" data-color="#1f272e" title="Black">
-						<span class="ss-draw-swatch" style="background:#1f272e"></span>
+					<button class="ss-draw-tool ss-draw-tool--active" data-tool="line" title="${__("Draw lines (snaps to grid)")}">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/><circle cx="4" cy="20" r="2" fill="currentColor"/><circle cx="20" cy="4" r="2" fill="currentColor"/></svg>
 					</button>
-					<button class="ss-draw-tool ss-draw-color-btn" data-tool="pen" data-color="#378ADD" title="Blue">
-						<span class="ss-draw-swatch" style="background:#378ADD"></span>
+					<button class="ss-draw-tool" data-tool="freehand" title="${__("Freehand draw")}">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 Q7 10 10 14 Q13 18 16 10 Q19 2 21 8"/></svg>
+					</button>
+					<button class="ss-draw-tool" data-tool="eraser" title="${__("Eraser — click a line to delete it")}">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l11-11 6 6-4.5 4.5"/><path d="M6.5 17.5l4-4"/></svg>
+					</button>
+					<button class="ss-draw-tool" data-tool="measure" title="${__("Measure — click a line to label it")}">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17h18M3 7h18"/><path d="M12 7v10M7 9v2M17 9v2M7 13v2M17 13v2"/></svg>
 					</button>
 					<div class="ss-draw-sep"></div>
-					<button class="ss-draw-tool ss-draw-eraser-btn" data-tool="eraser" title="Eraser">
-						<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M20 20H7L3 16l11-11 6 6-4.5 4.5"/><path d="M6.5 17.5l4-4"/>
-						</svg>
-					</button>
+					<button class="ss-draw-tool ss-draw-color-btn" data-color="#1f272e" title="Black"><span class="ss-draw-swatch" style="background:#1f272e"></span></button>
+					<button class="ss-draw-tool ss-draw-color-btn" data-color="#e74c3c" title="Red"><span class="ss-draw-swatch" style="background:#e74c3c"></span></button>
+					<button class="ss-draw-tool ss-draw-color-btn" data-color="#378ADD" title="Blue"><span class="ss-draw-swatch" style="background:#378ADD"></span></button>
+					<button class="ss-draw-tool ss-draw-color-btn" data-color="#27ae60" title="Green"><span class="ss-draw-swatch" style="background:#27ae60"></span></button>
+					<button class="ss-draw-tool ss-draw-color-btn" data-color="#f39c12" title="Orange"><span class="ss-draw-swatch" style="background:#f39c12"></span></button>
+					<div class="ss-draw-sep"></div>
+					<button class="ss-draw-undo-btn" title="${__("Undo last shape")}">${__("Undo")}</button>
 				</div>
-				<button class="ss-draw-clear-btn" title="Clear canvas">
-					<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-					</svg>
-					Clear
+				<button class="ss-draw-clear-btn" title="${__("Clear canvas")}">
+					<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+					${__("Clear")}
 				</button>
 			</div>
 			<div class="ss-draw-canvas-wrap">
@@ -383,94 +407,280 @@ function _ss_show_drawing_dialog(listview, docname, existingData) {
 			</div>
 		</div>`);
 
-	// Size canvas to fit the dialog body
+	// ── canvas sizing — fix crosshair by matching CSS px to logical px ──
 	const canvas  = $wrap.find(".ss-draw-canvas")[0];
 	const wrapEl  = $wrap.find(".ss-draw-canvas-wrap")[0];
-	const W       = Math.max(wrapEl.offsetWidth || 660, 400);
-	const H       = Math.round(W * 0.56); // 16:9-ish
-	canvas.width  = W;
-	canvas.height = H;
+	const dpr     = window.devicePixelRatio || 1;
+	const cssW    = Math.max(wrapEl.offsetWidth || 800, 600);
+	const cssH    = Math.round(cssW * 0.52);
+
+	// Explicit CSS size — prevents the 100%-width stretch that causes pointer offset
+	canvas.style.width  = cssW + "px";
+	canvas.style.height = cssH + "px";
+	// Physical pixel size scaled for retina
+	canvas.width  = Math.round(cssW * dpr);
+	canvas.height = Math.round(cssH * dpr);
 
 	const ctx = canvas.getContext("2d");
+	ctx.scale(dpr, dpr); // all drawing in CSS-pixel coords from here on
 
-	// White background
-	ctx.fillStyle = "#ffffff";
-	ctx.fillRect(0, 0, W, H);
-
-	// Load existing drawing
-	if (existingData) {
+	// If old raster drawing exists, paint it as background (read-only)
+	if (saved._legacy_jpeg) {
 		const img = new Image();
-		img.onload = () => ctx.drawImage(img, 0, 0, W, H);
-		img.src    = existingData;
+		img.onload = () => { ctx.drawImage(img, 0, 0, cssW, cssH); render(); };
+		img.src = saved._legacy_jpeg;
 	}
 
-	// ── Drawing state ──
-	let drawing = false;
-	let tool    = "pen";
-	let color   = "#1f272e";
-	let lx = 0, ly = 0;
-
-	const PEN_SIZE    = 3;
-	const ERASER_SIZE = 28;
-
-	ctx.lineCap  = "round";
-	ctx.lineJoin = "round";
-
+	// ── coordinate helpers ──
 	const canvasPos = (e) => {
 		const rect = canvas.getBoundingClientRect();
 		const src  = e.touches ? e.touches[0] : e;
-		return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+		return {
+			x: (src.clientX - rect.left),
+			y: (src.clientY - rect.top),
+		};
 	};
 
-	const startDraw = (e) => {
+	const snap = (v) => Math.round(v / SS_DRAW_GRID) * SS_DRAW_GRID;
+	const snapPt = (pt) => ({ x: snap(pt.x), y: snap(pt.y) });
+
+	// ── hit-test helpers ──
+	const distSeg = (px, py, ax, ay, bx, by) => {
+		const dx = bx - ax, dy = by - ay;
+		const len2 = dx * dx + dy * dy;
+		if (!len2) return Math.hypot(px - ax, py - ay);
+		const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+		return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+	};
+
+	const hitShape = (x, y, s, tol = 10) => {
+		if (s.type === "line") return distSeg(x, y, s.x1, s.y1, s.x2, s.y2) < tol;
+		if (s.type === "freehand") {
+			for (let i = 1; i < s.points.length; i++) {
+				const [ax, ay] = s.points[i - 1], [bx, by] = s.points[i];
+				if (distSeg(x, y, ax, ay, bx, by) < tol) return true;
+			}
+		}
+		return false;
+	};
+
+	// ── rendering ──
+	const render = (ghost) => {
+		ctx.save();
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset to logical coords
+		ctx.clearRect(0, 0, cssW, cssH);
+
+		// white background
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, cssW, cssH);
+
+		// dot grid
+		ctx.fillStyle = "#d0d5dd";
+		for (let gx = 0; gx <= cssW; gx += SS_DRAW_GRID) {
+			for (let gy = 0; gy <= cssH; gy += SS_DRAW_GRID) {
+				ctx.beginPath();
+				ctx.arc(gx, gy, 1.3, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
+
+		// committed shapes
+		shapes.forEach((s, i) => drawShape(s, i === _measureShapeIdx));
+
+		// ghost preview while dragging / placing line second point
+		if (ghost) drawShape(ghost, false, true);
+
+		ctx.restore();
+	};
+
+	const drawShape = (s, highlighted, ghost) => {
+		ctx.save();
+		ctx.globalAlpha   = ghost ? 0.45 : 1;
+		ctx.strokeStyle   = highlighted ? "#f39c12" : s.color;
+		ctx.lineWidth     = highlighted ? 3 : 2;
+		ctx.lineCap       = "round";
+		ctx.lineJoin      = "round";
+
+		if (s.type === "line") {
+			ctx.beginPath();
+			ctx.moveTo(s.x1, s.y1);
+			ctx.lineTo(s.x2, s.y2);
+			ctx.stroke();
+
+			// endpoint dots
+			ctx.fillStyle = highlighted ? "#f39c12" : s.color;
+			[[s.x1, s.y1], [s.x2, s.y2]].forEach(([px, py]) => {
+				ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+			});
+
+			// measurement label
+			if (s.measurement) {
+				const mx = (s.x1 + s.x2) / 2;
+				const my = (s.y1 + s.y2) / 2 - 10;
+				ctx.font = "bold 11px sans-serif";
+				ctx.textAlign = "center";
+				const tw = ctx.measureText(s.measurement).width;
+				ctx.fillStyle = "rgba(255,255,255,0.88)";
+				ctx.fillRect(mx - tw / 2 - 4, my - 13, tw + 8, 17);
+				ctx.fillStyle = highlighted ? "#f39c12" : s.color;
+				ctx.fillText(s.measurement, mx, my);
+			}
+
+		} else if (s.type === "freehand") {
+			ctx.beginPath();
+			s.points.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+			ctx.stroke();
+		}
+
+		ctx.restore();
+	};
+
+	render();
+
+	// ── measure input overlay ──
+	const removeMeasureInput = () => {
+		if (_measureInputEl?.parentNode) _measureInputEl.parentNode.removeChild(_measureInputEl);
+		_measureInputEl = null;
+		_measureShapeIdx = null;
+	};
+
+	const showMeasureInput = (idx) => {
+		removeMeasureInput();
+		_measureShapeIdx = idx;
+		const s  = shapes[idx];
+		const mx = (s.x1 + s.x2) / 2;
+		const my = (s.y1 + s.y2) / 2;
+
+		const inp = document.createElement("input");
+		inp.type = "text";
+		inp.placeholder = "e.g. 2m";
+		inp.value = s.measurement || "";
+		inp.style.cssText = `
+			position:absolute;
+			left:${mx - 36}px; top:${my - 38}px;
+			width:72px; font-size:12px; font-weight:600;
+			border:2px solid #f39c12; border-radius:5px;
+			padding:2px 4px; text-align:center;
+			background:#fffbe6; color:#333;
+			box-shadow:0 2px 8px rgba(0,0,0,.22); z-index:20;
+		`;
+		wrapEl.style.position = "relative";
+		wrapEl.appendChild(inp);
+		_measureInputEl = inp;
+		inp.focus(); inp.select();
+
+		const commit = () => {
+			if (_measureShapeIdx !== null) shapes[_measureShapeIdx].measurement = inp.value.trim();
+			removeMeasureInput();
+			render();
+		};
+		inp.addEventListener("keydown", (e) => {
+			if (e.key === "Enter")  { e.stopPropagation(); commit(); }
+			if (e.key === "Escape") { e.stopPropagation(); removeMeasureInput(); render(); }
+		});
+		inp.addEventListener("blur", commit);
+		render();
+	};
+
+	// ── pointer events ──
+	canvas.addEventListener("mousedown", onDown);
+	canvas.addEventListener("mousemove", onMove);
+	canvas.addEventListener("mouseup",   onUp);
+	canvas.addEventListener("mouseleave", () => { freeDrawing = false; render(); });
+	canvas.addEventListener("touchstart", onDown, { passive: false });
+	canvas.addEventListener("touchmove",  onMove, { passive: false });
+	canvas.addEventListener("touchend",   onUp,   { passive: false });
+
+	function onDown(e) {
 		e.preventDefault();
-		drawing     = true;
-		const { x, y } = canvasPos(e);
-		lx = x; ly = y;
-		ctx.beginPath();
-		ctx.arc(x, y, (tool === "eraser" ? ERASER_SIZE : PEN_SIZE) / 2, 0, Math.PI * 2);
-		ctx.fillStyle = tool === "eraser" ? "#ffffff" : color;
-		ctx.fill();
-	};
+		const raw = canvasPos(e);
 
-	const draw = (e) => {
+		if (tool === "measure") {
+			for (let i = shapes.length - 1; i >= 0; i--) {
+				if (shapes[i].type === "line" && hitShape(raw.x, raw.y, shapes[i])) {
+					showMeasureInput(i); return;
+				}
+			}
+			return;
+		}
+
+		if (tool === "eraser") {
+			for (let i = shapes.length - 1; i >= 0; i--) {
+				if (hitShape(raw.x, raw.y, shapes[i])) { shapes.splice(i, 1); render(); return; }
+			}
+			return;
+		}
+
+		if (tool === "line") {
+			const pt = snapPt(raw);
+			if (!lineStart) {
+				lineStart = pt; // first click — anchor placed
+			} else {
+				// second click — commit line
+				if (Math.hypot(pt.x - lineStart.x, pt.y - lineStart.y) > 2) {
+					shapes.push({ type: "line", x1: lineStart.x, y1: lineStart.y, x2: pt.x, y2: pt.y, color, measurement: "" });
+				}
+				lineStart = null;
+				render();
+			}
+			return;
+		}
+
+		if (tool === "freehand") {
+			freeDrawing = true;
+			freePoints  = [[raw.x, raw.y]];
+		}
+	}
+
+	function onMove(e) {
 		e.preventDefault();
-		if (!drawing) return;
-		const { x, y } = canvasPos(e);
-		ctx.beginPath();
-		ctx.moveTo(lx, ly);
-		ctx.lineTo(x, y);
-		ctx.strokeStyle = tool === "eraser" ? "#ffffff" : color;
-		ctx.lineWidth   = tool === "eraser" ? ERASER_SIZE : PEN_SIZE;
-		ctx.stroke();
-		lx = x; ly = y;
-	};
+		const raw = canvasPos(e);
 
-	const stopDraw = () => { drawing = false; };
+		if (tool === "line" && lineStart) {
+			const pt = snapPt(raw);
+			render({ type: "line", x1: lineStart.x, y1: lineStart.y, x2: pt.x, y2: pt.y, color, measurement: "" });
+			return;
+		}
 
-	canvas.addEventListener("mousedown",  startDraw);
-	canvas.addEventListener("mousemove",  draw);
-	canvas.addEventListener("mouseup",    stopDraw);
-	canvas.addEventListener("mouseleave", stopDraw);
-	canvas.addEventListener("touchstart", startDraw, { passive: false });
-	canvas.addEventListener("touchmove",  draw,      { passive: false });
-	canvas.addEventListener("touchend",   stopDraw);
+		if (tool === "freehand" && freeDrawing) {
+			freePoints.push([raw.x, raw.y]);
+			render({ type: "freehand", points: freePoints, color });
+		}
+	}
 
-	// ── Toolbar interactions ──
+	function onUp(e) {
+		if (tool === "freehand" && freeDrawing) {
+			freeDrawing = false;
+			if (freePoints.length > 1) shapes.push({ type: "freehand", points: [...freePoints], color });
+			freePoints = [];
+			render();
+		}
+	}
+
+	// ── toolbar interactions ──
 	const $toolbar = $wrap.find(".ss-draw-toolbar");
 
-	$toolbar.on("click", ".ss-draw-tool", function () {
-		const $btn = $(this);
-		tool = $btn.attr("data-tool");
-		if (tool === "pen") color = $btn.attr("data-color");
-		$toolbar.find(".ss-draw-tool").removeClass("ss-draw-tool--active");
-		$btn.addClass("ss-draw-tool--active");
-		canvas.style.cursor = tool === "eraser" ? "cell" : "crosshair";
+	$toolbar.on("click", ".ss-draw-tool[data-tool]", function () {
+		tool = $(this).attr("data-tool");
+		lineStart = null; removeMeasureInput();
+		$toolbar.find(".ss-draw-tool[data-tool]").removeClass("ss-draw-tool--active");
+		$(this).addClass("ss-draw-tool--active");
+		canvas.style.cursor = tool === "eraser" ? "not-allowed" : tool === "measure" ? "crosshair" : "crosshair";
+		render();
 	});
 
+	$toolbar.on("click", ".ss-draw-color-btn", function () {
+		color = $(this).attr("data-color");
+		$toolbar.find(".ss-draw-color-btn").removeClass("ss-draw-color-active");
+		$(this).addClass("ss-draw-color-active");
+	});
+
+	$toolbar.on("click", ".ss-draw-undo-btn", () => { shapes.pop(); lineStart = null; render(); });
+
 	$toolbar.on("click", ".ss-draw-clear-btn", () => {
-		ctx.fillStyle = "#ffffff";
-		ctx.fillRect(0, 0, W, H);
+		if (!shapes.length || confirm(__("Clear all? Cannot be undone."))) {
+			shapes.length = 0; lineStart = null; removeMeasureInput(); render();
+		}
 	});
 
 	canvas.style.cursor = "crosshair";
@@ -1392,46 +1602,53 @@ function ss_inject_styles() {
 		.ss-draw-dialog { display:flex; flex-direction:column; gap:0; }
 
 		.ss-draw-toolbar {
-			display:flex; align-items:center; justify-content:space-between;
-			padding:10px 12px; background:var(--bg-light-gray,#f7f9fa);
+			display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;
+			padding:8px 12px; background:var(--bg-light-gray,#f7f9fa);
 			border-bottom:0.5px solid var(--border-color,#e2e6ea);
 			border-radius:12px 12px 0 0;
 		}
-		.ss-draw-tools { display:flex; align-items:center; gap:6px; }
-		.ss-draw-sep   { width:1px; height:22px; background:var(--border-color,#e2e6ea); margin:0 4px; }
+		.ss-draw-tools { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+		.ss-draw-sep   { width:1px; height:22px; background:var(--border-color,#e2e6ea); margin:0 2px; }
 
 		.ss-draw-tool {
 			display:inline-flex; align-items:center; justify-content:center;
-			width:32px; height:32px; border-radius:8px;
+			width:30px; height:30px; border-radius:7px;
 			border:0.5px solid transparent; background:transparent;
 			cursor:pointer; color:var(--text-muted,#8d96a0);
 			transition:background .12s, border-color .12s, color .12s;
 		}
-		.ss-draw-tool:hover         { background:var(--card-bg,#fff); border-color:var(--border-color,#e2e6ea); color:var(--text-color,#1f272e); }
-		.ss-draw-tool--active       { background:var(--card-bg,#fff); border-color:#378ADD; box-shadow:0 0 0 1px #378ADD; }
-		.ss-draw-color-btn          { padding:4px; }
-		.ss-draw-swatch             { display:block; width:16px; height:16px; border-radius:50%; }
+		.ss-draw-tool:hover   { background:var(--card-bg,#fff); border-color:var(--border-color,#e2e6ea); color:var(--text-color,#1f272e); }
+		.ss-draw-tool--active { background:var(--card-bg,#fff); border-color:#378ADD; box-shadow:0 0 0 1.5px #378ADD; color:#378ADD; }
+		.ss-draw-color-btn    { padding:4px; }
+		.ss-draw-color-active { border-color:#333 !important; box-shadow:0 0 0 1.5px #333 !important; }
+		.ss-draw-swatch       { display:block; width:15px; height:15px; border-radius:50%; }
+
+		.ss-draw-undo-btn {
+			display:inline-flex; align-items:center;
+			padding:4px 10px; border-radius:7px;
+			border:0.5px solid var(--border-color,#e2e6ea);
+			background:var(--card-bg,#fff); cursor:pointer;
+			font-size:11px; color:var(--text-muted,#8d96a0);
+			transition:background .12s, color .12s;
+		}
+		.ss-draw-undo-btn:hover { color:var(--text-color,#1f272e); background:#f0f0f0; }
 
 		.ss-draw-clear-btn {
 			display:inline-flex; align-items:center; gap:5px;
-			padding:5px 12px; border-radius:8px;
+			padding:5px 12px; border-radius:7px;
 			border:0.5px solid var(--border-color,#e2e6ea);
 			background:var(--card-bg,#fff); cursor:pointer;
-			font-size:12px; font-weight:400; color:var(--text-muted,#8d96a0);
+			font-size:12px; color:var(--text-muted,#8d96a0);
 			transition:background .12s, color .12s, border-color .12s;
 		}
 		.ss-draw-clear-btn:hover { color:var(--text-danger,#c0392b); border-color:var(--text-danger,#c0392b); background:#fff5f5; }
 
 		.ss-draw-canvas-wrap {
-			background:#ffffff;
-			border-radius:0 0 12px 12px;
-			overflow:hidden;
-			line-height:0;
+			background:#ffffff; border-radius:0 0 12px 12px;
+			overflow:hidden; line-height:0; position:relative;
 		}
-		.ss-draw-canvas {
-			display:block; width:100%; touch-action:none;
-			border-radius:0 0 12px 12px;
-		}
+		/* No width:100% — explicit px size set via JS to prevent pointer offset */
+		.ss-draw-canvas { display:block; touch-action:none; border-radius:0 0 12px 12px; cursor:crosshair; }
 
 		@media (max-width:1280px) {
 			.ss-grid-shell { font-size:11px; }

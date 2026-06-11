@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_pajl",
   "status",
   "category",
   "date",
@@ -16,6 +17,10 @@
   "first_name",
   "last_name",
   "company_name",
+  "mobile",
+  "tel",
+  "email",
+  "attachments",
   "column_break_wxee",
   "site_location",
   "loc_country",
@@ -23,12 +28,6 @@
   "loc_city",
   "loc_street",
   "google_maps_url",
-  "attachments",
-  "section_break_chwt",
-  "column_break_5jgr",
-  "mobile",
-  "tel",
-  "email",
   "description",
   "updates"
  ],
@@ -127,16 +126,8 @@
    "options": "CRM Log Attachment"
   },
   {
-   "fieldname": "column_break_5jgr",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_wxee",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_chwt",
-   "fieldtype": "Section Break"
   },
   {
    "default": "Lebanon",
@@ -164,12 +155,17 @@
    "fieldtype": "Select",
    "label": "Category",
    "options": "Lead\nSite Surveys\nMeasurements Take Off\nEstimation\nQuotation"
+  },
+  {
+   "fieldname": "section_break_pajl",
+   "fieldtype": "Section Break",
+   "width": "100%"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-10 09:33:42.213696",
+ "modified": "2026-06-11 09:50:59.362800",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "CRM Log",
