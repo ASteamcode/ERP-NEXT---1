@@ -12,11 +12,11 @@
 
 window.frappe_drawing = (() => {
 
-    const GRID       = 20; // px between snap points
+    const GRID = 20; // px between snap points
     const DRAW_UNITS = { "m": 1, "cm": 100, "mm": 1000, "ft": 3.28084, "in": 39.3701 };
 
     const SVG_PENCIL = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`;
-    const SVG_RULER  = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>`;
+    const SVG_RULER = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>`;
 
     // ── Public render helper (button cell for list views) ─────────────────────
     function render_btn(name, hasDrawing) {
@@ -44,9 +44,9 @@ window.frappe_drawing = (() => {
         const {
             doctype,
             docname,
-            drawing_field     = "drawing",
+            drawing_field = "drawing",
             has_drawing_field = "has_drawing",
-            on_saved          = null,
+            on_saved = null,
         } = opts;
 
         frappe.db.get_value(doctype, docname, drawing_field, (r) => {
@@ -56,47 +56,48 @@ window.frappe_drawing = (() => {
 
     // ── Dialog ────────────────────────────────────────────────────────────────
     function _show(doctype, docname, drawing_field, has_drawing_field, on_saved, existingData) {
-        const saved  = parse(existingData);
-        let shapes   = saved.shapes;
-        const scale  = saved.scale && saved.scale.pxPerMeter > 0
+        const saved = parse(existingData);
+        let shapes = saved.shapes;
+        const scale = saved.scale && saved.scale.pxPerMeter > 0
             ? { pxPerMeter: saved.scale.pxPerMeter, unit: DRAW_UNITS[saved.scale.unit] ? saved.scale.unit : "m" }
             : { pxPerMeter: GRID, unit: "m" };
 
         let displayPxPerMeter = scale.pxPerMeter;
-        let scaleAnimFrame    = null;
-        let history           = [];
+        let scaleAnimFrame = null;
+        let history = [];
 
         const saveState = () => {
             const json = JSON.stringify(shapes);
             if (!history.length || history[history.length - 1] !== json) history.push(json);
         };
 
-        let tool                 = "line";
-        let color                = "#1f272e";
+        let tool = "line";
+        let color = "#1f272e";
         let selectedShapeIndices = [];
-        let transformState       = null;
-        let draftShape           = null;
-        let boxSelectDraft       = null;
-        let textInputEl          = null;
-        let propsPanelEl         = null;
-        let chainStart           = null;
-        let anchorJustPlaced     = false;
-        let pointerDown          = false;
-        let downPos              = null;
-        let pointerMoved         = false;
-        let freeDrawing          = false;
-        let freePoints           = [];
-        let eraseMode            = false;
-        let eraseModeSaved       = false;
-        let dimDraft             = null;
-        let dimDragIdx           = null;
-        let dimHitWasLabel       = false;
-        let _valInputEl          = null;
-        let _valShapeIdx         = null;
+        let transformState = null;
+        let draftShape = null;
+        let arcDraft = null;
+        let boxSelectDraft = null;
+        let textInputEl = null;
+        let propsPanelEl = null;
+        let chainStart = null;
+        let anchorJustPlaced = false;
+        let pointerDown = false;
+        let downPos = null;
+        let pointerMoved = false;
+        let freeDrawing = false;
+        let freePoints = [];
+        let eraseMode = false;
+        let eraseModeSaved = false;
+        let dimDraft = null;
+        let dimDragIdx = null;
+        let dimHitWasLabel = false;
+        let _valInputEl = null;
+        let _valShapeIdx = null;
 
         const dialog = new frappe.ui.Dialog({
             title: __("Drawing — {0}", [docname]),
-            size:  "extra-large",
+            size: "extra-large",
             fields: [{ fieldname: "draw_wrap", fieldtype: "HTML" }],
             primary_action_label: __("Save"),
             primary_action() {
@@ -121,7 +122,7 @@ window.frappe_drawing = (() => {
         });
 
         dialog.show();
-        const $wrap  = dialog.fields_dict.draw_wrap.$wrapper;
+        const $wrap = dialog.fields_dict.draw_wrap.$wrapper;
         const unitOpts = Object.keys(DRAW_UNITS).map(u =>
             `<option value="${u}"${u === scale.unit ? " selected" : ""}>${u}</option>`
         ).join("");
@@ -174,18 +175,16 @@ window.frappe_drawing = (() => {
                 </div>
             </div>`);
 
-        _inject_styles();
-
         const canvas = $wrap.find(".fd-draw-canvas")[0];
         const wrapEl = $wrap.find(".fd-draw-canvas-wrap")[0];
-        const dpr    = window.devicePixelRatio || 1;
-        const cssW   = Math.max(wrapEl.offsetWidth || 800, 600);
-        const cssH   = Math.round(cssW * 0.52);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = Math.max(wrapEl.offsetWidth || 800, 600);
+        const cssH = Math.round(cssW * 0.52);
 
-        canvas.style.width  = cssW + "px";
+        canvas.style.width = cssW + "px";
         canvas.style.height = cssH + "px";
-        canvas.width        = Math.round(cssW * dpr);
-        canvas.height       = Math.round(cssH * dpr);
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
 
         const ctx = canvas.getContext("2d");
         ctx.scale(dpr, dpr);
@@ -199,13 +198,13 @@ window.frappe_drawing = (() => {
         // ── coordinate / snap helpers ─────────────────────────────────────────
         const canvasPos = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const src  = (e.touches && e.touches.length) ? e.touches[0]
+            const src = (e.touches && e.touches.length) ? e.touches[0]
                 : (e.changedTouches && e.changedTouches.length) ? e.changedTouches[0]
-                : e;
+                    : e;
             return { x: src.clientX - rect.left, y: src.clientY - rect.top };
         };
-        const snap    = (v)  => Math.round(v / GRID) * GRID;
-        const snapPt  = (pt) => ({ x: snap(pt.x), y: snap(pt.y) });
+        const snap = (v) => Math.round(v / GRID) * GRID;
+        const snapPt = (pt) => ({ x: snap(pt.x), y: snap(pt.y) });
         const snapDimPt = (raw) => {
             let best = null, bd = 14;
             for (const s of shapes) {
@@ -219,6 +218,27 @@ window.frappe_drawing = (() => {
         };
 
         // ── geometry ─────────────────────────────────────────────────────────
+        const arcGeom = (x1, y1, x2, y2, bulge) => {
+            const dx = x2 - x1, dy = y2 - y1;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 0.001 || Math.abs(bulge) < 0.1) return null;
+            const s = bulge;
+            const halfDist = dist / 2;
+            const t = (s * s - halfDist * halfDist) / (2 * s);
+            const ux = dx / dist, uy = dy / dist;
+            const nx = -uy, ny = ux;
+            const cx = x1 + dx / 2 + t * nx;
+            const cy = y1 + dy / 2 + t * ny;
+            const radius = Math.hypot(x1 - cx, y1 - cy);
+            const startAngle = Math.atan2(y1 - cy, x1 - cx);
+            const endAngle = Math.atan2(y2 - cy, x2 - cx);
+            const counterclockwise = s < 0;
+            let sweep = endAngle - startAngle;
+            if (counterclockwise && sweep > 0) sweep -= 2 * Math.PI;
+            if (!counterclockwise && sweep < 0) sweep += 2 * Math.PI;
+            return { cx, cy, radius, startAngle, endAngle, counterclockwise, sweep, s };
+        };
+
         const distSeg = (px, py, ax, ay, bx, by) => {
             const dx = bx - ax, dy = by - ay;
             const len2 = dx * dx + dy * dy;
@@ -229,9 +249,27 @@ window.frappe_drawing = (() => {
 
         const getBBox = (s) => {
             if (!s) return null;
+            if (s.type === "arc") {
+                const geom = arcGeom(s.x1, s.y1, s.x2, s.y2, s.bulge);
+                if (!geom) return { minX: Math.min(s.x1, s.x2), minY: Math.min(s.y1, s.y2), maxX: Math.max(s.x1, s.x2), maxY: Math.max(s.y1, s.y2) };
+                const dx = s.x2 - s.x1, dy = s.y2 - s.y1;
+                const dist = Math.hypot(dx, dy);
+                const nx = -dy / dist, ny = dx / dist;
+                const midX = s.x1 + dx / 2 + s.bulge * nx, midY = s.y1 + dy / 2 + s.bulge * ny;
+                const p25X = geom.cx + geom.radius * Math.cos(geom.startAngle + geom.sweep * 0.25);
+                const p25Y = geom.cy + geom.radius * Math.sin(geom.startAngle + geom.sweep * 0.25);
+                const p75X = geom.cx + geom.radius * Math.cos(geom.startAngle + geom.sweep * 0.75);
+                const p75Y = geom.cy + geom.radius * Math.sin(geom.startAngle + geom.sweep * 0.75);
+                return {
+                    minX: Math.min(s.x1, s.x2, midX, p25X, p75X),
+                    minY: Math.min(s.y1, s.y2, midY, p25Y, p75Y),
+                    maxX: Math.max(s.x1, s.x2, midX, p25X, p75X),
+                    maxY: Math.max(s.y1, s.y2, midY, p25Y, p75Y)
+                };
+            }
             if (s.type === "line" || s.type === "dim") return { minX: Math.min(s.x1, s.x2), minY: Math.min(s.y1, s.y2), maxX: Math.max(s.x1, s.x2), maxY: Math.max(s.y1, s.y2) };
-            if (s.type === "rect")     return { minX: Math.min(s.x, s.x + s.w), minY: Math.min(s.y, s.y + s.h), maxX: Math.max(s.x, s.x + s.w), maxY: Math.max(s.y, s.y + s.h) };
-            if (s.type === "circle")   return { minX: s.x - s.r, minY: s.y - s.r, maxX: s.x + s.r, maxY: s.y + s.r };
+            if (s.type === "rect") return { minX: Math.min(s.x, s.x + s.w), minY: Math.min(s.y, s.y + s.h), maxX: Math.max(s.x, s.x + s.w), maxY: Math.max(s.y, s.y + s.h) };
+            if (s.type === "circle") return { minX: s.x - s.r, minY: s.y - s.r, maxX: s.x + s.r, maxY: s.y + s.r };
             if (s.type === "freehand") {
                 if (!s.points.length) return null;
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -262,20 +300,33 @@ window.frappe_drawing = (() => {
             const ux = dx / len, uy = dy / len;
             const nx = -uy, ny = ux;
             const off = typeof s.offset === "number" ? s.offset : 26;
-            return { len, ux, uy, nx, ny, off,
+            return {
+                len, ux, uy, nx, ny, off,
                 ax: s.x1 + nx * off, ay: s.y1 + ny * off,
                 bx: s.x2 + nx * off, by: s.y2 + ny * off,
                 mx: (s.x1 + s.x2) / 2 + nx * off,
-                my: (s.y1 + s.y2) / 2 + ny * off };
+                my: (s.y1 + s.y2) / 2 + ny * off
+            };
         };
 
         const dimText = (lenPx) => {
-            const val     = (lenPx / displayPxPerMeter) * DRAW_UNITS[scale.unit];
+            const val = (lenPx / displayPxPerMeter) * DRAW_UNITS[scale.unit];
             const rounded = Math.round(val * 100) / 100;
             return `${rounded} ${scale.unit}`;
         };
 
         const hitShape = (x, y, s, tol = 10) => {
+            if (s.type === "arc") {
+                const geom = arcGeom(s.x1, s.y1, s.x2, s.y2, s.bulge);
+                if (!geom) return distSeg(x, y, s.x1, s.y1, s.x2, s.y2) < tol;
+                if (Math.abs(Math.hypot(x - geom.cx, y - geom.cy) - geom.radius) > tol) return false;
+                let angle = Math.atan2(y - geom.cy, x - geom.cx);
+                let a1 = geom.startAngle, a2 = geom.startAngle + geom.sweep;
+                let minA = Math.min(a1, a2), maxA = Math.max(a1, a2);
+                while (angle < minA) angle += 2 * Math.PI;
+                while (angle > maxA + 2 * Math.PI) angle -= 2 * Math.PI;
+                return (angle >= minA && angle <= maxA) || (angle - 2 * Math.PI >= minA && angle - 2 * Math.PI <= maxA);
+            }
             if (s.type === "line") return distSeg(x, y, s.x1, s.y1, s.x2, s.y2) < tol;
             if (s.type === "freehand") {
                 for (let i = 1; i < s.points.length; i++) {
@@ -303,7 +354,7 @@ window.frappe_drawing = (() => {
             ctx.save(); ctx.font = "bold 11px sans-serif";
             const tw = ctx.measureText(dimText(g.len)).width; ctx.restore();
             const onLabel = Math.abs(x - g.mx) < tw / 2 + 8 && Math.abs(y - g.my) < 12;
-            const onLine  = distSeg(x, y, g.ax, g.ay, g.bx, g.by) < 9;
+            const onLine = distSeg(x, y, g.ax, g.ay, g.bx, g.by) < 9;
             return { hit: onLabel || onLine, label: onLabel };
         };
 
@@ -365,6 +416,17 @@ window.frappe_drawing = (() => {
             if (s.type === "line") {
                 ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
                 [[s.x1, s.y1], [s.x2, s.y2]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); });
+            } else if (s.type === "arc") {
+                const geom = arcGeom(s.x1, s.y1, s.x2, s.y2, s.bulge);
+                if (geom) {
+                    ctx.beginPath();
+                    ctx.arc(geom.cx, geom.cy, geom.radius, geom.startAngle, geom.endAngle, geom.counterclockwise);
+                    ctx.stroke();
+                    [[s.x1, s.y1], [s.x2, s.y2]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); });
+                } else {
+                    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+                    [[s.x1, s.y1], [s.x2, s.y2]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); });
+                }
             } else if (s.type === "freehand") {
                 ctx.beginPath(); s.points.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke();
             } else if (s.type === "rect") {
@@ -404,10 +466,29 @@ window.frappe_drawing = (() => {
                 const w = Math.abs(boxSelectDraft.x2 - boxSelectDraft.x1), h = Math.abs(boxSelectDraft.y2 - boxSelectDraft.y1);
                 ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h); ctx.restore();
             }
-            if (tool === "line" && chainStart) {
+            
+            if (arcDraft) {
+                if (Math.abs(arcDraft.bulge) > 2) {
+                    drawShape({ type: "arc", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, bulge: arcDraft.bulge, color: "#378ADD" }, false, false);
+                    const geom = arcGeom(arcDraft.startX, arcDraft.startY, arcDraft.endX, arcDraft.endY, arcDraft.bulge);
+                    if (geom) {
+                        const deg = Math.round(Math.abs(geom.sweep) * 180 / Math.PI) + "°";
+                        const dx = arcDraft.endX - arcDraft.startX, dy = arcDraft.endY - arcDraft.startY;
+                        const dist = Math.hypot(dx, dy);
+                        const nx = -dy / dist, ny = dx / dist;
+                        const midX = arcDraft.startX + dx / 2 + arcDraft.bulge * nx;
+                        const midY = arcDraft.startY + dy / 2 + arcDraft.bulge * ny;
+                        ctx.save(); ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#378ADD";
+                        ctx.fillText(deg, midX + nx * 14, midY + ny * 14); ctx.restore();
+                    }
+                } else {
+                    drawShape({ type: "line", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, color: "#378ADD" }, false, false);
+                }
+            } else if (tool === "line" && chainStart) {
                 ctx.beginPath(); ctx.arc(chainStart.x, chainStart.y, 5, 0, Math.PI * 2);
                 ctx.strokeStyle = "#378ADD"; ctx.lineWidth = 1.5; ctx.stroke();
             }
+            
             ctx.restore();
         };
 
@@ -429,8 +510,8 @@ window.frappe_drawing = (() => {
 
         // ── overlays ──────────────────────────────────────────────────────────
         const removeOverlayInputs = () => {
-            if (_valInputEl?.parentNode)  _valInputEl.parentNode.removeChild(_valInputEl);
-            if (textInputEl?.parentNode)  textInputEl.parentNode.removeChild(textInputEl);
+            if (_valInputEl?.parentNode) _valInputEl.parentNode.removeChild(_valInputEl);
+            if (textInputEl?.parentNode) textInputEl.parentNode.removeChild(textInputEl);
             _valInputEl = null; _valShapeIdx = null; textInputEl = null;
         };
 
@@ -511,7 +592,7 @@ window.frappe_drawing = (() => {
         function applyTransform(s, origS, state, dx, dy, shiftKey) {
             if (state.mode === "move") {
                 if (s.type === "rect" || s.type === "circle" || s.type === "text") { s.x = origS.x + dx; s.y = origS.y + dy; }
-                else if (s.type === "line" || s.type === "dim") { s.x1 = origS.x1 + dx; s.y1 = origS.y1 + dy; s.x2 = origS.x2 + dx; s.y2 = origS.y2 + dy; }
+                else if (s.type === "line" || s.type === "dim" || s.type === "arc") { s.x1 = origS.x1 + dx; s.y1 = origS.y1 + dy; s.x2 = origS.x2 + dx; s.y2 = origS.y2 + dy; }
                 else if (s.type === "freehand") { s.points = origS.points.map(p => [p[0] + dx, p[1] + dy]); }
             } else if (state.mode === "scale") {
                 const bb = state.groupBB; if (!bb) return;
@@ -528,9 +609,17 @@ window.frappe_drawing = (() => {
                     if (state.handle.includes("l")) nMinX = bb.maxX - (bb.maxX - bb.minX) * Math.abs(scaleX); else nMaxX = bb.minX + (bb.maxX - bb.minX) * Math.abs(scaleX);
                     if (state.handle.includes("t")) nMinY = bb.maxY - (bb.maxY - bb.minY) * Math.abs(scaleY); else nMaxY = bb.minY + (bb.maxY - bb.minY) * Math.abs(scaleY);
                 }
+                
                 if (s.type === "rect") { s.x = nMinX + (origS.x - bb.minX) * scaleX; s.y = nMinY + (origS.y - bb.minY) * scaleY; s.w = origS.w * scaleX; s.h = origS.h * scaleY; }
                 else if (s.type === "circle") { s.x = nMinX + (origS.x - bb.minX) * scaleX; s.y = nMinY + (origS.y - bb.minY) * scaleY; s.r = origS.r * Math.max(Math.abs(scaleX), Math.abs(scaleY)); }
-                else if (s.type === "line" || s.type === "dim") { s.x1 = nMinX + (origS.x1 - bb.minX) * scaleX; s.y1 = nMinY + (origS.y1 - bb.minY) * scaleY; s.x2 = nMinX + (origS.x2 - bb.minX) * scaleX; s.y2 = nMinY + (origS.y2 - bb.minY) * scaleY; }
+                else if (s.type === "line" || s.type === "dim" || s.type === "arc") { 
+                    s.x1 = nMinX + (origS.x1 - bb.minX) * scaleX; s.y1 = nMinY + (origS.y1 - bb.minY) * scaleY; 
+                    s.x2 = nMinX + (origS.x2 - bb.minX) * scaleX; s.y2 = nMinY + (origS.y2 - bb.minY) * scaleY; 
+                    if (s.type === "arc") {
+                        const flip = (scaleX < 0 ? -1 : 1) * (scaleY < 0 ? -1 : 1);
+                        s.bulge = origS.bulge * ((Math.abs(scaleX) + Math.abs(scaleY)) / 2) * flip;
+                    }
+                }
                 else if (s.type === "freehand") { s.points = origS.points.map(p => [nMinX + (p[0] - bb.minX) * scaleX, nMinY + (p[1] - bb.minY) * scaleY]); }
                 else if (s.type === "text") { s.x = nMinX + (origS.x - bb.minX) * scaleX; s.y = nMinY + (origS.y - bb.minY) * scaleY; }
             }
@@ -578,11 +667,11 @@ window.frappe_drawing = (() => {
                 }
                 for (let i = shapes.length - 1; i >= 0; i--) {
                     const s = shapes[i];
-                    if ((s.type === "rect" || s.type === "circle" || s.type === "line") && hitShape(raw.x, raw.y, s)) {
+                    if ((s.type === "rect" || s.type === "circle" || s.type === "line" || s.type === "arc") && hitShape(raw.x, raw.y, s)) {
                         saveState();
                         if (s.type === "rect") { shapes.push({ type: "dim", x1: s.x, y1: s.y, x2: s.x + s.w, y2: s.y, offset: -26, color }); shapes.push({ type: "dim", x1: s.x + s.w, y1: s.y, x2: s.x + s.w, y2: s.y + s.h, offset: 26, color }); }
                         else if (s.type === "circle") { shapes.push({ type: "dim", x1: s.x, y1: s.y, x2: s.x + s.r, y2: s.y, offset: -26, color }); }
-                        else if (s.type === "line") { shapes.push({ type: "dim", x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, offset: 26, color }); }
+                        else if (s.type === "line" || s.type === "arc") { shapes.push({ type: "dim", x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, offset: 26, color }); }
                         render(); return;
                     }
                 }
@@ -594,10 +683,20 @@ window.frappe_drawing = (() => {
                 for (let i = shapes.length - 1; i >= 0; i--) { if (hitShape(raw.x, raw.y, shapes[i])) { if (!eraseModeSaved) { saveState(); eraseModeSaved = true; } shapes.splice(i, 1); render(); return; } }
                 return;
             }
-            if (tool === "line") { if (!chainStart) { chainStart = snapPt(raw); anchorJustPlaced = true; render(); } return; }
-            if (tool === "rect")   { draftShape = { type: "rect",   x: snap(raw.x), y: snap(raw.y), w: 0, h: 0, color }; return; }
+            if (tool === "line") {
+                if (!chainStart) { chainStart = snapPt(raw); anchorJustPlaced = true; render(); }
+                else {
+                    const end = snapPt(raw);
+                    const d = Math.hypot(end.x - chainStart.x, end.y - chainStart.y);
+                    if (d > 2) { arcDraft = { startX: chainStart.x, startY: chainStart.y, endX: end.x, endY: end.y, bulge: 0 }; }
+                    else if (!anchorJustPlaced) { chainStart = null; }
+                    render();
+                }
+                return;
+            }
+            if (tool === "rect") { draftShape = { type: "rect", x: snap(raw.x), y: snap(raw.y), w: 0, h: 0, color }; return; }
             if (tool === "circle") { draftShape = { type: "circle", x: snap(raw.x), y: snap(raw.y), r: 0, color }; return; }
-            if (tool === "text")   { showTextInput(raw.x, raw.y); return; }
+            if (tool === "text") { showTextInput(raw.x, raw.y); return; }
             if (tool === "freehand") { freeDrawing = true; freePoints = [[raw.x, raw.y]]; }
         }
 
@@ -623,7 +722,18 @@ window.frappe_drawing = (() => {
                 for (let i = shapes.length - 1; i >= 0; i--) { if (hitShape(raw.x, raw.y, shapes[i])) { if (!eraseModeSaved) { saveState(); eraseModeSaved = true; } shapes.splice(i, 1); erased = true; } }
                 if (erased) render(); return;
             }
-            if (tool === "line" && chainStart) { e.preventDefault(); render({ type: "line", x1: chainStart.x, y1: chainStart.y, x2: snapPt(raw).x, y2: snapPt(raw).y, color, measurement: "" }); return; }
+            if (tool === "line") {
+                e.preventDefault();
+                if (arcDraft && pointerDown) {
+                    const dx = arcDraft.endX - arcDraft.startX, dy = arcDraft.endY - arcDraft.startY;
+                    const len = Math.hypot(dx, dy) || 1;
+                    const nx = -dy / len, ny = dx / len;
+                    const dragX = raw.x - arcDraft.endX, dragY = raw.y - arcDraft.endY;
+                    arcDraft.bulge = dragX * nx + dragY * ny;
+                    render(); return;
+                }
+                if (chainStart) { render({ type: "line", x1: chainStart.x, y1: chainStart.y, x2: snapPt(raw).x, y2: snapPt(raw).y, color, measurement: "" }); return; }
+            }
             if (tool === "rect" && draftShape && pointerDown) { e.preventDefault(); const pt = snapPt(raw); draftShape.w = pt.x - draftShape.x; draftShape.h = pt.y - draftShape.y; render(draftShape); return; }
             if (tool === "circle" && draftShape && pointerDown) { e.preventDefault(); const pt = snapPt(raw); draftShape.r = Math.hypot(pt.x - draftShape.x, pt.y - draftShape.y); render(draftShape); return; }
             if (tool === "measure") {
@@ -646,10 +756,17 @@ window.frappe_drawing = (() => {
                 boxSelectDraft = null; showPropsPanel(); render(); return;
             }
             if (tool === "select" && transformState) { transformState = null; return; }
-            if (tool === "line" && chainStart) {
-                const end = snapPt(raw), d = Math.hypot(end.x - chainStart.x, end.y - chainStart.y);
-                if (d > 2) { saveState(); shapes.push({ type: "line", x1: chainStart.x, y1: chainStart.y, x2: end.x, y2: end.y, color, measurement: "" }); chainStart = end; }
-                else if (!anchorJustPlaced) { chainStart = null; }
+            if (tool === "line") {
+                if (arcDraft) {
+                    saveState();
+                    if (Math.abs(arcDraft.bulge) > 2) {
+                        shapes.push({ type: "arc", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, bulge: arcDraft.bulge, color });
+                    } else {
+                        shapes.push({ type: "line", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, color, measurement: "" });
+                    }
+                    chainStart = { x: arcDraft.endX, y: arcDraft.endY };
+                    arcDraft = null; anchorJustPlaced = false; render(); return;
+                }
                 anchorJustPlaced = false; render(); return;
             }
             if ((tool === "rect" || tool === "circle") && draftShape) {
@@ -676,15 +793,15 @@ window.frappe_drawing = (() => {
             }
         }
 
-        canvas.addEventListener("mousedown",  onDown);
-        canvas.addEventListener("mousemove",  onMove);
-        canvas.addEventListener("mouseup",    onUp);
+        canvas.addEventListener("mousedown", onDown);
+        canvas.addEventListener("mousemove", onMove);
+        canvas.addEventListener("mouseup", onUp);
         canvas.addEventListener("mouseleave", () => { if (freeDrawing) { freeDrawing = false; render(); } eraseMode = false; eraseModeSaved = false; });
         canvas.addEventListener("touchstart", onDown, { passive: false });
-        canvas.addEventListener("touchmove",  onMove, { passive: false });
-        canvas.addEventListener("touchend",   onUp,   { passive: false });
-        canvas.addEventListener("dblclick",   (e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
-        canvas.addEventListener("contextmenu",(e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
+        canvas.addEventListener("touchmove", onMove, { passive: false });
+        canvas.addEventListener("touchend", onUp, { passive: false });
+        canvas.addEventListener("dblclick", (e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
+        canvas.addEventListener("contextmenu", (e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
 
         const keydownHandler = (e) => {
             if ((e.key === "Delete" || e.key === "Backspace") && tool === "select" && selectedShapeIndices.length > 0) {
@@ -712,7 +829,7 @@ window.frappe_drawing = (() => {
 
         $toolbar.on("click", ".fd-draw-tool[data-tool]", function () {
             tool = $(this).attr("data-tool");
-            chainStart = null; dimDraft = null; dimDragIdx = null; draftShape = null;
+            chainStart = null; dimDraft = null; dimDragIdx = null; draftShape = null; arcDraft = null;
             transformState = null; selectedShapeIndices = []; boxSelectDraft = null;
             removeOverlayInputs(); hidePropsPanel();
             $toolbar.find(".fd-draw-tool[data-tool]").removeClass("fd-draw-tool--active");
@@ -737,7 +854,7 @@ window.frappe_drawing = (() => {
         $toolbar.on("click", ".fd-draw-undo-btn", () => {
             if (history.length > 0) {
                 shapes = JSON.parse(history.pop());
-                chainStart = null; draftShape = null; selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
+                chainStart = null; draftShape = null; arcDraft = null; selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
                 removeOverlayInputs(); hidePropsPanel(); render();
             }
         });
@@ -745,7 +862,7 @@ window.frappe_drawing = (() => {
         $toolbar.on("click", ".fd-draw-clear-btn", () => {
             if (!shapes.length || confirm(__("Clear all? Cannot be undone."))) {
                 saveState(); shapes = [];
-                chainStart = null; dimDraft = null; dimDragIdx = null; draftShape = null;
+                chainStart = null; dimDraft = null; dimDragIdx = null; draftShape = null; arcDraft = null;
                 selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
                 removeOverlayInputs(); hidePropsPanel(); render();
             }
@@ -798,11 +915,11 @@ window.frappe_drawing = (() => {
                 background:transparent; cursor:pointer; color:var(--text-muted,#8d96a0);
                 transition:background .12s, border-color .12s, color .12s;
             }
-            .fd-draw-btn      { pointer-events:none; }
             .fd-draw-btn--has { color:#378ADD; }
         `;
         document.head.appendChild(style);
     }
 
+    _inject_styles();
     return { open, render_btn };
 })();

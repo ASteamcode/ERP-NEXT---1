@@ -199,7 +199,7 @@ function _fetch_resume_counts(names, cb) {
 function _contacts_paint(listview, host, rows) {
     _CONTACT_EDITING_ROW = null; 
     const cols = _active_cols();
-    const gridTemplate = cols.map(c => `${_col_width(c)}px`).join(" ");
+    const gridTemplate = ["42px", ...cols.map(c => `${_col_width(c)}px`)].join(" ");
 
     // ── Toolbar ──
     const toolbar = document.createElement("div");
@@ -212,7 +212,8 @@ function _contacts_paint(listview, host, rows) {
     // ── Grid ──
     const gridHtml = [];
 
-    gridHtml.push(`<div class="cg-row cg-header-row">`);
+    // Header row — rownum gutter + data columns
+    gridHtml.push(`<div class="cg-cell cg-header-cell cg-rownum-cell">#</div>`);
     cols.forEach((col, ci) => {
         gridHtml.push(
             `<div class="cg-cell cg-header-cell" data-col="${ci}" data-field="${col.field}">` +
@@ -221,17 +222,16 @@ function _contacts_paint(listview, host, rows) {
             `</div>`
         );
     });
-    gridHtml.push(`</div>`);
 
     if (!rows.length) {
         gridHtml.push(
-            `<div class="cg-empty-row" style="grid-column:1/${cols.length + 1}">` +
+            `<div class="cg-empty-row" style="grid-column:1/${cols.length + 2}">` +
             `${__("No contacts found")}</div>`
         );
     }
 
     rows.forEach((doc, ri) => {
-        gridHtml.push(`<div class="cg-row" data-row="${ri}">`);
+        gridHtml.push(`<div class="cg-cell cg-rownum-cell" data-name="${doc.name}">${ri + 1}</div>`);
         cols.forEach((col, ci) => {
             const raw = doc[col.field];
             gridHtml.push(
@@ -240,7 +240,6 @@ function _contacts_paint(listview, host, rows) {
                 `</div>`
             );
         });
-        gridHtml.push(`</div>`);
     });
 
     const grid = document.createElement("div");
@@ -834,6 +833,20 @@ function _contacts_css() {
 }
 .cg-del-resume:hover { color: var(--text-danger, #e53935); background: var(--bg-light-gray, #f7f8fa); }
 .cg-no-resume { text-align: center; color: var(--text-muted, #adb5bd); padding: 16px 0; font-size: 12px; font-weight: 400; }
+
+/* ── Row number gutter ────────────────────────────────────────────────────── */
+.cg-rownum-cell {
+    justify-content: center;
+    color: var(--text-muted, #adb5bd);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    font-weight: 400;
+    background: var(--card-bg, #fff);
+    user-select: none;
+    cursor: default;
+}
+.cg-row:not(.cg-header-row):hover .cg-rownum-cell,
+.cg-cell--editing.cg-rownum-cell { background: var(--bg-light-gray, #f7f8fa); }
 
 /* ── Link typeahead dropdown ──────────────────────────────────────────────── */
 .cg-link-wrap { position: relative; width: 100%; }
