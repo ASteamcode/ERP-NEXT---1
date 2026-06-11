@@ -27,7 +27,8 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
 app_include_js = [
-    "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/frappe_drawing.js",
 ]
         
 

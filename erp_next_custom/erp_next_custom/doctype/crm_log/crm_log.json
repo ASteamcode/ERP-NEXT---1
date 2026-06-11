@@ -29,7 +29,9 @@
   "loc_street",
   "google_maps_url",
   "description",
-  "updates"
+  "updates",
+  "drawing",
+  "has_drawing"
  ],
  "fields": [
   {
@@ -160,6 +162,18 @@
    "fieldname": "section_break_pajl",
    "fieldtype": "Section Break",
    "width": "100%"
+  },
+  {
+   "fieldname": "drawing",
+   "fieldtype": "Long Text",
+   "label": "Drawing",
+   "hidden": 1
+  },
+  {
+   "fieldname": "has_drawing",
+   "fieldtype": "Check",
+   "label": "Has Drawing",
+   "default": "0"
   }
  ],
  "grid_page_length": 50,

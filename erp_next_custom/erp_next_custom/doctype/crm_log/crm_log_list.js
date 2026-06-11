@@ -26,21 +26,23 @@ const CRM_COLUMNS = [
 	{ field: "site_location",   label: "Site Location", type: "text",    width: 120 },
 	{ field: "google_maps_url", label: "Maps",          type: "maps",    width: 130 },
 	{ field: "attachments",     label: "Files",         type: "attach",  width: 52  },
+	{ field: "drawing",         label: "Drawing",       type: "drawing", width: 52  },
 ];
 
 const CRM_ATTACH_DOCTYPE    = "CRM Log Attachment";
 const CRM_ATTACH_TABLE_FIELD = "attachments";
 const CRM_COL_WIDTH_KEY     = "crm_log_col_widths";
-const CRM_STYLE_VERSION     = "v13"; // bump whenever styles change
+const CRM_STYLE_VERSION     = "v14"; // bump whenever styles change
 
 /**
  * Fields to pass to `add_fields`. Excludes `attachments` (child table fetched
  * separately) and appends `name` which is always needed.
  */
 const CRM_FIELDS = [
-	...CRM_COLUMNS.filter(c => c.field !== "attachments").map(c => c.field),
+	...CRM_COLUMNS.filter(c => !["attachments","drawing"].includes(c.field)).map(c => c.field),
 	"name",
 	"attachments",
+	"has_drawing",
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -221,6 +223,7 @@ function crm_render_cell(col, doc) {
 		case "maps":    return _render_maps(col, name, raw);
 		case "area":    return _render_area(col, name, raw);
 		case "attach":  return _render_attach(name, raw);
+		case "drawing": return frappe_drawing.render_btn(name, doc.has_drawing);
 		default:        return _render_text(col, name, raw);
 	}
 }
@@ -403,6 +406,7 @@ function crm_bind_events(listview, shell, $host) {
 	_bind_link_autocomplete($shell, listview);
 	_bind_add_row($host, listview);
 	_bind_attachments($shell, listview);
+	_bind_drawings($shell, listview);
 	_bind_maps_toggle($shell);
 	_bind_delete_row($shell, listview);
 	_bind_col_resize($shell, shell);
@@ -658,6 +662,24 @@ function _bind_add_row($host, listview) {
 function _bind_attachments($shell, listview) {
 	$shell.on("click.crm", ".crm-attach-btn", function () {
 		crm_open_attachments_dialog(listview, $(this).attr("data-name"));
+	});
+}
+
+function _bind_drawings($shell, listview) {
+	$shell.on("click.crm", ".fd-draw-btn", function (e) {
+		e.stopPropagation();
+		const docname = $(this).attr("data-name");
+		frappe_drawing.open({
+			doctype:           "CRM Log",
+			docname,
+			drawing_field:     "drawing",
+			has_drawing_field: "has_drawing",
+			on_saved(hasShapes) {
+				const row = (listview.data || []).find(d => d.name === docname);
+				if (row) row.has_drawing = hasShapes ? 1 : 0;
+				crm_render_grid(listview);
+			},
+		});
 	});
 }
 
