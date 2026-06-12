@@ -1,0 +1,29 @@
+body[data-route="List/Item/List"] .list-row-col.list-subject {
+    flex: 0 0 115px !important;
+    max-width: 115px !important;
+}
+
+body[data-route="List/Item/List"] .list-row-col:nth-child(2) {
+    flex: 0 0 85px !important;
+    max-width: 85px !important;
+}
+
+body[data-route="List/Item/List"] .list-row-col:nth-child(3) {
+    flex: 0 0 150px !important;
+    max-width: 150px !important;
+}
+
+body[data-route="List/Item/List"] .list-row-col:nth-child(4) {
+    flex: 0 0 140px !important;
+    max-width: 140px !important;
+}
+
+body[data-route="List/Item/List"] .list-row-col:nth-child(5) {
+    flex: 0 0 150px !important;
+    max-width: 150px !important;
+}
+
+body[data-route="List/Item/List"] .list-row-col:nth-child(6) {
+    flex: 0 0 100px !important;
+    max-width: 100px !important;
+}

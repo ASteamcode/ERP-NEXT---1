@@ -276,3 +276,10 @@ fixtures = [
         ]
     }
 ]
+doctype_list_js = {
+    "Item": "public/js/item_list.js"
+}
+
+app_include_css = [
+    "/assets/erp_next_custom/css/item_list.css"
+]
