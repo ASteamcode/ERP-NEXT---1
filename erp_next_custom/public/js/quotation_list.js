@@ -14,16 +14,16 @@ const Q_STATUS_META = {
 };
 
 const Q_COLS = [
-    { field: "name",                        label: "Quotation #",  type: "id",       fr: 1.4 },
-    { field: "status",                      label: "Status",       type: "status",   fr: 1.0 },
-    { field: "transaction_date",            label: "Date",         type: "date",     fr: 0.9 },
-    { field: "valid_till",                  label: "Valid Till",   type: "date",     fr: 0.9 },
-    { field: "customer_name",               label: "Client",       type: "text",     fr: 1.6 },
-    { field: "grand_total",                 label: "Total",        type: "currency", fr: 1.0 },
-    { field: "custom_crm_log",              label: "CRM Log",      type: "link",     fr: 1.1, link_doctype: "CRM Log"             },
-    { field: "custom_lead",                 label: "Lead",         type: "link",     fr: 1.1, link_doctype: "Lead"                },
-    { field: "custom_site_survey",          label: "Site Survey",  type: "link",     fr: 1.1, link_doctype: "Site Survey"         },
-    { field: "custom_measurement_take_off", label: "MTO",          type: "link",     fr: 1.1, link_doctype: "Measurement Take Off"},
+    { field: "name",                        label: "Quotation #",  type: "id",       width: 160 },
+    { field: "status",                      label: "Status",       type: "status",   width: 120 },
+    { field: "transaction_date",            label: "Date",         type: "date",     width: 110 },
+    { field: "valid_till",                  label: "Valid Till",   type: "date",     width: 110 },
+    { field: "customer_name",               label: "Client",       type: "text",     width: 180 },
+    { field: "grand_total",                 label: "Total",        type: "currency", width: 130 },
+    { field: "custom_crm_log",              label: "CRM Log",      type: "link",     width: 130, link_doctype: "CRM Log"             },
+    { field: "custom_lead",                 label: "Lead",         type: "link",     width: 130, link_doctype: "Lead"                },
+    { field: "custom_site_survey",          label: "Site Survey",  type: "link",     width: 130, link_doctype: "Site Survey"         },
+    { field: "custom_measurement_take_off", label: "MTO",          type: "link",     width: 130, link_doctype: "Measurement Take Off"},
 ];
 
 const _Q_COL_WIDTHS = {};
@@ -80,12 +80,12 @@ function _q_paint(listview, host, rows) {
     });
 
     const grid = document.createElement("div");
-    grid.className = "gl-grid gl-grid--fill";
+    grid.className = "gl-grid gl-grid--scroll";
     grid.style.gridTemplateColumns = getTpl();
     grid.innerHTML = html.join("");
 
     host.innerHTML = "";
-    host.className = "gl-host";
+    host.className = "gl-host gl-host--scroll";
     host.appendChild(toolbar);
     host.appendChild(grid);
 
