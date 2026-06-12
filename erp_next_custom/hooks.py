@@ -26,7 +26,12 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+app_include_js = [
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/grid_core.js",
+    "/assets/erp_next_custom/js/frappe_drawing.js",
+]
+        
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -44,7 +49,13 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Contact": "public/js/contacts_list.js",
+    "Lead": "public/js/leads_list.js",
+    "Quotation": "public/js/quotation_list.js",
+}
+
+after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -257,10 +268,6 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {
-        "dt": "Workspace",
-        "filters": [
-            ["module", "=", "CRM"]
-        ]
-    }
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
 ]

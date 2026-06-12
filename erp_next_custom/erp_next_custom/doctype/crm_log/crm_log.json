@@ -6,7 +6,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_pajl",
   "status",
+  "category",
   "date",
   "user",
   "assigned_to",
@@ -18,11 +20,18 @@
   "mobile",
   "tel",
   "email",
+  "attachments",
+  "column_break_wxee",
+  "site_location",
+  "loc_country",
+  "loc_district",
+  "loc_city",
+  "loc_street",
+  "google_maps_url",
   "description",
   "updates",
-  "site_location",
-  "google_maps_url",
-  "attachments"
+  "drawing",
+  "has_drawing"
  ],
  "fields": [
   {
@@ -32,6 +41,7 @@
    "options": "Open\nScheduled\nViewed\nCancelled\nDone"
   },
   {
+   "default": "Now",
    "fieldname": "date",
    "fieldtype": "Datetime",
    "label": "Created"
@@ -58,16 +68,16 @@
    "fieldname": "prefix",
    "fieldtype": "Select",
    "label": "Pre",
-   "options": "Mr\nMs\nMrs\nDr"
+   "options": "Mr\nMs\nMrs\nDr\nEng\nArch"
   },
   {
    "fieldname": "first_name",
-   "fieldtype": "Text",
+   "fieldtype": "Data",
    "label": "Name"
   },
   {
    "fieldname": "last_name",
-   "fieldtype": "Text",
+   "fieldtype": "Data",
    "label": "Surname"
   },
   {
@@ -113,14 +123,63 @@
   },
   {
    "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Files",
+   "options": "CRM Log Attachment"
+  },
+  {
+   "fieldname": "column_break_wxee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Lebanon",
+   "fieldname": "loc_country",
    "fieldtype": "Data",
-   "label": "Files"
+   "label": "Country"
+  },
+  {
+   "fieldname": "loc_district",
+   "fieldtype": "Data",
+   "label": "District"
+  },
+  {
+   "fieldname": "loc_city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "loc_street",
+   "fieldtype": "Data",
+   "label": "Street"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Lead\nSite Surveys\nMeasurements Take Off\nEstimation\nQuotation"
+  },
+  {
+   "fieldname": "section_break_pajl",
+   "fieldtype": "Section Break",
+   "width": "100%"
+  },
+  {
+   "fieldname": "drawing",
+   "fieldtype": "Long Text",
+   "label": "Drawing",
+   "hidden": 1
+  },
+  {
+   "fieldname": "has_drawing",
+   "fieldtype": "Check",
+   "label": "Has Drawing",
+   "default": "0"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-08 16:31:49.504631",
+ "modified": "2026-06-11 09:50:59.362800",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "CRM Log",
