@@ -1,0 +1,17 @@
+[
+ {
+  "allow_edit": 0,
+  "disable_auto_refresh": 0,
+  "disable_automatic_recency_filters": 0,
+  "disable_comment_count": 0,
+  "disable_count": 0,
+  "disable_scrolling": 0,
+  "disable_sidebar_stats": 0,
+  "docstatus": 0,
+  "doctype": "List View Settings",
+  "fields": "[{\"fieldname\": \"item_code\", \"label\": \"ID\"}, {\"fieldname\": \"item_name\", \"label\": \"Item Name\"}, {\"fieldname\": \"custom_arabic_name\", \"label\": \"Arabic Name\"}, {\"fieldname\": \"item_group\", \"label\": \"Function / Use\"}, {\"fieldname\": \"custom_length__size\", \"label\": \"Length / Size\"}]",
+  "modified": "2026-06-11 22:13:11.030555",
+  "name": "Item",
+  "show_tags": 0
+ }
+]

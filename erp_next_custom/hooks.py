@@ -274,6 +274,14 @@ fixtures = [
         "filters": [
             ["doc_type", "in", ["Item"]]
         ]
+    },
+	{
+        "dt": "List View Settings",
+        "filters": [["name", "in", ["Item"]]]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [["dt", "in", ["Item", "Stock Entry"]]]
     }
 ]
 doctype_list_js = {

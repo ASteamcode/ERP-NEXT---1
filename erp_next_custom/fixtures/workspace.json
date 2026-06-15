@@ -1,24 +1,25 @@
 [
  {
+  "app": "erpnext",
   "charts": [
    {
     "chart_name": "Won Opportunities",
-    "label": "Won Opportunities",
-    "parent": "CRM",
-    "parentfield": "charts",
-    "parenttype": "Workspace"
+    "label": "Won Opportunities"
    }
   ],
   "content": "[{\"id\":\"4jhDsfZ7EP\",\"type\":\"header\",\"data\":{\"text\":\"This module is scheduled for deprecation and will be completely removed in version 17, please use <a href=\\\"https://frappe.io/crm\\\">Frappe CRM</a> instead.\",\"col\":12}},{\"id\":\"-bzBQ_IbL9\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Won Opportunities\",\"col\":12}},{\"id\":\"LdM1QgUnqU\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"New Lead (Last 1 Month)\",\"col\":4}},{\"id\":\"X23-SXBcYG\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"New Opportunity (Last 1 Month)\",\"col\":4}},{\"id\":\"3rm7fH52M-\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Won Opportunity (Last 1 Month)\",\"col\":4}},{\"id\":\"K6a2Kh5Zav\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
+  "external_link": null,
   "for_user": "",
   "hide_custom": 0,
   "icon": "crm",
   "indicator_color": null,
   "is_hidden": 0,
   "label": "CRM",
+  "link_to": null,
+  "link_type": null,
   "links": [
    {
     "dependencies": "Lead",
@@ -32,9 +33,6 @@
     "link_type": "Report",
     "onboard": 1,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -50,9 +48,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -68,9 +63,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -86,9 +78,6 @@
     "link_type": "Page",
     "onboard": 1,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -104,9 +93,6 @@
     "link_type": "Report",
     "onboard": 1,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -122,9 +108,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -140,9 +123,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -158,9 +138,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -176,9 +153,6 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -194,9 +168,6 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -212,9 +183,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -230,9 +198,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -248,9 +213,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Card Break"
    },
@@ -266,9 +228,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -284,9 +243,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -302,9 +258,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -320,9 +273,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -338,9 +288,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -356,9 +303,6 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    },
@@ -374,37 +318,25 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "CRM",
-    "parentfield": "links",
-    "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
    }
   ],
-  "modified": "2026-01-03 15:05:23.983099",
+  "modified": "2026-06-14 20:31:00.461947",
   "module": "CRM",
   "name": "CRM",
   "number_cards": [
    {
     "label": "New Lead (Last 1 Month)",
-    "number_card_name": "New Lead (Last 1 Month)",
-    "parent": "CRM",
-    "parentfield": "number_cards",
-    "parenttype": "Workspace"
+    "number_card_name": "New Lead (Last 1 Month)"
    },
    {
     "label": "New Opportunity (Last 1 Month)",
-    "number_card_name": "New Opportunity (Last 1 Month)",
-    "parent": "CRM",
-    "parentfield": "number_cards",
-    "parenttype": "Workspace"
+    "number_card_name": "New Opportunity (Last 1 Month)"
    },
    {
     "label": "Won Opportunity (Last 1 Month)",
-    "number_card_name": "Won Opportunity (Last 1 Month)",
-    "parent": "CRM",
-    "parentfield": "number_cards",
-    "parenttype": "Workspace"
+    "number_card_name": "Won Opportunity (Last 1 Month)"
    }
   ],
   "parent_page": "",
@@ -414,6 +346,7 @@
   "roles": [],
   "sequence_id": 17.0,
   "shortcuts": [],
-  "title": "CRM"
+  "title": "CRM",
+  "type": "Workspace"
  }
 ]
