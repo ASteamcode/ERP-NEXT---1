@@ -1,1375 +1,181 @@
-// CRM Log — Custom Spreadsheet Grid
-// Fully replaces Frappe's native list-row renderer with a self-rendered grid.
-// ─────────────────────────────────────────────────────────────────────────────
+// CRM Log — List View (built on GL)
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS & CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Single source of truth for column layout. `type` drives cell rendering. */
 const CRM_COLUMNS = [
-	{ field: "status",          label: "Status",        type: "select",  width: 120, options: ["Open", "Scheduled", "Viewed", "Cancelled", "Done"] },
-	{ field: "category",        label: "Category",      type: "select",  width: 150, options: ["Lead", "Site Surveys", "Measurements Take Off", "Estimation", "Quotation"] },
-	{ field: "date",            label: "Created",       type: "date",    width: 130 },
-	{ field: "user",            label: "User",          type: "avatar",  width: 60  },
-	{ field: "assigned_to",     label: "To",            type: "avatar",  width: 60, variant: "grey" },
-	{ field: "log_type",        label: "Type",          type: "select",  width: 130, options: ["Inbound call", "Quotation", "Field", "Job", "Transport", "Yard"] },
-	{ field: "prefix",          label: "Pre",           type: "select",  width: 64,  options: ["Mr", "Ms", "Mrs", "Dr", "Eng", "Arch"] },
-	{ field: "first_name",      label: "Name",          type: "text",    width: 120 },
-	{ field: "last_name",       label: "Surname",       type: "text",    width: 120 },
-	{ field: "company_name",    label: "Company",       type: "text",    width: 140 },
-	{ field: "mobile",          label: "Mobile",        type: "tel",     width: 130 },
-	{ field: "tel",             label: "Tel",           type: "tel",     width: 120 },
-	{ field: "email",           label: "Email",         type: "email",   width: 180 },
-	{ field: "description",     label: "Description",   type: "area",    width: 280 },
-	{ field: "updates",         label: "Update(s)",     type: "area",    width: 280 },
-	{ field: "site_location",   label: "Site Location", type: "text",    width: 120 },
-	{ field: "google_maps_url", label: "Maps",          type: "maps",    width: 130 },
-	{ field: "attachments",     label: "Files",         type: "attach",  width: 52  },
-	{ field: "drawing",         label: "Drawing",       type: "drawing", width: 52  },
+	{ field: "status",          label: "Status",        type: "select",   width: 120, options: ["Open", "Scheduled", "Viewed", "Cancelled", "Done"] },
+	{ field: "category",        label: "Category",      type: "select",   width: 150, options: ["Lead", "Site Surveys", "Measurements Take Off", "Estimation", "Quotation"] },
+	{ field: "date",            label: "Created",       type: "date",     width: 130 },
+	{ field: "user",            label: "User",          type: "avatar",   width: 60,  link_doctype: "User",     link_namefield: "full_name" },
+	{ field: "assigned_to",     label: "To",            type: "avatar",   width: 60,  link_doctype: "Employee", link_namefield: "employee_name", variant: "grey" },
+	{ field: "log_type",        label: "Type",          type: "select",   width: 130, options: ["Inbound call", "Quotation", "Field", "Job", "Transport", "Yard"] },
+	{ field: "prefix",          label: "Pre",           type: "select",   width: 64,  options: ["Mr", "Ms", "Mrs", "Dr", "Eng", "Arch"] },
+	{ field: "first_name",      label: "Name",          type: "text",     width: 120 },
+	{ field: "last_name",       label: "Surname",       type: "text",     width: 120 },
+	{ field: "company_name",    label: "Company",       type: "text",     width: 140 },
+	{ field: "mobile",          label: "Mobile",        type: "tel",      width: 130 },
+	{ field: "tel",             label: "Tel",           type: "tel",      width: 120 },
+	{ field: "email",           label: "Email",         type: "email",    width: 180 },
+	{ field: "description",     label: "Description",   type: "area",     width: 280 },
+	{ field: "updates",         label: "Update(s)",     type: "area",     width: 280 },
+	{ field: "site_location",   label: "Site Location", type: "text",     width: 120 },
+	{ field: "google_maps_url", label: "Maps",          type: "maps",     width: 130 },
+	{ field: "attachments",     label: "Files",         type: "attach",   width: 52  },
+	{ field: "drawing",         label: "Drawing",       type: "drawing",  width: 52  },
 ];
 
-const CRM_ATTACH_DOCTYPE    = "CRM Log Attachment";
-const CRM_ATTACH_TABLE_FIELD = "attachments";
-const CRM_COL_WIDTH_KEY     = "crm_log_col_widths";
-const CRM_STYLE_VERSION     = "v14"; // bump whenever styles change
-
-/**
- * Fields to pass to `add_fields`. Excludes `attachments` (child table fetched
- * separately) and appends `name` which is always needed.
- */
-const CRM_FIELDS = [
-	...CRM_COLUMNS.filter(c => !["attachments","drawing"].includes(c.field)).map(c => c.field),
-	"name",
-	"attachments",
-	"has_drawing",
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COLUMN-WIDTH PERSISTENCE
-// User-set widths survive page reloads via localStorage. A column only gets an
-// entry once the user drags its resize handle; no entry → auto-fit.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CRM_COL_WIDTHS = (() => {
-	try {
-		const parsed = JSON.parse(localStorage.getItem(CRM_COL_WIDTH_KEY) || "{}");
-		return Object.fromEntries(
-			Object.entries(parsed).filter(([, v]) => typeof v === "number")
-		);
-	} catch {
-		return {};
-	}
-})();
-
-const crm_stored_col_width = (field) =>
-	typeof CRM_COL_WIDTHS[field] === "number" ? CRM_COL_WIDTHS[field] : null;
-
-const crm_persist_col_widths = () => {
-	try { localStorage.setItem(CRM_COL_WIDTH_KEY, JSON.stringify(CRM_COL_WIDTHS)); } catch { /* noop */ }
+const CRM_LINK_CONFIG = {
+	User: {
+		doctype: "User", fields: ["name", "full_name", "email"],
+		searchfield: "full_name", primary: "full_name", sub: "email", id: "name",
+	},
+	Employee: {
+		doctype: "Employee", fields: ["name", "employee_name", "company"],
+		searchfield: "employee_name", primary: "employee_name", sub: "company", id: "name",
+	},
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FRAPPE LIST SETTINGS
-// ─────────────────────────────────────────────────────────────────────────────
+const CRM_ADD_FIELDS = [
+	...CRM_COLUMNS.filter(c => c.field !== "drawing").map(c => c.field),
+	"name", "has_drawing",
+];
 
 frappe.listview_settings["CRM Log"] = {
 	hide_name_column: true,
-	add_fields: CRM_FIELDS,
+	add_fields: CRM_ADD_FIELDS,
 
 	onload(listview) {
-		crm_inject_styles();
-		crm_suppress_native_refresh(listview);
+		GL.suppressRefresh(listview);
 	},
 
 	refresh(listview) {
-		crm_inject_styles();
-		crm_render_grid(listview);
+		GL.suppressRefresh(listview);
+		GL.hideNative(listview);
+
+		const lnc     = GL.makeLinkNameCache();
+		const cw      = GL.makeColWidths("crm_log_col_widths");
+		const attCnt  = GL.makeCountCache();
+		const host    = GL.bootstrap(listview, { doctype: "CRM Log" });
+		if (!host) return;
+
+		// Pre-seed link-name cache from already-loaded data
+		(listview.data || []).forEach(doc => {
+			CRM_COLUMNS.filter(c => c.type === "avatar").forEach(c => {
+				if (doc[c.field]) {
+					const known = lnc.get(c.link_doctype, doc[c.field]);
+					if (!known) lnc.resolve(c.link_doctype, doc[c.field], c.link_namefield);
+				}
+			});
+		});
+		lnc.onResolve = () => crm_render(listview, host, lnc, cw, attCnt);
+
+		crm_render(listview, host, lnc, cw, attCnt);
 	},
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SUPPRESS NATIVE AUTO-REFRESH
-// Stops two things that would re-render behind our back:
-//   1) The periodic auto-refresh timer.
-//   2) The realtime "list_update" subscription (fires on any CRM Log change).
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────────────────
 
-function crm_suppress_native_refresh(listview) {
-	if (listview.auto_refresh) {
-		try { clearInterval(listview.auto_refresh); } catch { /* noop */ }
-		listview.auto_refresh = null;
-	}
-	if (typeof listview.setup_auto_refresh === "function") {
-		listview.setup_auto_refresh = () => {};
-	}
+function crm_render(listview, host, lnc, cw, attCnt) {
+	const rows  = listview.data || [];
+	const getTpl = () => GL.gridTpl(CRM_COLUMNS, cw.widths);
+	const saveFn = (name, field, value) => GL.fastSave("CRM Log", name, field, value);
 
-	try { frappe.realtime.off("list_update"); } catch { /* noop */ }
-
-	if (listview.on_doctype_update) {
-		listview.on_doctype_update = () => {};
-	}
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GRID RENDERING
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_render_grid(listview) {
-	_CRM_EDITING_ROW = null; // re-render always starts with no row in edit mode
-	_CRM_CURRENT_LISTVIEW = listview; // used by lazy link-name resolution
-	const $result = listview.$result;
-	if (!$result?.length) return;
-
-	_hide_native_list(listview, $result);
-
-	const $host = _get_or_create_host($result);
-	$host.empty();
-
-	const data = listview.data || [];
-	const shell = _build_grid_shell(data);
-
-	const toolbar = _build_toolbar();
-	$host.append(toolbar).append(shell);
-
-	crm_bind_events(listview, shell, $host);
-}
-
-function _hide_native_list(listview, $result) {
-	$result.find(
-		".result-list, .list-row-head, .list-row-container, .list-row, .no-result"
-	).hide();
-	listview.$page.find(".list-row-head, .list-headers").hide();
-}
-
-function _get_or_create_host($result) {
-	let $host = $result.closest("[data-page-route]").find(".crm-grid-host");
-	if (!$host.length) {
-		$host = $(`<div class="crm-grid-host"></div>`);
-		$result.before($host);
-	}
-	return $host;
-}
-
-function _build_grid_shell(data) {
-	const shell = document.createElement("div");
-	shell.className = "crm-grid-shell";
-
-	// Fixed px tracks prevent the "stacked into one column" browser bug.
-	// Track 0 = row-number gutter; tracks 1…N = data columns.
-	const tracks = [
-		"42px",
-		...CRM_COLUMNS.map(col => `${crm_stored_col_width(col.field) || col.width || 120}px`),
-	];
-	shell.style.gridTemplateColumns = tracks.join(" ");
-
-	shell.innerHTML = _build_header_html() + _build_body_html(data);
-	return shell;
-}
-
-function _build_header_html() {
-	const cells = CRM_COLUMNS.map(col =>
-		`<div class="crm-grid-cell crm-grid-headcell" data-field="${col.field}">
-			${__(col.label)}
-			<span class="crm-col-resize" data-field="${col.field}"></span>
-		</div>`
-	).join("");
-	return `<div class="crm-grid-cell crm-grid-rownum crm-grid-headcell">#</div>${cells}`;
-}
-
-function _build_body_html(data) {
-	if (!data.length) {
-		return `<div class="crm-grid-empty" style="grid-column:1 / -1">${__("No records yet — add your first row below.")}</div>`;
-	}
-	return data.map((doc, i) => _build_row_html(doc, i)).join("");
-}
-
-function _build_row_html(doc, index) {
-	const cells = CRM_COLUMNS.map(col =>
-		`<div class="crm-grid-cell crm-data-cell" data-row="${doc.name}" data-field="${col.field}">${crm_render_cell(col, doc)}</div>`
+	// Build grid HTML
+	const headerCells = CRM_COLUMNS.map((c, i) =>
+		`<div class="gl-cell gl-hdr" style="justify-content:${c.type==='avatar'||c.type==='attach'||c.type==='drawing'?'center':'flex-start'}">` +
+		`${__(c.label)}<div class="gl-rh" data-col="${i}"></div></div>`
 	).join("");
 
-	return `
-		<div class="crm-grid-cell crm-grid-rownum" data-row="${doc.name}">
-			<span class="crm-rownum-text">${index + 1}</span>
-			<button class="crm-row-del" data-name="${doc.name}" title="${__("Delete row")}">×</button>
-		</div>
-		${cells}`;
+	const bodyHtml = rows.length
+		? rows.map((doc, ri) =>
+			GL.rnCell(doc, ri) +
+			CRM_COLUMNS.map(c => `<div class="gl-cell" data-name="${doc.name}">${crm_cell(c, doc, lnc, attCnt)}</div>`).join("")
+		).join("")
+		: `<div class="gl-empty" style="grid-column:1/-1">${__("No records")}</div>`;
+
+	host.innerHTML =
+		`<div class="gl-toolbar">` +
+		`<button class="btn btn-sm btn-primary gl-add-btn"><span class="gl-add-icon">+</span> ${__("New CRM Log")}</button>` +
+		`</div>` +
+		`<div class="gl-grid gl-grid--scroll" style="grid-template-columns:${getTpl()}">` +
+		GL.rnHeader() + headerCells + bodyHtml +
+		`</div>`;
+
+	const $host = $(host);
+	const $grid = $host.find(".gl-grid");
+	const esm   = GL.editState($grid);
+
+	GL.bindHover($grid);
+	GL.bindDelete($grid, "CRM Log", listview, () => crm_render(listview, host, lnc, cw, attCnt));
+	GL.bindColResize($grid, CRM_COLUMNS, cw.widths, getTpl, cw.save);
+	GL.bindOutsideClick($grid, esm, "crm");
+	GL.bindTextEdit($grid, rows, saveFn, esm);
+	GL.bindDateEdit($grid, rows, saveFn, esm);
+	GL.bindSelectChange($grid, rows, saveFn);
+	GL.bindAreaAutogrow($grid);
+	GL.bindAreaSave($grid, rows, saveFn);
+	GL.bindMapsToggle($grid);
+	GL.bindMapsEdit($grid, rows, saveFn);
+	GL.bindAvatarAutocomplete($grid, CRM_LINK_CONFIG, crm_avatar_save(listview, host, lnc, cw, attCnt), lnc);
+	GL.bindDrawings($grid, { doctype: "CRM Log", drawingField: "drawing", hasDrawingField: "has_drawing" }, listview,
+		() => crm_render(listview, host, lnc, cw, attCnt));
+	GL.bindAttachments($grid, {
+		doctype: "CRM Log", attachDoctype: "CRM Log Attachment",
+		attachTableField: "attachments", attachCounts: attCnt, uploadable: false,
+	}, listview, () => crm_render(listview, host, lnc, cw, attCnt));
+
+	GL.bindAddRow($host, () => crm_add_row(listview, host, lnc, cw, attCnt));
 }
 
-function _build_toolbar() {
-	const toolbar = document.createElement("div");
-	toolbar.className = "crm-grid-toolbar";
-	toolbar.innerHTML = `
-		<button class="btn btn-default btn-sm crm-add-row-btn">
-			<span class="crm-add-icon">+</span> ${__("Add Row")}
-		</button>`;
-	return toolbar;
-}
+// ── Cell renderer dispatch ────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CELL RENDERERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_render_cell(col, doc) {
-	const raw  = doc[col.field];
-	const name = doc.name;
-
+function crm_cell(col, doc, lnc, attCnt) {
+	const raw = doc[col.field];
 	switch (col.type) {
-		case "select":  return _render_select(col, name, raw);
-		case "avatar":  return _render_avatar(col, name, raw);
-		case "date":    return _render_date(raw);
-		case "maps":    return _render_maps(col, name, raw);
-		case "area":    return _render_area(col, name, raw);
-		case "attach":  return _render_attach(name, raw);
-		case "drawing": return frappe_drawing.render_btn(name, doc.has_drawing);
-		default:        return _render_text(col, name, raw);
+		case "select":  return GL.renderSelect(col, doc.name, raw);
+		case "date":    return GL.renderDate(col, doc.name, raw);
+		case "avatar":  return GL.renderAvatar(col, doc.name, raw, lnc);
+		case "maps":    return GL.renderMaps(col, doc.name, raw);
+		case "area":    return GL.renderArea(col, doc.name, raw);
+		case "attach":  return GL.renderAttachBtn(doc.name, attCnt.fromRaw(doc.name, raw));
+		case "drawing": return GL.renderDrawingBtn(doc.name, doc.has_drawing);
+		default:        return GL.renderText(col, doc.name, raw, col.type);
 	}
 }
 
-function _render_select(col, name, raw) {
-	const hasValue = col.options.includes(raw);
-	// When nothing valid is stored, prepend a selected blank option so the cell
-	// shows empty instead of defaulting to the first option (which would be
-	// misleading and risk an accidental save of that first value).
-	const blank = hasValue ? "" : `<option value="" selected></option>`;
-	const opts  = col.options.map(o =>
-		`<option value="${o}"${o === raw ? " selected" : ""}>${__(o)}</option>`
-	).join("");
-	return `<select class="crm-cell-input crm-cell-select" data-name="${name}" data-field="${col.field}">${blank}${opts}</select>`;
-}
+// ── Avatar save (upsert path) ─────────────────────────────────────────────────
+// Returns a saveFn suitable for bindAvatarAutocomplete.
+// CRM Log uses upsertUser for the "user" field and upsertEmployee for "assigned_to".
 
-// Link-target id → readable name cache. `user`/`assigned_to` are Link fields,
-// so the row stores an id like "HR-EMP-0001". We resolve it to a name for
-// display. The cache is filled by the autocomplete dropdown and lazily by
-// _resolve_link_name below; misses trigger a one-off fetch then a repaint.
-const _CRM_LINK_NAMES = new Map();
-const _CRM_LINK_PENDING = new Set();
-let _CRM_CURRENT_LISTVIEW = null; // set each render so resolvers can repaint
-
-// Per-field config for resolving a stored id to its display name.
-const CRM_LINK_FIELDS = {
-	user:        { doctype: "User",     namefield: "full_name" },
-	assigned_to: { doctype: "Employee", namefield: "employee_name" },
-};
-
-/**
- * Returns the readable name for a stored link id, or null if not yet known.
- * On a cache miss, fires a single fetch and re-renders the grid when it lands.
- */
-function _resolve_link_name(fieldname, id) {
-	const cfg = CRM_LINK_FIELDS[fieldname];
-	if (!cfg || !id) return null;
-
-	const key = `${cfg.doctype}::${id}`;
-	if (_CRM_LINK_NAMES.has(key)) return _CRM_LINK_NAMES.get(key);
-
-	if (!_CRM_LINK_PENDING.has(key)) {
-		_CRM_LINK_PENDING.add(key);
-		frappe.db.get_value(cfg.doctype, id, cfg.namefield, (r) => {
-			_CRM_LINK_PENDING.delete(key);
-			_CRM_LINK_NAMES.set(key, r?.[cfg.namefield] || id);
-			if (_CRM_CURRENT_LISTVIEW) crm_render_grid(_CRM_CURRENT_LISTVIEW); // repaint
-		});
-	}
-	return null; // unknown for now → show id this pass, repaint follows
-}
-
-function _render_avatar(col, name, raw) {
-	// `raw` is the stored Link id. Resolve it to a readable name for display.
-	const display     = raw ? (_resolve_link_name(col.field, raw) || raw) : "";
-	const initial     = display ? display.charAt(0).toUpperCase() : "?";
-	const hue         = display ? [...display].reduce((a, c) => a + c.charCodeAt(0), 0) % 360 : 210;
-	const isGrey      = col.variant === "grey";
-	const avatarClass = isGrey ? "crm-avatar crm-avatar--grey" : "crm-avatar";
-	const hueStyle    = isGrey ? "" : `style="--h:${hue}"`;
-	const placeholder = isGrey ? "employee…" : "user…";
-	// data-link tells the autocomplete binder which doctype to search.
-	const linkType    = isGrey ? "Employee" : "User";
-
-	return `
-		<div class="crm-avatar-wrap">
-			<div class="${avatarClass}" ${hueStyle} title="${frappe.utils.escape_html(display)}">${initial}</div>
-			<input type="text" class="crm-cell-input crm-avatar-input"
-				data-name="${name}" data-field="${col.field}" data-link="${linkType}"
-				value="${frappe.utils.escape_html(display)}"
-				placeholder="${placeholder}" autocomplete="off">
-		</div>`;
-}
-
-function _render_date(raw) {
-	return `<div class="crm-cell-date" title="${frappe.utils.escape_html(raw || "")}">${crm_fmt_date(raw)}</div>`;
-}
-
-const SVG = {
-	map: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-	pen: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
-	clip: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`,
-	file: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-};
-
-function _render_maps(col, name, raw) {
-	const escaped = frappe.utils.escape_html(raw || "");
-	const mapBtn  = raw
-		? `<a href="${escaped}" target="_blank" class="crm-icon-btn crm-map-open" title="Open map">${SVG.map}</a>`
-		: `<span class="crm-icon-btn crm-map-open crm-icon-btn--disabled" title="No URL set">${SVG.map}</span>`;
-
-	return `
-		<div class="crm-map-cell">
-			<span class="crm-map-display" title="${escaped}">${raw ? "URL set" : "<span class='crm-muted-text'>No URL</span>"}</span>
-			<input type="text" class="crm-cell-input crm-map-input"
-				data-name="${name}" data-field="${col.field}"
-				value="${escaped}" placeholder="Paste Google Maps URL..." style="display:none">
-			<button class="crm-icon-btn crm-map-pen" data-name="${name}" title="Edit URL">${SVG.pen}</button>
-			${mapBtn}
-		</div>`;
-}
-
-function _render_area(col, name, raw) {
-	return `<textarea class="crm-cell-input crm-cell-area"
-		data-name="${name}" data-field="${col.field}"
-		rows="1" placeholder="…">${frappe.utils.escape_html(raw || "")}</textarea>`;
-}
-
-// Tracks which row is currently in inline-edit mode.
-// Reset on every grid re-render so stale state never leaks across refreshes.
-let _CRM_EDITING_ROW = null;
-
-function _set_editing_row($shell, docname) {
-	if (_CRM_EDITING_ROW === docname) return;
-	_clear_editing_row($shell);
-	_CRM_EDITING_ROW = docname;
-	if (docname) {
-		$shell.find(`.crm-grid-cell[data-row="${docname}"]`).addClass("crm-row--editing");
-	}
-}
-
-function _clear_editing_row($shell) {
-	if (_CRM_EDITING_ROW) {
-		$shell.find(`.crm-grid-cell[data-row="${_CRM_EDITING_ROW}"]`).removeClass("crm-row--editing");
-	}
-	_CRM_EDITING_ROW = null;
-}
-
-// Attachment counts survive list refreshes here. `add_fields` does NOT return
-// child table data, so `doc.attachments` is often undefined after a native
-// re-fetch — which made the badge vanish. We cache the last-known count per
-// docname (updated on dialog open and on save) and fall back to it at render.
-const _CRM_ATTACH_COUNTS = new Map();
-
-function _attach_count(name, raw) {
-	if (Array.isArray(raw)) {
-		_CRM_ATTACH_COUNTS.set(name, raw.length);
-		return raw.length;
-	}
-	return _CRM_ATTACH_COUNTS.get(name) ?? 0;
-}
-
-function _render_attach(name, raw) {
-	const count = _attach_count(name, raw);
-	const badge = count ? `<span class="crm-attach-badge">${count}</span>` : "";
-	return `<button class="crm-icon-btn crm-attach-btn" data-name="${name}" title="${count} attachment(s)">${SVG.clip}${badge}</button>`;
-}
-
-function _render_text(col, name, raw) {
-	// Display as a SPAN so the column auto-fits to real text width.
-	// Clicking activates an inline <input>; blur commits.
-	const inputType = col.type === "tel" ? "tel" : col.type === "email" ? "email" : "text";
-	const val       = frappe.utils.escape_html(raw || "");
-	const display   = raw ? val : `<span class="crm-cell-placeholder">${__(col.label)}</span>`;
-
-	return `<span class="crm-cell-display"
-		data-name="${name}" data-field="${col.field}" data-type="${inputType}"
-		tabindex="0" title="${val}">${display}</span>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EVENT BINDING
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_bind_events(listview, shell, $host) {
-	const $shell = $(shell);
-
-	_bind_row_hover($shell);
-	_bind_textarea_autogrow($shell);
-	_init_last_saved_vals($shell);
-
-	const handle_update = _make_update_handler(listview);
-	$shell.on("change.crm", ".crm-cell-select", handle_update);
-	$shell.on("blur.crm",   ".crm-cell-input:not(.crm-cell-select):not([data-inline])", handle_update);
-	$shell.on("keydown.crm", "input.crm-cell-input", (e) => {
-		if (e.key === "Enter") { e.preventDefault(); $(e.currentTarget).blur(); }
-	});
-
-	_bind_click_to_edit($shell, listview, handle_update);
-	_bind_link_autocomplete($shell, listview);
-	_bind_add_row($host, listview);
-	_bind_attachments($shell, listview);
-	_bind_drawings($shell, listview);
-	_bind_maps_toggle($shell);
-	_bind_delete_row($shell, listview);
-	_bind_col_resize($shell, shell);
-
-	// Deactivate row editing when user clicks anywhere outside the grid
-	$(document).off("mousedown.crmrow").on("mousedown.crmrow", function (e) {
-		if (!$(e.target).closest(".crm-grid-shell").length) {
-			_clear_editing_row($shell);
-		}
-	});
-}
-
-function _bind_row_hover($shell) {
-	$shell.on("mouseenter.crm", ".crm-grid-cell[data-row]", function () {
-		$shell.find(`.crm-grid-cell[data-row="${$(this).attr("data-row")}"]`).addClass("crm-row-hover");
-	});
-	$shell.on("mouseleave.crm", ".crm-grid-cell[data-row]", function () {
-		$shell.find(`.crm-grid-cell[data-row="${$(this).attr("data-row")}"]`).removeClass("crm-row-hover");
-	});
-}
-
-function _bind_textarea_autogrow($shell) {
-	const autogrow = function () {
-		this.style.height = "auto";
-		this.style.height = `${this.scrollHeight}px`;
-	};
-	$shell.on("input.crm", ".crm-cell-area", autogrow);
-	$shell.find(".crm-cell-area").each(autogrow);
-}
-
-function _init_last_saved_vals($shell) {
-	// Seed last-saved-val so the first blur isn't a false dirty hit.
-	$shell.find(".crm-cell-input[data-field]").each(function () {
-		$(this).data("last-saved-val", ($(this).val() || "").trim());
-	});
-}
-
-function _make_update_handler(listview) {
-	return function () {
-		const $el      = $(this);
-		const docname  = $el.attr("data-name");
-		const fieldname = $el.attr("data-field");
-		const val      = ($el.val() || "").trim();
-
-		if (!docname || !fieldname) return;
-		if ($el.data("last-saved-val") === val) return;
-
-		if (val !== "") {
-			if (fieldname === "company_name") { crm_upsert_company_and_save(docname, val, listview, $el);  return; }
-			if (fieldname === "user")         { crm_upsert_user_and_save(docname, val, listview, $el);     return; }
-			if (fieldname === "assigned_to")  { crm_upsert_employee_and_save(docname, val, listview, $el); return; }
-		}
-
-		crm_fast_save(listview, docname, fieldname, val, $el);
-	};
-}
-
-function _bind_click_to_edit($shell, listview, handle_update) {
-	const activate = ($span, typedChar) => {
-		if ($span.data("editing")) return;
-		$span.data("editing", true);
-
-		const docname   = $span.attr("data-name");
-		const fieldname = $span.attr("data-field");
-		const type      = $span.attr("data-type") || "text";
-		const current   = $span.attr("title") || "";
-
-		const $input = $(`<input type="${type}" class="crm-cell-input crm-cell-input--inline">`)
-			.val(typedChar != null ? typedChar : current)
-			.attr({ "data-name": docname, "data-field": fieldname, "data-inline": "1" })
-			.data("last-saved-val", current.trim());
-
-		$span.replaceWith($input);
-		$input.trigger("focus");
-		if (typedChar == null) $input[0].select();
-		else $input[0].setSelectionRange($input.val().length, $input.val().length);
-
-		$input.on("blur.crminline", function () {
-			const unchanged = $input.data("last-saved-val") === ($input.val() || "").trim();
-			handle_update.call(this);
-			if (unchanged) crm_render_grid(listview);
-		});
-		$input.on("keydown.crminline", (e) => {
-			if (e.key === "Enter")  { e.preventDefault(); $input.trigger("blur"); }
-			if (e.key === "Escape") {
-				e.preventDefault();
-				_clear_editing_row($shell);
-				$input.off("blur.crminline");
-				crm_render_grid(listview);
-			}
-		});
-	};
-
-	// Single click on any data cell → activate row editing state for the whole row
-	$shell.on("click.crm", ".crm-data-cell", function () {
-		_set_editing_row($shell, $(this).attr("data-row"));
-	});
-
-	// Single click on a display span within an editing row → activate inline input
-	$shell.on("click.crm", ".crm-cell-display", function () { activate($(this), null); });
-
-	// Double click on any data cell → navigate to full form view
-	$shell.on("dblclick.crm", ".crm-data-cell", function (e) {
-		e.preventDefault();
-		const docname = $(this).attr("data-row");
-		if (docname) frappe.set_route("Form", "CRM Log", docname);
-	});
-
-	$shell.on("keydown.crm", ".crm-cell-display", function (e) {
-		if (e.key === "Enter") { e.preventDefault(); activate($(this), null); }
-		else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-			e.preventDefault(); activate($(this), e.key);
-		}
-	});
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LINK-FIELD AUTOCOMPLETE (User / Employee)
-// A lightweight typeahead. As the user types into a [data-link] input we query
-// frappe.client.get_list for matching records and show a dropdown. Picking a
-// suggestion fills the input and commits via the existing blur handler. The
-// last item is always "+ Add «typed»", which creates a new record through the
-// existing upsert path (the upsert fns already link-or-create on the typed text).
-// ─────────────────────────────────────────────────────────────────────────────
-function _bind_link_autocomplete($shell, listview) {
-	let $menu = null;
-	let activeInput = null;
-	let debounceTimer = null;
-
-	const closeMenu = () => {
-		if ($menu) { $menu.remove(); $menu = null; }
-		activeInput = null;
-	};
-
-	// Maps the avatar field to its source doctype.
-	//   primary = what gets saved/displayed (the readable name)
-	//   sub     = secondary line shown in grey (email / id) for disambiguation
-	//   id      = the Link target stored in the field (record name / PK)
-	const linkConfig = {
-		User: {
-			doctype: "User",
-			fields: ["name", "full_name", "email"],
-			searchfield: "full_name",
-			primary: "full_name", sub: "email", id: "name",
-		},
-		Employee: {
-			doctype: "Employee",
-			fields: ["name", "employee_name", "company_email", "personal_email", "user_id"],
-			searchfield: "employee_name",
-			primary: "employee_name", sub: "company_email", id: "name",
-		},
-	};
-
-	const positionMenu = ($input) => {
-		const rect = $input[0].getBoundingClientRect();
-		$menu.css({
-			top:   `${rect.bottom + window.scrollY}px`,
-			left:  `${rect.left + window.scrollX}px`,
-			width: `${Math.max(rect.width, 220)}px`,
-		});
-	};
-
-	const renderMenu = ($input, results) => {
-		if (!$menu) {
-			$menu = $(`<div class="crm-ac-menu"></div>`).appendTo(document.body);
-		}
-		const items = results.map(r => {
-			const primary = frappe.utils.escape_html(r.primary);
-			const sub     = r.sub ? `<span class="crm-ac-sub">${frappe.utils.escape_html(r.sub)}</span>` : "";
-			// data-value = readable name (what we display), data-id = link target (what we store)
-			return `<div class="crm-ac-item"
-				data-value="${frappe.utils.escape_html(r.primary)}"
-				data-id="${frappe.utils.escape_html(r.id)}">
-				<span class="crm-ac-primary">${primary}</span>${sub}
-			</div>`;
-		}).join("");
-
-		if (!items) { closeMenu(); return; }
-
-		$menu.html(items);
-		positionMenu($input);
-	};
-
-	const search = ($input, typed) => {
-		const cfg = linkConfig[$input.attr("data-link")];
-		if (!cfg) return;
-
-		const filters = typed.trim()
-			? { [cfg.searchfield]: ["like", `%${typed.trim()}%`] }
-			: {};
-
-		frappe.call({
-			method: "frappe.client.get_list",
-			args: {
-				doctype: cfg.doctype,
-				fields: cfg.fields,
-				filters,
-				limit_page_length: 8,
-				order_by: `${cfg.searchfield} asc`,
-			},
-			callback: ({ message }) => {
-				if (activeInput !== $input[0]) return; // input changed/blurred meanwhile
-				const results = (message || []).map(row => {
-					const primary = row[cfg.primary] || row.name;
-					const id      = row[cfg.id] || row.name;
-					// Cache id→name so the cell can show the readable name on render.
-					_CRM_LINK_NAMES.set(`${cfg.doctype}::${id}`, primary);
-					return { primary, sub: row[cfg.sub] || "", id };
-				});
-				renderMenu($input, results);
-			},
-		});
-	};
-
-	$shell.on("input.crmac focus.crmac", ".crm-avatar-input[data-link]", function () {
-		activeInput = this;
-		const $input = $(this);
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => search($input, $input.val() || ""), 180);
-	});
-
-	// Pick a suggestion: the field is a Link, so we save the record ID. We push
-	// the ID into the input and commit via blur — the existing upsert resolves it
-	// and stores the ID. Display-as-name is handled by the renderer via the cache.
-	$(document).off("mousedown.crmac").on("mousedown.crmac", ".crm-ac-item", function (e) {
-		e.preventDefault(); // keep focus until we commit
-		if (!activeInput) return;
-		const $input = $(activeInput);
-		const id     = $(this).attr("data-id");
-		const name   = $(this).attr("data-value");
-		const cfg    = linkConfig[$input.attr("data-link")];
-		// Cache id→name now so the immediate re-render shows the readable name.
-		if (cfg) _CRM_LINK_NAMES.set(`${cfg.doctype}::${id}`, name);
-		$input.val(id); // upsert path matches an existing record by id → stores id
-		closeMenu();
-		$input.trigger("blur");
-	});
-
-	// Close the menu on outside click or when the input loses focus.
-	$shell.on("blur.crmac", ".crm-avatar-input[data-link]", () => setTimeout(closeMenu, 120));
-	$(document).off("click.crmacout").on("click.crmacout", (e) => {
-		if ($menu && !$(e.target).closest(".crm-ac-menu, .crm-avatar-input").length) closeMenu();
-	});
-}
-
-function _bind_add_row($host, listview) {
-	// Unbind first to guard against double-binding across re-renders.
-	$host.off("click.crmadd").on("click.crmadd", ".crm-add-row-btn", () => {
-		crm_add_blank_row_instantly(listview);
-	});
-}
-
-function _bind_attachments($shell, listview) {
-	$shell.on("click.crm", ".crm-attach-btn", function () {
-		crm_open_attachments_dialog(listview, $(this).attr("data-name"));
-	});
-}
-
-function _bind_drawings($shell, listview) {
-	$shell.on("click.crm", ".fd-draw-btn", function (e) {
-		e.stopPropagation();
-		const docname = $(this).attr("data-name");
-		frappe_drawing.open({
-			doctype:           "CRM Log",
-			docname,
-			drawing_field:     "drawing",
-			has_drawing_field: "has_drawing",
-			on_saved(hasShapes) {
-				const row = (listview.data || []).find(d => d.name === docname);
-				if (row) row.has_drawing = hasShapes ? 1 : 0;
-				crm_render_grid(listview);
-			},
-		});
-	});
-}
-
-function _bind_maps_toggle($shell) {
-	$shell.on("click.crm", ".crm-map-pen", function (e) {
-		e.stopPropagation();
-		const $cell    = $(this).closest(".crm-map-cell");
-		const $input   = $cell.find(".crm-map-input");
-		const $display = $cell.find(".crm-map-display");
-		const editing  = $input.is(":visible");
-
-		if (editing) {
-			$input.hide(); $display.show(); $input.blur();
+function crm_avatar_save(listview, host, lnc, cw, attCnt) {
+	return function (docname, field, value) {
+		const rerender = () => crm_render(listview, host, lnc, cw, attCnt);
+		if (field === "user") {
+			GL.upsertUser(value, id => GL.saveLinkedField("CRM Log", docname, field, id, listview, rerender));
+		} else if (field === "assigned_to") {
+			const doc = (listview.data || []).find(d => d.name === docname);
+			GL.upsertEmployee(value, doc?.company_name || "", id => GL.saveLinkedField("CRM Log", docname, field, id, listview, rerender));
 		} else {
-			$display.hide(); $input.show().focus().select();
+			GL.fastSave("CRM Log", docname, field, value).then(rerender);
 		}
-	});
+		return Promise.resolve();
+	};
 }
 
-function _bind_delete_row($shell, listview) {
-	$shell.on("click.crm", ".crm-row-del", function (e) {
-		e.stopPropagation();
-		crm_delete_row(listview, $(this).attr("data-name"));
-	});
-}
+// ── Add row ───────────────────────────────────────────────────────────────────
 
-function _bind_col_resize($shell, shell) {
-	$shell.on("mousedown.crm", ".crm-col-resize", function (e) {
-		e.preventDefault(); e.stopPropagation();
-
-		const field   = $(this).attr("data-field");
-		const startX  = e.pageX;
-		const startW  = $shell.find(`.crm-grid-headcell[data-field="${field}"]`).outerWidth();
-		const colIndex = CRM_COLUMNS.findIndex(c => c.field === field) + 1;
-
-		$("body").css("user-select", "none");
-		$shell.addClass("crm-col-resizing");
-
-		const onMove = (ev) => {
-			const newW   = Math.max(48, startW + (ev.pageX - startX));
-			const tracks = shell.style.gridTemplateColumns.split(" ");
-			tracks[colIndex] = `${newW}px`;
-			shell.style.gridTemplateColumns = tracks.join(" ");
-			CRM_COL_WIDTHS[field] = newW;
-		};
-		const onUp = () => {
-			$(document).off("mousemove.crmcol mouseup.crmcol");
-			$("body").css("user-select", "");
-			$shell.removeClass("crm-col-resizing");
-			crm_persist_col_widths();
-		};
-
-		$(document).on("mousemove.crmcol", onMove).on("mouseup.crmcol", onUp);
-	});
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CRUD OPERATIONS
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_add_blank_row_instantly(listview) {
+function crm_add_row(listview, host, lnc, cw, attCnt) {
 	frappe.call({
 		method: "frappe.client.insert",
-		args: {
-			doc: { doctype: "CRM Log", status: "Open", date: frappe.datetime.now_datetime() },
-		},
-		callback: ({ exc, message }) => {
-			if (exc || !message) return;
-			frappe.show_alert({ message: __("New Row Added"), indicator: "green" }, 1.2);
-			// Push straight into local data and re-render — avoids the async gap
-			// that listview.refresh() opens, which collapses the grid briefly.
-			if (!Array.isArray(listview.data)) listview.data = [];
-			listview.data.push(message);
-			crm_render_grid(listview);
-		},
-	});
-}
-
-function crm_delete_row(listview, docname) {
-	frappe.confirm(__("Delete row {0}? This cannot be undone.", [docname]), () => {
-		frappe.call({
-			method: "frappe.client.delete",
-			args: { doctype: "CRM Log", name: docname },
-			callback: ({ exc }) => {
-				if (exc) return;
-				frappe.show_alert({ message: __("Row deleted"), indicator: "red" }, 1.2);
-				listview.data = (listview.data || []).filter(d => d.name !== docname);
-				crm_render_grid(listview);
-			},
-		});
-	});
-}
-
-// Tracks in-flight saves keyed by "docname::fieldname".
-// Any call that arrives while a save is already in flight for the same field
-// is dropped — the value will be correct because crm_apply_local_update writes
-// it into listview.data and re-renders immediately on the first response.
-const _CRM_SAVING = new Set();
-
-function crm_fast_save(listview, docname, fieldname, val, $el) {
-	const key = `${docname}::${fieldname}`;
-	if (_CRM_SAVING.has(key)) return;
-	_CRM_SAVING.add(key);
-
-	frappe.call({
-		method: "frappe.client.set_value",
-		args: { doctype: "CRM Log", name: docname, fieldname, value: val },
-		callback: ({ exc }) => {
-			_CRM_SAVING.delete(key);
-			if (exc) return;
-			if ($el) $el.data("last-saved-val", val);
-			frappe.show_alert({ message: __("Saved"), indicator: "green" }, 0.8);
-			crm_apply_local_update(listview, docname, fieldname, val);
-		},
-		error: () => _CRM_SAVING.delete(key),
-	});
-}
-
-/**
- * Patches the local row and re-renders in place.
- * No page reload, no native list refresh — no flash, no scroll jump.
- */
-function crm_apply_local_update(listview, docname, fieldname, value) {
-	const row = (listview.data || []).find(d => d.name === docname);
-	if (row) row[fieldname] = value;
-	crm_render_grid(listview);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// UPSERT HELPERS — link-or-create for Company / User / Employee
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_upsert_company_and_save(crm_docname, company_value, listview, $el, done) {
-	frappe.db.get_value("Company", { company_name: company_value }, "name", (r) => {
-		if (r?.name) {
-			crm_save_linked_field(listview, crm_docname, "company_name", r.name, company_value, $el, done);
-			return;
-		}
-
-		frappe.show_alert({ message: __("Creating company '{0}'...", [company_value]), indicator: "orange" }, 1.0);
-		const abbr = company_value.substring(0, 4).replace(/[^a-zA-Z0-9]/g, "").toUpperCase() || "NEW";
-
-		frappe.call({
-			method: "frappe.client.insert",
-			args: { doc: {
-				doctype: "Company",
-				company_name: company_value,
-				abbr,
-				default_currency: frappe.defaults.get_default("currency") || "USD",
-			}},
-			callback: ({ exc, message }) => {
-				if (!exc && message) {
-					frappe.show_alert({ message: __("Company '{0}' Created", [company_value]), indicator: "green" }, 1.2);
-					crm_save_linked_field(listview, crm_docname, "company_name", message.name, company_value, $el, done);
-				} else {
-					done?.();
-				}
-			},
-			error: () => done?.(),
-		});
-	});
-}
-
-function crm_upsert_user_and_save(crm_docname, user_value, listview, $el) {
-	// The value may be: a User id (picked from the dropdown), an email, or a typed
-	// full name. Try an exact id match first so dropdown picks link instantly and
-	// never create a duplicate.
-	frappe.db.get_value("User", { name: user_value }, "name", (byId) => {
-		if (byId?.name) {
-			crm_save_linked_field(listview, crm_docname, "user", byId.name, user_value, $el);
-			return;
-		}
-
-		const filter = user_value.includes("@") ? { name: user_value } : { full_name: user_value };
-		frappe.db.get_value("User", filter, "name", (r) => {
-			if (r?.name) {
-				crm_save_linked_field(listview, crm_docname, "user", r.name, user_value, $el);
-				return;
-			}
-
-			frappe.show_alert({ message: __("Creating user '{0}'...", [user_value]), indicator: "orange" }, 1.0);
-			const is_email  = user_value.includes("@");
-			const email     = is_email ? user_value : `${user_value.toLowerCase().replace(/\s+/g, "")}@example.com`;
-			const full_name = is_email ? user_value.split("@")[0] : user_value;
-
-			frappe.call({
-				method: "frappe.client.insert",
-				args: { doc: { doctype: "User", email, first_name: full_name, send_welcome_email: 0 } },
-				callback: ({ exc, message }) => {
-					if (!exc && message) {
-						frappe.show_alert({ message: __("User '{0}' Created", [user_value]), indicator: "green" }, 1.2);
-						crm_save_linked_field(listview, crm_docname, "user", message.name, user_value, $el);
-					}
-				},
-			});
-		});
-	});
-}
-
-function crm_upsert_employee_and_save(crm_docname, employee_value, listview, $el) {
-	// Try exact id match first (dropdown pick), then employee_name (typed), else create.
-	frappe.db.get_value("Employee", { name: employee_value }, "name", (byId) => {
-		if (byId?.name) {
-			crm_save_linked_field(listview, crm_docname, "assigned_to", byId.name, employee_value, $el);
-			return;
-		}
-
-		frappe.db.get_value("Employee", { employee_name: employee_value }, "name", (r) => {
-			if (r?.name) {
-				crm_save_linked_field(listview, crm_docname, "assigned_to", r.name, employee_value, $el);
-				return;
-			}
-
-			frappe.show_alert({ message: __("Creating employee '{0}'...", [employee_value]), indicator: "orange" }, 1.0);
-			const row_company = listview.data.find(d => d.name === crm_docname)?.company_name || "";
-
-			const insert_employee = (company) => {
-				frappe.call({
-					method: "frappe.client.insert",
-					args: { doc: {
-						doctype: "Employee",
-						first_name: employee_value,
-						company: company || frappe.defaults.get_default("company") || "",
-					}},
-					callback: ({ exc, message }) => {
-						if (!exc && message) {
-							frappe.show_alert({ message: __("Employee '{0}' Created", [employee_value]), indicator: "green" }, 1.2);
-							crm_save_linked_field(listview, crm_docname, "assigned_to", message.name, employee_value, $el);
-						}
-					},
-				});
-			};
-
-			if (row_company) {
-				frappe.db.get_value("Company", { company_name: row_company }, "name",
-					(comp) => insert_employee(comp?.name || "")
-				);
-			} else {
-				insert_employee("");
-			}
-		});
-	});
-}
-
-function crm_save_linked_field(listview, docname, fieldname, actual_value, input_string, $el, done) {
-	frappe.call({
-		method: "frappe.client.set_value",
-		args: { doctype: "CRM Log", name: docname, fieldname, value: actual_value },
-		callback: ({ exc }) => {
-			if (!exc) {
-				if ($el) $el.data("last-saved-val", input_string);
-				frappe.show_alert({ message: __("Linked"), indicator: "green" }, 0.8);
-				crm_apply_local_update(listview, docname, fieldname, actual_value);
-			}
-			done?.();
-		},
-		error: () => done?.(),
-	});
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ATTACHMENTS DIALOG
-// Fetches the full doc (child tables included) so the badge count is accurate —
-// add_fields does NOT return child table data.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_open_attachments_dialog(listview, docname) {
-	const dialog = new frappe.ui.Dialog({
-		title: __("Attachments — {0}", [docname]),
-		size: "large",
-		fields: [{ fieldname: "attach_html", fieldtype: "HTML" }],
-		primary_action_label: __("Save"),
-		primary_action() {
-			const collected = [];
-			dialog.$wrapper.find(".crm-attach-dlg-row").each(function () {
-				const label = $(this).find(".crm-attach-label").val().trim();
-				const url   = $(this).find(".crm-attach-url").val().trim();
-				if (label || url) collected.push({ label, url });
-			});
-
-			// `frappe.client.set_value` cannot handle child table fields — it expects
-			// a scalar and throws "str object does not support item assignment" on the
-			// Python side when given a list. We save the full doc instead so Frappe's
-			// normal child-table reconciliation runs correctly.
-			frappe.call({
-				method: "frappe.client.get",
-				args: { doctype: "CRM Log", name: docname },
-				callback: ({ exc: getExc, message: doc }) => {
-					if (getExc || !doc) {
-						frappe.show_alert({ message: __("Could not load document for save."), indicator: "red" }, 2);
-						return;
-					}
-					doc[CRM_ATTACH_TABLE_FIELD] = collected.map(r => ({
-						doctype: CRM_ATTACH_DOCTYPE,
-						label:   r.label,
-						url:     r.url,
-					}));
-					frappe.call({
-						method: "frappe.client.save",
-						args: { doc },
-						callback: ({ exc }) => {
-							if (exc) return;
-							frappe.show_alert({ message: __("Attachments saved"), indicator: "green" }, 1.0);
-							const localDoc = (listview.data || []).find(d => d.name === docname);
-							if (localDoc) localDoc[CRM_ATTACH_TABLE_FIELD] = collected;
-							_CRM_ATTACH_COUNTS.set(docname, collected.length);
-							crm_render_grid(listview);
-							dialog.hide();
-						},
-					});
-				},
-			});
+		args: { doc: { doctype: "CRM Log", status: "Open", date: frappe.datetime.get_today() } },
+		callback: ({ exc, message: doc }) => {
+			if (exc || !doc) return;
+			(listview.data = listview.data || []).push(doc);
+			crm_render(listview, host, lnc, cw, attCnt);
+			// Scroll to the new row and focus the first text cell
+			setTimeout(() => {
+				const $grid = $(host).find(".gl-grid");
+				const $last = $grid.find(`.gl-cell[data-name="${doc.name}"]`).last();
+				$last[0]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+			}, 60);
 		},
 	});
-
-	dialog.show();
-
-	frappe.call({
-		method: "frappe.client.get",
-		args: { doctype: "CRM Log", name: docname },
-		callback: ({ exc, message }) => {
-			const $wrapper = dialog.fields_dict.attach_html.$wrapper;
-			if (exc || !message) {
-				$wrapper.html(`<p style="color:#c0392b">${__("Could not load attachments.")}</p>`);
-				return;
-			}
-			const rows = Array.isArray(message[CRM_ATTACH_TABLE_FIELD])
-				? message[CRM_ATTACH_TABLE_FIELD].map(row => ({ label: row.label || "", url: row.url || "" }))
-				: [];
-			// Refresh the cached count from the authoritative server copy. If it
-			// differs from what's on screen, repaint so the badge is accurate.
-			const prev = _CRM_ATTACH_COUNTS.get(docname);
-			_CRM_ATTACH_COUNTS.set(docname, rows.length);
-			if (prev !== rows.length) crm_render_grid(listview);
-			_render_attach_dialog_body(dialog, rows);
-		},
-	});
-}
-
-function _render_attach_dialog_body(dialog, rows) {
-	const $body = dialog.fields_dict.attach_html.$wrapper;
-
-	const savedRows   = rows.filter(r => r.url);
-	const previewHtml = savedRows.length
-		? `<div class="crm-att-preview-section">
-			<div class="crm-att-preview-label">${__("Preview")}</div>
-			<div class="crm-att-preview-list">${savedRows.map(_attach_preview_item).join("")}</div>
-		</div><hr class="crm-att-divider">`
-		: "";
-
-	$body.html(`
-		<style>
-			.crm-attach-dlg-head, .crm-attach-dlg-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
-			.crm-attach-dlg-head { font-size:11px; text-transform:uppercase; color:#8d96a0; letter-spacing:.04em; margin-bottom:8px; }
-			.crm-attach-col-label, .crm-attach-label { flex:0 0 160px; }
-			.crm-attach-col-url,   .crm-attach-url   { flex:1 1 auto; }
-			.crm-attach-col-act,   .crm-attach-del   { flex:0 0 32px; text-align:center; }
-			.crm-attach-dlg input  { width:100%; }
-			.crm-attach-del { cursor:pointer; color:#c0392b; background:none; border:none; font-size:16px; }
-			.crm-attach-add { margin-top:4px; }
-			.crm-att-preview-section { margin-bottom:12px; }
-			.crm-att-preview-label  { font-size:11px; text-transform:uppercase; color:#8d96a0; letter-spacing:.04em; margin-bottom:8px; }
-			.crm-att-preview-list   { display:flex; flex-wrap:wrap; gap:10px; }
-			.crm-att-thumb-wrap     { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:inherit; max-width:90px; }
-			.crm-att-thumb          { width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e6ea; transition:opacity .12s; }
-			.crm-att-thumb:hover    { opacity:.85; }
-			.crm-att-thumb-label    { font-size:10.5px; color:#8d96a0; text-align:center; width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-			.crm-att-chip           { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:6px; border:1px solid #e2e6ea; background:#f7f9fa; text-decoration:none; color:#1f272e; font-size:12px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition:background .12s, border-color .12s; }
-			.crm-att-chip:hover     { background:#eef2f5; border-color:#c8d0d8; }
-			.crm-att-chip svg       { flex-shrink:0; color:#8d96a0; }
-			.crm-att-divider        { border:none; border-top:1px solid #e2e6ea; margin:12px 0; }
-		</style>
-		<div class="crm-attach-dlg">
-			${previewHtml}
-			<div class="crm-attach-dlg-head">
-				<div class="crm-attach-col-label">${__("Label")}</div>
-				<div class="crm-attach-col-url">${__("Link")}</div>
-				<div class="crm-attach-col-act"></div>
-			</div>
-			<div class="crm-attach-dlg-rows"></div>
-			<button class="btn btn-xs btn-default crm-attach-add">+ ${__("Add attachment")}</button>
-		</div>`);
-
-	const $rows   = $body.find(".crm-attach-dlg-rows");
-	const add_row = (label = "", url = "") => {
-		const $row = $(`
-			<div class="crm-attach-dlg-row">
-				<input type="text" class="form-control crm-attach-label" placeholder="${__("e.g. Building Drawing")}" value="${frappe.utils.escape_html(label)}">
-				<input type="text" class="form-control crm-attach-url"   placeholder="https://..."                  value="${frappe.utils.escape_html(url)}">
-				<button class="crm-attach-del" title="${__("Remove")}">×</button>
-			</div>`);
-		$row.find(".crm-attach-del").on("click", () => $row.remove());
-		$rows.append($row);
-	};
-
-	rows.forEach(r => add_row(r.label, r.url));
-	if (!rows.length) add_row();
-
-	$body.find(".crm-attach-add").on("click", () => add_row());
-}
-
-function _attach_preview_item(r) {
-	const escapedUrl   = frappe.utils.escape_html(r.url);
-	const escapedLabel = frappe.utils.escape_html(r.label || r.url);
-	// Catches: explicit image extensions, Frappe's own /files/ & /thumbnail/ paths,
-	// and known image CDN hostnames (Unsplash, Cloudinary, Imgix, ImageKit) whose
-	// URLs never carry a file extension.
-	const isImage = (
-		/\.(jpe?g|png|gif|webp|svg|avif)(\?|$)/i.test(r.url) ||
-		/\/(thumbnail|files)\//i.test(r.url) ||
-		/^https?:\/\/(images\.unsplash\.com|[^/]+\.cloudinary\.com|[^/]+\.imgix\.net|[^/]+\.imagekit\.io)\//i.test(r.url)
-	);
-
-	if (isImage) {
-		return `<a href="${escapedUrl}" target="_blank" class="crm-att-thumb-wrap" title="${escapedLabel}">
-			<img src="${escapedUrl}" class="crm-att-thumb" alt="${escapedLabel}">
-			<span class="crm-att-thumb-label">${escapedLabel}</span>
-		</a>`;
-	}
-	return `<a href="${escapedUrl}" target="_blank" class="crm-att-chip" title="${escapedUrl}">
-		${SVG.file}<span>${escapedLabel}</span>
-	</a>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_fmt_date(v) {
-	if (!v) return "-";
-	try {
-		const [datePart, timePart = "00:00:00"] = String(v).split(" ");
-		const [year, month, day] = datePart.split("-");
-		const [hh, mm]           = timePart.split(":");
-		return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year.substring(2)} ${hh}:${mm}`;
-	} catch {
-		return v;
-	}
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
-
-function crm_inject_styles() {
-	const existing = document.getElementById("crm-grid-styles");
-	if (existing?.dataset.version === CRM_STYLE_VERSION) return;
-	existing?.remove();
-
-	const style = Object.assign(document.createElement("style"), {
-		id: "crm-grid-styles",
-	});
-	style.dataset.version = CRM_STYLE_VERSION;
-	style.textContent = `
-		/* ── Hide Frappe's native list rendering ── */
-		[data-doctype="CRM Log"] .result-list,
-		[data-doctype="CRM Log"] .list-row-head,
-		[data-doctype="CRM Log"] .list-row-container,
-		[data-doctype="CRM Log"] .list-row,
-		[data-doctype="CRM Log"] .list-headers,
-		[data-doctype="CRM Log"] .frappe-list .list-row-head,
-		[data-doctype="CRM Log"] .no-result { display: none !important; }
-
-		[data-doctype="CRM Log"] .result,
-		[data-doctype="CRM Log"] .frappe-list .result {
-			overflow: visible !important; height: auto !important; max-height: none !important;
-		}
-
-		/* Keep grid host in a low stacking context so it never paints over
-		   Frappe's page ribbon, menus, or page-level dropdowns. */
-		.crm-grid-host {
-			display: block; padding: 8px 0 12px;
-			overflow: auto; max-height: calc(100vh - 200px);
-			position: relative; z-index: 0;
-		}
-
-		.crm-grid-shell {
-			--crm-border:   var(--border-color,  #e2e6ea);
-			--crm-head-bg:  var(--card-bg,        #fff);
-			--crm-bg-sec:   var(--bg-light-gray,  #f7f9fa);
-			--crm-text:     var(--text-color,     #1f272e);
-			--crm-muted:    var(--text-muted,     #8d96a0);
-			--crm-accent:   #378ADD;
-			display: grid; width: max-content; min-width: 100%;
-			font-size: 12px; font-weight: 400; color: var(--crm-text);
-			border: 0.5px solid var(--crm-border); border-radius: 12px;
-			background: var(--card-bg, #fff);
-		}
-
-		.crm-grid-cell {
-			display: flex; align-items: center;
-			padding: 5px 8px;
-			border-right: 0.5px solid var(--crm-border);
-			border-bottom: 0.5px solid var(--crm-border);
-			min-height: 32px; min-width: 0; overflow: hidden;
-		}
-
-		.crm-grid-headcell {
-			position: sticky; top: 0; z-index: 10;
-			justify-content: center; text-align: center;
-			padding: 6px 8px; background: var(--crm-head-bg);
-			font-size: 11px; font-weight: 500; color: var(--crm-muted);
-			white-space: nowrap;
-		}
-
-		/* Column resize handle */
-		.crm-col-resize {
-			position: absolute; top: 0; right: -3px; width: 7px; height: 100%;
-			cursor: col-resize; z-index: 12; user-select: none;
-		}
-		.crm-col-resize:hover          { background: rgba(55,138,221,0.30); }
-		.crm-col-resizing              { cursor: col-resize; }
-		.crm-col-resizing .crm-cell-input { pointer-events: none; }
-
-		/* Row number gutter */
-		.crm-grid-rownum {
-			justify-content: center; color: var(--crm-muted);
-			font-variant-numeric: tabular-nums;
-			background: var(--crm-head-bg);
-			position: sticky; left: 0; z-index: 5;
-		}
-		.crm-grid-headcell.crm-grid-rownum { z-index: 11; }
-
-		/* Delete button — fades in on row hover */
-		.crm-row-del {
-			display: none; border: none; background: none; cursor: pointer;
-			color: var(--text-danger, #c0392b); font-size: 16px; line-height: 1;
-			padding: 0; width: 100%; text-align: center;
-			opacity: 0; transition: opacity 0.15s;
-		}
-		.crm-row-del:hover                      { color: var(--text-danger, #e74c3c); }
-		.crm-grid-rownum:hover .crm-rownum-text { display: none; }
-		.crm-grid-rownum:hover .crm-row-del     { display: block; opacity: 1; }
-
-		/* Row hover — background-secondary, action icons fade in */
-		.crm-grid-cell.crm-row-hover,
-		.crm-grid-rownum.crm-row-hover { background: var(--crm-bg-sec); }
-
-		/* Row editing — background-secondary + 2px left accent on gutter */
-		.crm-grid-cell.crm-row--editing       { background: var(--crm-bg-sec); }
-		.crm-grid-rownum.crm-row--editing     { background: var(--crm-bg-sec); border-left: 2px solid #378ADD; }
-
-		/* Inputs */
-		.crm-cell-input {
-			width: 100%; min-width: 0;
-			border: 0.5px solid transparent; background: transparent;
-			padding: 3px 6px; font-size: 12px; font-weight: 400; border-radius: 8px;
-			color: var(--crm-text);
-			transition: border-color .12s ease, background .12s ease;
-			box-sizing: border-box; font-family: inherit;
-			text-align: center; text-overflow: ellipsis;
-		}
-		.crm-cell-input:hover { border-color: var(--crm-border); }
-		.crm-cell-input:focus {
-			border-color: #378ADD;
-			background: var(--card-bg, #fff);
-			outline: 1.5px solid #378ADD;
-			outline-offset: -1px;
-		}
-
-		/* Click-to-edit display span */
-		.crm-cell-display {
-			width: 100%; min-width: 0; text-align: center;
-			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-			padding: 4px 6px; border: 0.5px solid transparent; border-radius: 8px;
-			cursor: text; color: var(--crm-text); font-size: 12px; font-weight: 400;
-		}
-		.crm-cell-display:hover { border-color: var(--crm-border); }
-		.crm-cell-display:focus {
-			outline: 1.5px solid #378ADD;
-			outline-offset: -1px;
-			border-color: #378ADD;
-		}
-		.crm-cell-placeholder   { color: var(--crm-muted); opacity: 0.55; }
-		.crm-cell-input--inline { text-align: center; }
-
-		.crm-cell-select {
-			width: auto; max-width: 100%;
-			font-size: 12px; font-weight: 400;
-			cursor: pointer; appearance: none;
-			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238d96a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-			background-repeat: no-repeat; background-position: right 6px center; padding-right: 18px;
-		}
-
-		/* Textarea */
-		.crm-cell-area {
-			resize: none; overflow: hidden; line-height: 1.4;
-			min-height: 28px; white-space: pre-wrap;
-			font-size: 12px; font-weight: 400;
-		}
-		.crm-grid-cell:has(.crm-cell-area) { align-items: flex-start; overflow: visible; }
-
-		/* Timestamps / meta */
-		.crm-cell-date {
-			padding: 5px 8px; color: var(--crm-muted);
-			white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center;
-			font-size: 11px; font-weight: 400;
-		}
-
-		/* Avatar — 22×22px circle per spec */
-		.crm-avatar-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
-		.crm-avatar {
-			width: 22px; height: 22px; border-radius: 50%;
-			background: hsl(var(--h, 210), 58%, 52%);
-			color: #fff; font-weight: 500; font-size: 10px;
-			display: flex; align-items: center; justify-content: center;
-			flex-shrink: 0; cursor: text; user-select: none; transition: opacity .12s ease;
-		}
-		.crm-avatar-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; border-radius: 50%; }
-		.crm-avatar--grey { background: var(--gray-500, #8d96a0); }
-		.crm-avatar-input:focus {
-			opacity: 1;
-			outline: 1.5px solid #378ADD;
-			outline-offset: -1px;
-			background: var(--card-bg, #fff);
-		}
-		.crm-avatar-wrap:focus-within .crm-avatar { opacity: 0; }
-
-		/* Maps cell */
-		.crm-map-cell    { display: flex; align-items: center; gap: 4px; width: 100%; overflow: hidden; }
-		.crm-map-display {
-			flex: 1; color: var(--crm-muted);
-			white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px;
-			font-size: 12px; font-weight: 400;
-		}
-		.crm-muted-text { color: var(--crm-muted); font-style: italic; }
-		.crm-map-input  { flex: 1; min-width: 0; }
-
-		/* Shared icon button */
-		.crm-icon-btn {
-			flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-			width: 26px; height: 26px; border: 0.5px solid transparent; border-radius: 8px;
-			background: transparent; cursor: pointer; color: var(--crm-muted);
-			transition: background .12s, border-color .12s, color .12s; text-decoration: none;
-		}
-		.crm-icon-btn:hover     { background: var(--crm-bg-sec); border-color: var(--crm-border); color: var(--crm-text); }
-		.crm-icon-btn--disabled { opacity: 0.3; cursor: default; pointer-events: none; }
-		.crm-map-open:hover     { color: #378ADD; }
-
-		/* Attachment button + badge */
-		.crm-attach-btn { position: relative; }
-		.crm-attach-badge {
-			position: absolute; top: -4px; right: -5px;
-			min-width: 14px; height: 14px; padding: 0 3px;
-			background: #378ADD; color: #fff;
-			font-size: 9px; font-weight: 500; line-height: 14px;
-			border-radius: 7px; box-sizing: border-box;
-			pointer-events: none;
-		}
-
-		/* Autocomplete dropdown */
-		.crm-ac-menu {
-			position: absolute; z-index: 2000;
-			background: var(--card-bg, #fff);
-			border: 0.5px solid var(--crm-border, #e2e6ea);
-			border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-			max-height: 260px; overflow-y: auto; padding: 4px;
-			font-size: 12px; font-weight: 400; color: var(--crm-text, #1f272e);
-		}
-		.crm-ac-item {
-			display: flex; flex-direction: column; gap: 1px;
-			padding: 6px 10px; border-radius: 8px; cursor: pointer; overflow: hidden;
-		}
-		.crm-ac-item:hover { background: var(--crm-bg-sec, #f4f5f6); }
-		.crm-ac-primary    { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-		.crm-ac-sub        { font-size: 11px; font-weight: 400; color: var(--crm-muted, #8d96a0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-		/* Toolbar */
-		.crm-grid-toolbar { display: flex; align-items: center; padding: 9px 12px; }
-		.crm-add-row-btn  { display: inline-flex; align-items: center; gap: 6px; }
-		.crm-add-icon     { font-size: 14px; line-height: 1; font-weight: 500; }
-
-		.crm-grid-empty {
-			padding: 40px 20px; text-align: center; color: var(--crm-muted);
-			position: sticky; left: 0; width: 100%; font-size: 12px;
-		}
-
-		/* ── Small screen compact mode (≤ 1280px) ── */
-		@media (max-width: 1280px) {
-			.crm-grid-shell    { font-size: 11px; }
-			.crm-grid-cell     { padding: 4px 6px; min-height: 28px; }
-			.crm-grid-headcell { padding: 5px 6px; font-size: 10px; }
-			.crm-cell-input,
-			.crm-cell-display,
-			.crm-cell-area,
-			.crm-cell-date     { font-size: 11px; }
-			.crm-avatar        { width: 20px; height: 20px; font-size: 9px; }
-			.crm-cell-select   { font-size: 11px; }
-			.crm-icon-btn      { width: 22px; height: 22px; }
-		}
-	`;
-	document.head.appendChild(style);
 }
