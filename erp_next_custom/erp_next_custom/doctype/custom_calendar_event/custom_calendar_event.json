@@ -1,0 +1,241 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-06-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "status",
+  "event_type",
+  "color",
+  "column_break_1",
+  "start_date",
+  "end_date",
+  "start_time",
+  "end_time",
+  "section_people",
+  "assigned_to",
+  "contact_person",
+  "crew_number",
+  "column_break_people",
+  "customer",
+  "lead",
+  "contact",
+  "section_location",
+  "location",
+  "google_maps_url",
+  "section_notes",
+  "description",
+  "notes",
+  "section_resources",
+  "attachments",
+  "has_attachment",
+  "column_break_res",
+  "crew_members",
+  "section_inventory",
+  "inventory_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nScheduled\nConfirmed\nIn Progress\nCompleted\nCancelled",
+   "default": "Draft"
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "label": "Event Type",
+   "options": "\nMeeting\nSite Visit\nInstallation\nSurvey\nDelivery\nInspection\nOther"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "End Time"
+  },
+  {
+   "fieldname": "section_people",
+   "fieldtype": "Section Break",
+   "label": "People"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Data",
+   "label": "Contact Person"
+  },
+  {
+   "default": "0",
+   "fieldname": "crew_number",
+   "fieldtype": "Int",
+   "label": "Crew No."
+  },
+  {
+   "fieldname": "column_break_people",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "section_location",
+   "fieldtype": "Section Break",
+   "label": "Location"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "google_maps_url",
+   "fieldtype": "Data",
+   "label": "Maps URL"
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "section_resources",
+   "fieldtype": "Section Break",
+   "label": "Resources"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Custom Calendar Attachment"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_attachment",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Has Attachment"
+  },
+  {
+   "fieldname": "column_break_res",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "crew_members",
+   "fieldtype": "Table",
+   "label": "Crew Members",
+   "options": "Custom Calendar Crew Member"
+  },
+  {
+   "fieldname": "section_inventory",
+   "fieldtype": "Section Break",
+   "label": "Inventory"
+  },
+  {
+   "fieldname": "inventory_items",
+   "fieldtype": "Table",
+   "label": "Inventory Items",
+   "options": "Custom Calendar Inventory Item"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-15 00:00:01.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "Custom Calendar Event",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "start_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
