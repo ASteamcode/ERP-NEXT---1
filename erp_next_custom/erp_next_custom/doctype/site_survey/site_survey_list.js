@@ -23,7 +23,8 @@ const SS_COLS = [
     { field: "updates",         label: "Updates",       type: "area",    width: 200 },
     { field: "attachments",     label: "Files",         type: "attach",  width: 52 },
     { field: "drawing",         label: "Drawing",       type: "drawing", width: 52 },
-    { field: "measurements",    label: "MTO",           type: "measure", width: 52 },
+    { field: "measurements",    label: "Measure",       type: "measure", width: 52 },
+    { field: "name",            label: "→ MTO",         type: "nav-mto", width: 52 },
 ];
 
 const SS_FIELDS = [
@@ -122,9 +123,10 @@ function _ss_cell(col, doc) {
         case "area":    return _ss_render_area(col, doc.name, raw);
         case "number":  return _ss_render_number(col, doc.name, raw);
         case "attach":  return _ss_render_attach(doc.name, raw);
-        case "drawing": return frappe_drawing.render_btn(doc.name, doc.has_drawing);
-        case "measure": return _ss_render_measure(doc.name, doc);
-        default:        return GL.renderText(col, doc.name, raw, "text");
+        case "drawing":  return frappe_drawing.render_btn(doc.name, doc.has_drawing);
+        case "measure":  return _ss_render_measure(doc.name, doc);
+        case "nav-mto":  return `<button class="gl-icon-btn ss-nav-mto-btn" data-survey="${frappe.utils.escape_html(doc.name)}" title="${__("View Measurements Take Off")}">→</button>`;
+        default:         return GL.renderText(col, doc.name, raw, "text");
     }
 }
 
@@ -225,7 +227,29 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _SS_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, SS_DOCTYPE, listview, () => _ss_render(listview));
+
+    // Custom delete: warn if linked MTOs exist
+    $grid.on("click.ss-del", ".gl-rn-del", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe.db.count("Measurement Take Off", { site_survey: docname }).then(count => {
+            const msg = count > 0
+                ? __("This Site Survey has {0} linked Measurement Take Off(s). They will remain but lose their survey link. Delete this Site Survey anyway?", [count])
+                : __("Delete this Site Survey? This cannot be undone.");
+            frappe.confirm(msg, () => {
+                frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: SS_DOCTYPE, name: docname },
+                    callback: ({ exc }) => {
+                        if (exc) return;
+                        frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
+                        listview.data = (listview.data || []).filter(d => d.name !== docname);
+                        _ss_render(listview);
+                    },
+                });
+            });
+        });
+    });
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindDateEdit($grid, rows, saveFn, esm);
@@ -297,6 +321,13 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
 
     $grid.on("click.ss-att",  ".ss-attach-btn",  function () { _ss_open_attach_dialog(listview, $(this).attr("data-name")); });
     $grid.on("click.ss-meas", ".ss-measure-btn", function (e) { e.stopPropagation(); _ss_open_measure_dialog(listview, $(this).attr("data-name")); });
+
+    // Navigate to MTO list filtered by this site survey
+    $grid.on("click.ss-mto", ".ss-nav-mto-btn", function (e) {
+        e.stopPropagation();
+        frappe.route_options = { site_survey: $(this).attr("data-survey") };
+        frappe.set_route("List", "Measurement Take Off");
+    });
     $grid.on("click.ss-draw", ".fd-draw-btn", function (e) {
         e.stopPropagation();
         const docname = $(this).attr("data-name");

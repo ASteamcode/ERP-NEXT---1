@@ -7,16 +7,17 @@ const LEAD_STATUS_OPTIONS = ["","Open","Replied","Opportunity","Interest","Do No
 const LEAD_TYPE_OPTIONS   = ["","Client","Channel Partner","Consultant"];
 
 const LEAD_COLS = [
-    { field: "status",       label: "Status",    type: "select", width: 130, options: LEAD_STATUS_OPTIONS },
-    { field: "lead_name",    label: "Full Name", type: "text",   width: 160 },
-    { field: "company_name", label: "Company",   type: "text",   width: 160 },
-    { field: "email_id",     label: "Email",     type: "email",  width: 190 },
-    { field: "mobile_no",    label: "Mobile",    type: "tel",    width: 130 },
-    { field: "phone",        label: "Phone",     type: "tel",    width: 120 },
-    { field: "website",      label: "Website",   type: "url",    width: 170 },
-    { field: "type",         label: "Type",      type: "select", width: 130, options: LEAD_TYPE_OPTIONS },
-    { field: "lead_owner",   label: "Owner",     type: "link",   width: 150, link_doctype: "User" },
-    { field: "territory",    label: "Territory", type: "link",   width: 130, link_doctype: "Territory" },
+    { field: "status",       label: "Status",    type: "select",  width: 130, options: LEAD_STATUS_OPTIONS },
+    { field: "lead_name",    label: "Full Name", type: "text",    width: 160 },
+    { field: "company_name", label: "Company",   type: "text",    width: 160 },
+    { field: "email_id",     label: "Email",     type: "email",   width: 190 },
+    { field: "mobile_no",    label: "Mobile",    type: "tel",     width: 130 },
+    { field: "phone",        label: "Phone",     type: "tel",     width: 120 },
+    { field: "website",      label: "Website",   type: "url",     width: 170 },
+    { field: "type",         label: "Type",      type: "select",  width: 130, options: LEAD_TYPE_OPTIONS },
+    { field: "lead_owner",   label: "Owner",     type: "link",    width: 150, link_doctype: "User" },
+    { field: "territory",    label: "Territory", type: "link",    width: 130, link_doctype: "Territory" },
+    { field: "name",         label: "→ SS",      type: "nav-ss",  width: 52 },
 ];
 
 const _L_COL_WIDTHS = {};
@@ -87,6 +88,7 @@ function _l_cell(col, doc) {
     if (col.type === "select") return GL.renderSelect(col, doc.name, raw);
     if (col.type === "url")    return GL.renderUrl(col, doc.name, raw);
     if (col.type === "link")   return GL.renderLink(col, doc.name, raw);
+    if (col.type === "nav-ss") return `<button class="gl-icon-btn l-nav-ss-btn" data-lead="${frappe.utils.escape_html(doc.name)}" title="${__("View Site Surveys")}">→</button>`;
     return GL.renderText(col, doc.name, raw, col.type);
 }
 
@@ -99,7 +101,29 @@ function _l_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _L_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, LEAD_DOCTYPE, listview, () => _l_render(listview));
+
+    // Custom delete: warn if linked Site Surveys exist
+    $grid.on("click.l-del", ".gl-rn-del", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe.db.count("Site Survey", { lead: docname }).then(count => {
+            const msg = count > 0
+                ? __("This Lead has {0} linked Site Survey(s). They will remain but lose their lead link. Delete this Lead anyway?", [count])
+                : __("Delete this Lead? This cannot be undone.");
+            frappe.confirm(msg, () => {
+                frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: LEAD_DOCTYPE, name: docname },
+                    callback: ({ exc }) => {
+                        if (exc) return;
+                        frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
+                        listview.data = (listview.data || []).filter(d => d.name !== docname);
+                        _l_render(listview);
+                    },
+                });
+            });
+        });
+    });
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindUrlEdit($grid, rows, saveFn, esm);
     GL.bindLinkEdit($grid, rows, saveFn, esm);
@@ -126,5 +150,12 @@ function _l_bind(listview, host, rows, cols, getTpl) {
                 _l_render(listview);
             },
         });
+    });
+
+    // Navigate to Site Survey list filtered by this lead
+    $grid.on("click.l-ss", ".l-nav-ss-btn", function (e) {
+        e.stopPropagation();
+        frappe.route_options = { lead: $(this).attr("data-lead") };
+        frappe.set_route("List", "Site Survey");
     });
 }
