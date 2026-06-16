@@ -31,7 +31,12 @@
   "description",
   "updates",
   "drawing",
-  "has_drawing"
+  "has_drawing",
+  "workflow_section",
+  "crm_lead",
+  "crm_col_break",
+  "crm_contact",
+  "crm_customer"
  ],
  "fields": [
   {
@@ -174,12 +179,42 @@
    "fieldtype": "Check",
    "label": "Has Drawing",
    "default": "0"
+  },
+  {
+   "fieldname": "workflow_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Records"
+  },
+  {
+   "fieldname": "crm_lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead",
+   "read_only": 1
+  },
+  {
+   "fieldname": "crm_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "crm_contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "crm_customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 09:50:59.362800",
+ "modified": "2026-06-16 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "CRM Log",

@@ -23,7 +23,8 @@ const SS_COLS = [
     { field: "updates",         label: "Updates",       type: "area",    width: 200 },
     { field: "attachments",     label: "Files",         type: "attach",  width: 52 },
     { field: "drawing",         label: "Drawing",       type: "drawing", width: 52 },
-    { field: "measurements",    label: "MTO",           type: "measure", width: 52 },
+    { field: "measurements",    label: "Measure",       type: "measure", width: 52 },
+    { field: "name",            label: "→ MTO",         type: "nav-mto", width: 52 },
 ];
 
 const SS_FIELDS = [
@@ -122,9 +123,10 @@ function _ss_cell(col, doc) {
         case "area":    return _ss_render_area(col, doc.name, raw);
         case "number":  return _ss_render_number(col, doc.name, raw);
         case "attach":  return _ss_render_attach(doc.name, raw);
-        case "drawing": return frappe_drawing.render_btn(doc.name, doc.has_drawing);
-        case "measure": return _ss_render_measure(doc.name, doc);
-        default:        return GL.renderText(col, doc.name, raw, "text");
+        case "drawing":  return frappe_drawing.render_btn(doc.name, doc.has_drawing);
+        case "measure":  return _ss_render_measure(doc.name, doc);
+        case "nav-mto":  return `<button class="gl-icon-btn ss-nav-mto-btn" data-survey="${frappe.utils.escape_html(doc.name)}" title="${__("View Measurements Take Off")}">→</button>`;
+        default:         return GL.renderText(col, doc.name, raw, "text");
     }
 }
 
@@ -297,6 +299,13 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
 
     $grid.on("click.ss-att",  ".ss-attach-btn",  function () { _ss_open_attach_dialog(listview, $(this).attr("data-name")); });
     $grid.on("click.ss-meas", ".ss-measure-btn", function (e) { e.stopPropagation(); _ss_open_measure_dialog(listview, $(this).attr("data-name")); });
+
+    // Navigate to MTO list filtered by this site survey
+    $grid.on("click.ss-mto", ".ss-nav-mto-btn", function (e) {
+        e.stopPropagation();
+        frappe.route_options = { site_survey: $(this).attr("data-survey") };
+        frappe.set_route("List", "Measurement Take Off");
+    });
     $grid.on("click.ss-draw", ".fd-draw-btn", function (e) {
         e.stopPropagation();
         const docname = $(this).attr("data-name");

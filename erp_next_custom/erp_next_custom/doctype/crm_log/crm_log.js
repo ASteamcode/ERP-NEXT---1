@@ -31,6 +31,12 @@ frappe.ui.form.on("CRM Log", {
 	refresh(frm) {
 		crm_hide_raw_location(frm);
 		crm_bind_enter_navigation(frm);
+		crm_setup_workflow_buttons(frm);
+	},
+
+	// Show/hide workflow section when category changes.
+	category(frm) {
+		crm_setup_workflow_buttons(frm);
 	},
 
 	// Auto-set the creation datetime on every save (always overwrite).
@@ -105,5 +111,50 @@ function crm_focus_next(frm, currentField) {
 			$next.trigger("focus");
 			return;
 		}
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKFLOW — Linked Records section + Create / View Lead button
+// ─────────────────────────────────────────────────────────────────────────────
+
+function crm_setup_workflow_buttons(frm) {
+	// Clear any previously added Workflow buttons to avoid duplicates on refresh.
+	frm.remove_custom_button(__("Create Lead"), __("Workflow"));
+	frm.remove_custom_button(__("View Lead"),   __("Workflow"));
+
+	const isLead = frm.doc.category === "Lead";
+
+	// Show the "Linked Records" section only when category = Lead.
+	frm.set_df_property("workflow_section", "hidden", isLead ? 0 : 1);
+	frm.refresh_field("workflow_section");
+
+	if (!isLead) return;
+
+	if (frm.doc.crm_lead) {
+		frm.add_custom_button(__("View Lead"), () => {
+			frappe.set_route("Form", "Lead", frm.doc.crm_lead);
+		}, __("Workflow"));
+	} else {
+		frm.add_custom_button(__("Create Lead"), () => {
+			frappe.confirm(
+				__("Create a Contact, Customer, and Lead from this CRM Log?"),
+				() => {
+					frappe.call({
+						method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.create_lead_from_log",
+						args: { crm_log_name: frm.docname },
+						freeze: true,
+						freeze_message: __("Creating Lead…"),
+						callback({ message }) {
+							frappe.show_alert(
+								{ message: __("Lead {0} created", [message.lead]), indicator: "green" },
+								3
+							);
+							frm.reload_doc();
+						},
+					});
+				}
+			);
+		}, __("Workflow"));
 	}
 }

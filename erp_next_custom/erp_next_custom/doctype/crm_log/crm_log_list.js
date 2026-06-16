@@ -26,11 +26,12 @@ const CRM_COLS = [
     { field: "google_maps_url", label: "Maps",          type: "maps",     width: 120 },
     { field: "attachments",     label: "Files",         type: "attach",   width: 52 },
     { field: "drawing",         label: "Drawing",       type: "drawing",  width: 52 },
+    { field: "crm_lead",        label: "Lead",          type: "crm-lead", width: 140 },
 ];
 
 const CRM_FIELDS = [
-    ...CRM_COLS.filter(c => !["attachments","drawing"].includes(c.field)).map(c => c.field),
-    "name", "attachments", "has_drawing",
+    ...CRM_COLS.filter(c => !["attachments","drawing","crm-lead"].includes(c.type)).map(c => c.field),
+    "name", "attachments", "has_drawing", "crm_lead",
 ];
 
 const _CRM_COL_WIDTHS = (() => {
@@ -129,9 +130,10 @@ function _crm_cell(col, doc) {
         case "avatar":   return _crm_render_avatar(col, doc.name, raw);
         case "maps":     return _crm_render_maps(col, doc.name, raw);
         case "area":     return _crm_render_area(col, doc.name, raw);
-        case "attach":   return _crm_render_attach(doc.name, raw);
-        case "drawing":  return frappe_drawing.render_btn(doc.name, doc.has_drawing);
-        default:         return GL.renderText(col, doc.name, raw, "text");
+        case "attach":    return _crm_render_attach(doc.name, raw);
+        case "drawing":   return frappe_drawing.render_btn(doc.name, doc.has_drawing);
+        case "crm-lead":  return _crm_render_lead_cell(doc.name, doc.category, raw);
+        default:          return GL.renderText(col, doc.name, raw, "text");
     }
 }
 
@@ -202,6 +204,17 @@ function _crm_render_attach(name, raw) {
     const count = _crm_attach_count(name, raw);
     const badge = count ? `<span class="gl-badge">${count}</span>` : "";
     return `<button class="gl-icon-btn crm-attach-btn" data-name="${name}" title="${count} file(s)">${GL.SVG.paperclip}${badge}</button>`;
+}
+
+function _crm_render_lead_cell(name, category, leadName) {
+    if (leadName) {
+        const esc = frappe.utils.escape_html(leadName);
+        return `<a class="crm-lead-link" href="/app/lead/${encodeURIComponent(leadName)}" onclick="event.stopPropagation()" title="${esc}">${esc}</a>`;
+    }
+    if (category === "Lead") {
+        return `<button class="gl-icon-btn crm-create-lead-btn" data-name="${frappe.utils.escape_html(name)}" title="${__("Create Lead")}"><span class="crm-lead-cta">+ Lead</span></button>`;
+    }
+    return `<span class="gl-ph">—</span>`;
 }
 
 // ── Event binding ──────────────────────────────────────────────────────────────
@@ -303,6 +316,28 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
                 _crm_render(listview);
             },
         });
+    });
+
+    // Create Lead inline
+    $grid.on("click.crm-lead-create", ".crm-create-lead-btn", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe.confirm(
+            __("Create a Contact, Customer, and Lead from this CRM Log?"),
+            () => {
+                frappe.call({
+                    method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.create_lead_from_log",
+                    args: { crm_log_name: docname },
+                    callback({ message }) {
+                        if (!message) return;
+                        frappe.show_alert({ message: __("Lead {0} created", [message.lead]), indicator: "green" }, 3);
+                        const row = (listview.data || []).find(d => d.name === docname);
+                        if (row) row.crm_lead = message.lead;
+                        _crm_render(listview);
+                    },
+                });
+            }
+        );
     });
 
     _crm_bind_avatar_ac($grid, listview);
@@ -645,6 +680,10 @@ function _crm_inject_styles() {
 .gl-cell:has(.crm-area) { align-items:flex-start; overflow:visible; }
 
 .crm-attach-btn { position:relative; }
+
+.crm-lead-link { display:block; color:#378ADD; text-decoration:none; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+.crm-lead-link:hover { text-decoration:underline; }
+.crm-lead-cta  { font-size:10px; white-space:nowrap; }
 
 .crm-ac-menu {
     position:absolute; z-index:2000; background:var(--card-bg,#fff);
