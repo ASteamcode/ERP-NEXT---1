@@ -36,8 +36,13 @@ def run():
     frappe.flags.ignore_permissions = True
 
     # ── 1. Create the Project ─────────────────────────────────────────────────
-    if frappe.db.exists("Project", PROJECT_NAME):
-        frappe.delete_doc("Project", PROJECT_NAME, force=True)
+    # Project uses naming series (PROJ-####), so look up by project_name field
+    existing = frappe.db.get_value("Project", {"project_name": PROJECT_NAME}, "name")
+    if existing:
+        for t in frappe.get_all("Task", filters={"project": existing}, pluck="name"):
+            frappe.delete_doc("Task", t, force=True)
+        frappe.delete_doc("Project", existing, force=True)
+        frappe.db.commit()
 
     project = frappe.get_doc({
         "doctype":          "Project",
@@ -56,8 +61,11 @@ def run():
             "• Ask early when stuck."
         ),
     }).insert()
+    frappe.db.commit()  # commit so tasks can link to the new project record
 
-    print(f"✓ Project '{PROJECT_NAME}' created")
+    # project.name is the auto-generated key (e.g. PROJ-0003)
+    PROJ_KEY = project.name
+    print(f"✓ Project '{PROJECT_NAME}' created  [{PROJ_KEY}]")
 
     # ── 2. Task definitions ───────────────────────────────────────────────────
     # Format: (subject, assigned_to_key, start_offset, duration_days, priority, depends_on_subjects)
@@ -291,7 +299,28 @@ def run():
          ["I5 · Export all fixtures, final git commit, tag release v1.0"]),
     ]
 
-    # ── 3. Insert tasks and build a lookup table for dependencies ─────────────
+    # ── 3. Ensure intern users exist (create stub accounts if missing) ──────────
+    USER_NAMES = {
+        "anthony": "Anthony",
+        "grace":   "Grace",
+        "pascale": "Pascale",
+    }
+    for key, email in USERS.items():
+        if key == "supervisor":
+            continue
+        if not frappe.db.exists("User", email):
+            first = USER_NAMES.get(key, key.capitalize())
+            frappe.get_doc({
+                "doctype":    "User",
+                "email":      email,
+                "first_name": first,
+                "send_welcome_email": 0,
+                "roles": [{"role": "Projects User"}],
+            }).insert(ignore_permissions=True)
+            print(f"  ✓ Created user {email}")
+    frappe.db.commit()
+
+    # ── 4. Insert tasks and build a lookup table for dependencies ─────────────
     subject_to_name = {}
 
     for (subject, user_key, start_offset, duration, priority, _deps) in TASKS:
@@ -299,7 +328,7 @@ def run():
 
         task = frappe.get_doc({
             "doctype":          "Task",
-            "project":          PROJECT_NAME,
+            "project":          PROJ_KEY,
             "subject":          subject,
             "status":           "Open",
             "priority":         priority,
@@ -307,7 +336,9 @@ def run():
             "exp_start_date":   _d(start_offset),
             "exp_end_date":     _d(start_offset + max(int(duration), 1)),
             "expected_time":    duration * 8,   # hours
-        }).insert()
+        })
+        task.flags.from_project = True   # skip Task.on_update → update_project()
+        task.insert(ignore_links=True)
 
         subject_to_name[subject] = task.name
         print(f"  ✓ {subject[:60]}")
@@ -321,11 +352,12 @@ def run():
         if not task_name:
             continue
         task = frappe.get_doc("Task", task_name)
+        task.flags.from_project = True
         for dep_subject in deps:
             dep_name = subject_to_name.get(dep_subject)
             if dep_name:
                 task.append("depends_on", {"task": dep_name})
-        task.save()
+        task.save(ignore_permissions=True)
 
     frappe.db.commit()
 
