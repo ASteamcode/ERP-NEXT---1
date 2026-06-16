@@ -26,12 +26,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = [
-    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
-    "/assets/erp_next_custom/js/grid_core.js",
-    "/assets/erp_next_custom/js/frappe_drawing.js",
-]
-        
+app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -49,21 +44,7 @@ app_include_js = [
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-doctype_list_js = {
-    "Contact": "public/js/contacts_list.js",
-    "Lead": "public/js/leads_list.js",
-    "Quotation": "public/js/quotation_list.js",
-}
-
-after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
-
-doctype_js = {
-    "CRM Log":              "erp_next_custom/doctype/crm_log/crm_log.js",
-    "Site Survey":          "erp_next_custom/doctype/site_survey/site_survey.js",
-    "Measurement Take Off": "erp_next_custom/doctype/measurement_take_off/measurement_take_off.js",
-    "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
-}
-
+# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -275,34 +256,7 @@ doctype_js = {
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-fixtures = [
-    {
-        "dt": "Workspace",
-        "filters": [
-            ["module", "=", "CRM"]
-        ]
-    },
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["dt", "in", ["Item"]]
-        ]
-    },
-    {
-        "dt": "Property Setter",
-        "filters": [
-            ["doc_type", "in", ["Item"]]
-        ]
-    },
-	{
-        "dt": "List View Settings",
-        "filters": [["name", "in", ["Item"]]]
-    },
-    {
-        "dt": "Client Script",
-        "filters": [["dt", "in", ["Item", "Stock Entry"]]]
-    }
-]
+
 doctype_list_js = {
     "Item": "public/js/item_list.js"
 }
@@ -310,6 +264,84 @@ doctype_list_js = {
 app_include_css = [
     "/assets/erp_next_custom/css/item_list.css"
 ]
-    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
-    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
+fixtures = [
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["module", "in", ["Erp Next Custom"]]
+        ]
+    },
+    {
+        "dt": "Warehouse",
+        "filters": [
+            ["name", "in", [
+                "All Warehouses - AS",
+                "Goods In Transit - AS",
+                "Main Yard - AS",
+                "Main Yard - Damaged - AS",
+                "Main Yard - Scrap - AS",
+                "Main Yard - Under Repair - AS",
+                "Main Yard - Usable - AS",
+                "Sites - AS",
+                "Site A - AS",
+                "Site B - AS",
+                "Site C - AS"
+            ]]
+        ]
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", [
+                "Item",
+                "Stock Entry",
+                "Stock Entry Detail"
+            ]]
+        ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "in", [
+                "Item",
+                "Stock Entry",
+                "Stock Entry Detail",
+                "Daily Site Stock Report",
+                "Daily Inventory Count Item"
+            ]]
+        ]
+    },
+    {
+        "dt": "List View Settings",
+        "filters": [
+            ["name", "in", [
+                "Item",
+                "Daily Site Stock Report"
+            ]]
+        ]
+    },
+{
+    "dt": "Item Group",
+    "filters": [
+        ["name", "in", [
+            "Scaffolding",
+            "Tubes",
+            "Couplers",
+            "Boards",
+            "Frames",
+            "Jacks",
+            "Accessories"
+        ]]
+    ]
+},
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["dt", "in", [
+                "Item",
+                "Stock Entry",
+                "Daily Site Stock Report"
+            ]]
+        ]
+    }
 ]

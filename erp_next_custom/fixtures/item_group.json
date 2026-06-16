@@ -1,0 +1,41 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Item Group",
+  "image": null,
+  "is_group": 0,
+  "item_group_defaults": [],
+  "item_group_name": "Tubes",
+  "modified": "2026-06-09 04:19:09.351191",
+  "name": "Tubes",
+  "old_parent": "Scaffolding Materials",
+  "parent_item_group": "Scaffolding Materials",
+  "taxes": []
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Item Group",
+  "image": null,
+  "is_group": 0,
+  "item_group_defaults": [],
+  "item_group_name": "couplers",
+  "modified": "2026-06-09 04:20:26.922121",
+  "name": "couplers",
+  "old_parent": "Scaffolding Materials",
+  "parent_item_group": "Scaffolding Materials",
+  "taxes": []
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Item Group",
+  "image": null,
+  "is_group": 0,
+  "item_group_defaults": [],
+  "item_group_name": "Frames",
+  "modified": "2026-06-11 03:07:04.099781",
+  "name": "Frames",
+  "old_parent": "Scaffolding Materials",
+  "parent_item_group": "Scaffolding Materials",
+  "taxes": []
+ }
+]

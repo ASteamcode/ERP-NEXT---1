@@ -54,7 +54,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Site",
-   "options": "Warehouse"
+   "options": "Warehouse",
+   "reqd": 1
   },
   {
    "fieldname": "supervisor",
@@ -66,7 +67,8 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
-   "options": "Daily Inventory Count Item"
+   "options": "Daily Inventory Count Item",
+   "reqd": 1
   },
   {
    "fieldname": "remarks",
@@ -78,7 +80,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-15 04:37:08.686624",
+ "modified": "2026-06-15 23:02:10.373817",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "Daily Site Stock Report",
