@@ -234,7 +234,28 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _CRM_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, CRM_DOCTYPE, listview, () => _crm_render(listview));
+
+    // Custom delete: warn if this log is linked to a Lead
+    $grid.on("click.crm-del", ".gl-rn-del", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        const row     = rows.find(r => r.name === docname);
+        const msg     = row?.crm_lead
+            ? __("This log is linked to Lead {0}. The Lead will remain — only this log will be deleted. Continue?", [row.crm_lead])
+            : __("Delete this CRM Log? This cannot be undone.");
+        frappe.confirm(msg, () => {
+            frappe.call({
+                method: "frappe.client.delete",
+                args: { doctype: CRM_DOCTYPE, name: docname },
+                callback: ({ exc }) => {
+                    if (exc) return;
+                    frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
+                    listview.data = (listview.data || []).filter(d => d.name !== docname);
+                    _crm_render(listview);
+                },
+            });
+        });
+    });
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindOutsideClick($grid, esm, "crm");
@@ -318,26 +339,21 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
         });
     });
 
-    // Create Lead inline
+    // Create Lead inline — immediate, no confirm
     $grid.on("click.crm-lead-create", ".crm-create-lead-btn", function (e) {
         e.stopPropagation();
         const docname = $(this).attr("data-name");
-        frappe.confirm(
-            __("Create a Contact, Customer, and Lead from this CRM Log?"),
-            () => {
-                frappe.call({
-                    method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.create_lead_from_log",
-                    args: { crm_log_name: docname },
-                    callback({ message }) {
-                        if (!message) return;
-                        frappe.show_alert({ message: __("Lead {0} created", [message.lead]), indicator: "green" }, 3);
-                        const row = (listview.data || []).find(d => d.name === docname);
-                        if (row) row.crm_lead = message.lead;
-                        _crm_render(listview);
-                    },
-                });
-            }
-        );
+        frappe.call({
+            method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.create_lead_from_log",
+            args: { crm_log_name: docname },
+            callback({ message }) {
+                if (!message) return;
+                frappe.show_alert({ message: __("Lead {0} created", [message.lead]), indicator: "green" }, 3);
+                const row = (listview.data || []).find(d => d.name === docname);
+                if (row) row.crm_lead = message.lead;
+                _crm_render(listview);
+            },
+        });
     });
 
     _crm_bind_avatar_ac($grid, listview);

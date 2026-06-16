@@ -101,7 +101,29 @@ function _l_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _L_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, LEAD_DOCTYPE, listview, () => _l_render(listview));
+
+    // Custom delete: warn if linked Site Surveys exist
+    $grid.on("click.l-del", ".gl-rn-del", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe.db.count("Site Survey", { lead: docname }).then(count => {
+            const msg = count > 0
+                ? __("This Lead has {0} linked Site Survey(s). They will remain but lose their lead link. Delete this Lead anyway?", [count])
+                : __("Delete this Lead? This cannot be undone.");
+            frappe.confirm(msg, () => {
+                frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: LEAD_DOCTYPE, name: docname },
+                    callback: ({ exc }) => {
+                        if (exc) return;
+                        frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
+                        listview.data = (listview.data || []).filter(d => d.name !== docname);
+                        _l_render(listview);
+                    },
+                });
+            });
+        });
+    });
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindUrlEdit($grid, rows, saveFn, esm);
     GL.bindLinkEdit($grid, rows, saveFn, esm);

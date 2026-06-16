@@ -227,7 +227,29 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _SS_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, SS_DOCTYPE, listview, () => _ss_render(listview));
+
+    // Custom delete: warn if linked MTOs exist
+    $grid.on("click.ss-del", ".gl-rn-del", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe.db.count("Measurement Take Off", { site_survey: docname }).then(count => {
+            const msg = count > 0
+                ? __("This Site Survey has {0} linked Measurement Take Off(s). They will remain but lose their survey link. Delete this Site Survey anyway?", [count])
+                : __("Delete this Site Survey? This cannot be undone.");
+            frappe.confirm(msg, () => {
+                frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: SS_DOCTYPE, name: docname },
+                    callback: ({ exc }) => {
+                        if (exc) return;
+                        frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
+                        listview.data = (listview.data || []).filter(d => d.name !== docname);
+                        _ss_render(listview);
+                    },
+                });
+            });
+        });
+    });
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindDateEdit($grid, rows, saveFn, esm);
