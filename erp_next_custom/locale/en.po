@@ -1,0 +1,1143 @@
+# English translations for Erp Next Custom.
+# Copyright (C) 2026 ASteamcode
+# This file is distributed under the same license as the Erp Next Custom project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Erp Next Custom VERSION\n"
+"Report-Msgid-Bugs-To: mgmtechaff@gmail.com\n"
+"POT-Creation-Date: 2026-06-15 13:39+0000\n"
+"PO-Revision-Date: 2026-06-15 13:39+0000\n"
+"Last-Translator: mgmtechaff@gmail.com\n"
+"Language: en\n"
+"Language-Team: mgmtechaff@gmail.com\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: erp_next_custom/public/js/contacts_list.js:196
+msgid "Add"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:78
+msgid "Add Contact"
+msgstr ""
+
+#: erp_next_custom/public/js/leads_list.js:54
+msgid "Add Lead"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1042
+msgid "Add URL manually"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:26
+msgid "Add drawing"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1193
+msgid "Add measurement"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:146
+msgid "Add text"
+msgstr ""
+
+#. Name of a role
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "All"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Arch"
+msgstr ""
+
+#. Label of the area (Float) field in DocType 'MTO Item'
+#. Label of the site_area (Float) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Area (m²)"
+msgstr ""
+
+#. Label of the assigned_to (Link) field in DocType 'Custom Calendar Event'
+#. Label of the assigned_to (Link) field in DocType 'Measurement Take Off'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+msgid "Assigned To"
+msgstr ""
+
+#. Label of the attachments (Table) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/public/js/contacts_list.js:190
+msgid "Attachments"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:250
+msgid "Attachments saved"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "CRM Log"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/crm_log_attachment/crm_log_attachment.json
+msgid "CRM Log Attachment"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'CRM Log'
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#. Option for the 'Status' (Select) field in DocType 'Measurement Take Off'
+#. Option for the 'Status' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Cancelled"
+msgstr ""
+
+#. Label of the category (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Category"
+msgstr ""
+
+#. Label of the loc_city (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "City"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:170
+msgid "Clear"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:863
+msgid "Clear all? Cannot be undone."
+msgstr ""
+
+#. Label of the color (Color) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Color"
+msgstr ""
+
+#. Option for the 'Site Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Commercial"
+msgstr ""
+
+#. Label of the company_name (Link) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Company"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:442
+msgid "Company '{0}' created"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#. Option for the 'Status' (Select) field in DocType 'Measurement Take Off'
+#. Option for the 'Status' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Completed"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Confirmed"
+msgstr ""
+
+#. Label of the contact (Link) field in DocType 'Custom Calendar Event'
+#. Label of the contact (Link) field in DocType 'Measurement Take Off'
+#. Label of the contact (Link) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Contact"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/contact_attachment/contact_attachment.json
+msgid "Contact Attachment"
+msgstr ""
+
+#. Label of the contact_person (Data) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:420
+msgid "Contact Person"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/contact_resume/contact_resume.json
+msgid "Contact Resume"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:164
+msgid "Contact added"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:994
+msgid "Could not load files."
+msgstr ""
+
+#. Label of the loc_country (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Country"
+msgstr ""
+
+#. Label of the date (Datetime) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Created"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:433
+msgid "Creating company '{0}'…"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:475
+msgid "Creating employee '{0}'…"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:455
+msgid "Creating user '{0}'…"
+msgstr ""
+
+#. Label of the crew_members (Table) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Crew Members"
+msgstr ""
+
+#. Label of the crew_number (Int) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:421
+msgid "Crew No."
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_attachment/custom_calendar_attachment.json
+msgid "Custom Calendar Attachment"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_crew_member/custom_calendar_crew_member.json
+msgid "Custom Calendar Crew Member"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Custom Calendar Event"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+msgid "Custom Calendar Inventory Item"
+msgstr ""
+
+#. Label of the customer (Link) field in DocType 'Custom Calendar Event'
+#. Label of the customer (Link) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Customer"
+msgstr ""
+
+#. Label of the date (Date) field in DocType 'Measurement Take Off'
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+msgid "Date"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:129
+msgid "Delete"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:413
+msgid "Delete this record? This cannot be undone."
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:419
+msgid "Deleted"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Delivery"
+msgstr ""
+
+#. Label of the description (Text Editor) field in DocType 'CRM Log'
+#. Label of the description (Small Text) field in DocType 'Custom Calendar
+#. Event'
+#. Label of the description (Data) field in DocType 'Custom Calendar Inventory
+#. Item'
+#. Label of the description (Data) field in DocType 'MTO Item'
+#. Label of the label (Data) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+#: erp_next_custom/public/js/grid_core.js:1187
+msgid "Description"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:155
+msgid "Dimension"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:165
+msgid "Display unit"
+msgstr ""
+
+#. Label of the loc_district (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "District"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Done"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Dr"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#. Option for the 'Status' (Select) field in DocType 'Measurement Take Off'
+#. Option for the 'Status' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Draft"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:143
+msgid "Draw circle"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:137
+msgid "Draw lines"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:140
+msgid "Draw rectangle"
+msgstr ""
+
+#. Label of the drawing (Long Text) field in DocType 'CRM Log'
+#. Label of the drawing (Long Text) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Drawing"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:114
+msgid "Drawing saved"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:99
+msgid "Drawing — {0}"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:428
+msgid "Edit Full Form"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:246
+msgid "Edit URL"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:26
+msgid "Edit drawing"
+msgstr ""
+
+#. Label of the email (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Email"
+msgstr ""
+
+#. Label of the employee (Link) field in DocType 'Custom Calendar Crew Member'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_crew_member/custom_calendar_crew_member.json
+msgid "Employee"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:481
+msgid "Employee '{0}' created"
+msgstr ""
+
+#. Label of the end_date (Date) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "End Date"
+msgstr ""
+
+#. Label of the end_time (Time) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:424
+msgid "End Time"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Eng"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:152
+msgid "Eraser"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Estimation"
+msgstr ""
+
+#. Label of the event_type (Select) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:418
+msgid "Event Type"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:448
+msgid "Event created"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Field"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:195
+msgid "File / URL"
+msgstr ""
+
+#. Label of the attachments (Table) field in DocType 'CRM Log'
+#. Label of the attachments (Table) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Files"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:974
+msgid "Files saved"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:946
+msgid "Files — {0}"
+msgstr ""
+
+#. Option for the 'Roof Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Flat"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:149
+msgid "Freehand draw"
+msgstr ""
+
+#. Label of the has_attachment (Int) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Has Attachment"
+msgstr ""
+
+#. Label of the has_drawing (Check) field in DocType 'CRM Log'
+#. Label of the has_drawing (Int) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Has Drawing"
+msgstr ""
+
+#. Label of the has_measurements (Int) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Has Measurements"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#. Option for the 'Status' (Select) field in DocType 'Measurement Take Off'
+#. Option for the 'Status' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "In Progress"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Inbound call"
+msgstr ""
+
+#. Option for the 'Site Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Industrial"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Inspection"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Installation"
+msgstr ""
+
+#. Label of the section_inventory (Section Break) field in DocType 'Custom
+#. Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Inventory"
+msgstr ""
+
+#. Label of the inventory_items (Table) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Inventory Items"
+msgstr ""
+
+#. Label of the item_code (Link) field in DocType 'Custom Calendar Inventory
+#. Item'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+msgid "Item"
+msgstr ""
+
+#. Label of the items (Table) field in DocType 'Measurement Take Off'
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+msgid "Items"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Job"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "L"
+msgstr ""
+
+#. Label of the label (Data) field in DocType 'CRM Log Attachment'
+#. Label of the label (Data) field in DocType 'Custom Calendar Attachment'
+#. Label of the label (Data) field in DocType 'Site Survey Attachment'
+#: erp_next_custom/erp_next_custom/doctype/crm_log_attachment/crm_log_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_attachment/custom_calendar_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_attachment/site_survey_attachment.json
+#: erp_next_custom/public/js/contacts_list.js:194
+#: erp_next_custom/public/js/grid_core.js:1026
+msgid "Label"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'CRM Log'
+#. Label of the lead (Link) field in DocType 'Custom Calendar Event'
+#. Label of the lead (Link) field in DocType 'Measurement Take Off'
+#. Label of the lead (Link) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Lead"
+msgstr ""
+
+#: erp_next_custom/public/js/leads_list.js:123
+msgid "Lead added"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:405
+msgid "Linked"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:403
+msgid "Loading…"
+msgstr ""
+
+#. Label of the section_location (Section Break) field in DocType 'Custom
+#. Calendar Event'
+#. Label of the location (Data) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:425
+msgid "Location"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+msgid "MTO Item"
+msgstr ""
+
+#. Label of the google_maps_url (Data) field in DocType 'CRM Log'
+#. Label of the google_maps_url (Data) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Maps"
+msgstr ""
+
+#. Label of the google_maps_url (Data) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Maps URL"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+msgid "Measurement Take Off"
+msgstr ""
+
+#. Label of the section_items (Section Break) field in DocType 'Measurement
+#. Take Off'
+#. Label of the measurements (Table) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+#: erp_next_custom/public/js/grid_core.js:278
+msgid "Measurements"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Measurements Take Off"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1166
+msgid "Measurements saved"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1138
+msgid "Measurements — {0}"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Meeting"
+msgstr ""
+
+#. Option for the 'Roof Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Mixed"
+msgstr ""
+
+#. Label of the mobile (Phone) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Mobile"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Mr"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Mrs"
+msgstr ""
+
+#. Option for the 'Pre' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Ms"
+msgstr ""
+
+#. Option for the 'Roof Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "N/A"
+msgstr ""
+
+#. Label of the first_name (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Name"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log_list.js:96
+msgid "New CRM Log"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:456
+msgid "New Event"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:415
+msgid "New Event — {0}"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off_list.js:70
+msgid "New MTO"
+msgstr ""
+
+#: erp_next_custom/public/js/quotation_list.js:64
+msgid "New Quotation"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey_list.js:79
+msgid "New Site Survey"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:240
+msgid "No URL"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:226
+msgid "No attachments yet."
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:86
+msgid "No contacts found"
+msgstr ""
+
+#: erp_next_custom/public/js/leads_list.js:62
+msgid "No leads found"
+msgstr ""
+
+#: erp_next_custom/public/js/quotation_list.js:72
+msgid "No quotations found"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log_list.js:92
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off_list.js:66
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey_list.js:75
+msgid "No records"
+msgstr ""
+
+#. Label of the notes (Small Text) field in DocType 'Custom Calendar Crew
+#. Member'
+#. Label of the section_notes (Section Break) field in DocType 'Custom Calendar
+#. Event'
+#. Label of the notes (Small Text) field in DocType 'Custom Calendar Event'
+#. Label of the section_notes (Section Break) field in DocType 'Measurement
+#. Take Off'
+#. Label of the notes (Text Editor) field in DocType 'Measurement Take Off'
+#. Label of the notes (Small Text) field in DocType 'MTO Item'
+#. Label of the notes (Small Text) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_crew_member/custom_calendar_crew_member.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Notes"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Open"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:239
+msgid "Open map"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Other"
+msgstr ""
+
+#. Label of the section_people (Section Break) field in DocType 'Custom
+#. Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "People"
+msgstr ""
+
+#. Option for the 'Roof Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Pitched"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:217
+msgid "Please provide a file or URL"
+msgstr ""
+
+#. Label of the prefix (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Pre"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1008
+msgid "Preview"
+msgstr ""
+
+#. Label of the qty (Float) field in DocType 'Custom Calendar Inventory Item'
+#. Label of the qty (Float) field in DocType 'MTO Item'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+msgid "Qty"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#. Option for the 'Category' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Quotation"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:233
+#: erp_next_custom/public/js/grid_core.js:1204
+msgid "Remove"
+msgstr ""
+
+#. Option for the 'Site Type' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Residential"
+msgstr ""
+
+#. Label of the section_resources (Section Break) field in DocType 'Custom
+#. Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Resources"
+msgstr ""
+
+#. Label of the role (Data) field in DocType 'Custom Calendar Crew Member'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_crew_member/custom_calendar_crew_member.json
+msgid "Role"
+msgstr ""
+
+#. Label of the roof_type (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Roof Type"
+msgstr ""
+
+#. Label of the room (Data) field in DocType 'MTO Item'
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+msgid "Room / Zone"
+msgstr ""
+
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:427
+#: erp_next_custom/public/js/contacts_list.js:198
+#: erp_next_custom/public/js/frappe_drawing.js:102
+#: erp_next_custom/public/js/grid_core.js:949
+#: erp_next_custom/public/js/grid_core.js:1141
+msgid "Save"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'CRM Log'
+#. Option for the 'Status' (Select) field in DocType 'Custom Calendar Event'
+#. Option for the 'Status' (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Scheduled"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:629
+msgid "Search…"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:134
+msgid "Select / move / scale"
+msgstr ""
+
+#. Label of the site_location (Text) field in DocType 'CRM Log'
+#. Label of the site_location (Data) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Site Location"
+msgstr ""
+
+#. Label of the site_survey (Link) field in DocType 'Measurement Take Off'
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Site Survey"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/site_survey_attachment/site_survey_attachment.json
+msgid "Site Survey Attachment"
+msgstr ""
+
+#. Name of a DocType
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "Site Survey Measurement"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Site Surveys"
+msgstr ""
+
+#. Label of the site_type (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Site Type"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Site Visit"
+msgstr ""
+
+#. Label of the start_date (Date) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Start Date"
+msgstr ""
+
+#. Label of the start_time (Time) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:423
+msgid "Start Time"
+msgstr ""
+
+#. Label of the status (Select) field in DocType 'CRM Log'
+#. Label of the status (Select) field in DocType 'Custom Calendar Event'
+#. Label of the status (Select) field in DocType 'Measurement Take Off'
+#. Label of the status (Select) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Status"
+msgstr ""
+
+#. Label of the loc_street (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Street"
+msgstr ""
+
+#. Label of the last_name (Data) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Surname"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Custom Calendar
+#. Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+msgid "Survey"
+msgstr ""
+
+#. Label of the survey_date (Date) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Survey Date"
+msgstr ""
+
+#. Label of the assigned_to (Link) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Surveyor"
+msgstr ""
+
+#. Name of a role
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/measurement_take_off/measurement_take_off.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "System Manager"
+msgstr ""
+
+#. Label of the tel (Phone) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Tel"
+msgstr ""
+
+#. Label of the title (Data) field in DocType 'Custom Calendar Event'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_event/custom_calendar_event_list.js:417
+msgid "Title"
+msgstr ""
+
+#. Label of the assigned_to (Link) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "To"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Transport"
+msgstr ""
+
+#. Label of the log_type (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Type"
+msgstr ""
+
+#. Label of the url (Data) field in DocType 'CRM Log Attachment'
+#. Label of the url (Data) field in DocType 'Custom Calendar Attachment'
+#. Label of the url (Data) field in DocType 'Site Survey Attachment'
+#: erp_next_custom/erp_next_custom/doctype/crm_log_attachment/crm_log_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_attachment/custom_calendar_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_attachment/site_survey_attachment.json
+msgid "URL"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1027
+msgid "URL / Path"
+msgstr ""
+
+#: erp_next_custom/public/js/frappe_drawing.js:166
+msgid "Undo"
+msgstr ""
+
+#. Label of the unit (Select) field in DocType 'Custom Calendar Inventory Item'
+#. Label of the unit (Select) field in DocType 'MTO Item'
+#. Label of the unit (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+#: erp_next_custom/public/js/grid_core.js:1189
+msgid "Unit"
+msgstr ""
+
+#. Label of the updates (Text Editor) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Update(s)"
+msgstr ""
+
+#. Label of the updates (Small Text) field in DocType 'Site Survey'
+#: erp_next_custom/erp_next_custom/doctype/site_survey/site_survey.json
+msgid "Updates"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1090
+#: erp_next_custom/public/js/grid_core.js:1091
+#: erp_next_custom/public/js/grid_core.js:1093
+msgid "Upload failed"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1015
+msgid "Upload files"
+msgstr ""
+
+#. Label of the user (Link) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "User"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:463
+msgid "User '{0}' created"
+msgstr ""
+
+#. Label of the value (Float) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+#: erp_next_custom/public/js/grid_core.js:1188
+msgid "Value"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Viewed"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'CRM Log'
+#: erp_next_custom/erp_next_custom/doctype/crm_log/crm_log.json
+msgid "Yard"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "cm"
+msgstr ""
+
+#: erp_next_custom/public/js/contacts_list.js:194
+msgid "e.g. Document 2025"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1201
+msgid "e.g. Room width"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "ft"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "g"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+msgid "hrs"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "in"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "kg"
+msgstr ""
+
+#. Label of the label (Data) field in DocType 'Contact Attachment'
+#. Label of the label (Data) field in DocType 'Contact Resume'
+#: erp_next_custom/erp_next_custom/doctype/contact_attachment/contact_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/contact_resume/contact_resume.json
+msgid "label"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'MTO Item'
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+msgid "ls"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#. Option for the 'Unit' (Select) field in DocType 'MTO Item'
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "m"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "mL"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "mm"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#. Option for the 'Unit' (Select) field in DocType 'MTO Item'
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "m²"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "m³"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+msgid "nos"
+msgstr ""
+
+#: erp_next_custom/public/js/grid_core.js:1016
+msgid "or paste a URL below"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'MTO Item'
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "pcs"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Custom Calendar Inventory
+#. Item'
+#. Option for the 'Unit' (Select) field in DocType 'MTO Item'
+#: erp_next_custom/erp_next_custom/doctype/custom_calendar_inventory_item/custom_calendar_inventory_item.json
+#: erp_next_custom/erp_next_custom/doctype/mto_item/mto_item.json
+msgid "set"
+msgstr ""
+
+#. Option for the 'Unit' (Select) field in DocType 'Site Survey Measurement'
+#: erp_next_custom/erp_next_custom/doctype/site_survey_measurement/site_survey_measurement.json
+msgid "units"
+msgstr ""
+
+#. Label of the url (Data) field in DocType 'Contact Attachment'
+#. Label of the url (Data) field in DocType 'Contact Resume'
+#: erp_next_custom/erp_next_custom/doctype/contact_attachment/contact_attachment.json
+#: erp_next_custom/erp_next_custom/doctype/contact_resume/contact_resume.json
+msgid "url"
+msgstr ""
+

@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-06-10 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "survey_date",
+  "assigned_to",
+  "customer",
+  "lead",
+  "contact",
+  "column_break_1",
+  "site_location",
+  "google_maps_url",
+  "site_type",
+  "roof_type",
+  "site_area",
+  "section_break_1",
+  "notes",
+  "updates",
+  "attachments",
+  "has_drawing",
+  "drawing",
+  "measurements",
+  "has_measurements"
+ ],
+ "fields": [
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nScheduled\nIn Progress\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "survey_date",
+   "fieldtype": "Date",
+   "label": "Survey Date"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Surveyor",
+   "options": "User"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_location",
+   "fieldtype": "Data",
+   "label": "Site Location"
+  },
+  {
+   "fieldname": "google_maps_url",
+   "fieldtype": "Data",
+   "label": "Maps"
+  },
+  {
+   "fieldname": "site_type",
+   "fieldtype": "Select",
+   "label": "Site Type",
+   "options": "\nResidential\nCommercial\nIndustrial"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Select",
+   "label": "Roof Type",
+   "options": "\nFlat\nPitched\nMixed\nN/A"
+  },
+  {
+   "fieldname": "site_area",
+   "fieldtype": "Float",
+   "label": "Area (m²)"
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "updates",
+   "fieldtype": "Small Text",
+   "label": "Updates"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Files",
+   "options": "Site Survey Attachment"
+  },
+  {
+   "fieldname": "measurements",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Measurements",
+   "options": "Site Survey Measurement"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_measurements",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Has Measurements"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_drawing",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Has Drawing"
+  },
+  {
+   "fieldname": "drawing",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Drawing"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "Site Survey",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

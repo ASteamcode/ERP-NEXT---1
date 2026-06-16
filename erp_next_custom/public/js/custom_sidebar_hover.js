@@ -78,11 +78,48 @@
     container.addEventListener("mouseleave", scheduleCollapse);
   }
 
+  // ─── Simplify "Add {DocType}" → "+ Add" ──────────────────────────────────
+
+  function simplifyAddButton() {
+    document.querySelectorAll(".page-head .btn-primary, .page-head .page-actions .btn").forEach(btn => {
+      const txt = btn.textContent.trim();
+      if (txt === "+ Add") return; // already done
+      if (/\b(Add|New)\s+[A-Z]/.test(txt)) {
+        btn.textContent = "+ Add";
+      }
+    });
+  }
+
+  // Watch document.body so we catch the button no matter when Frappe renders it
+  const _addBtnObserver = new MutationObserver(simplifyAddButton);
+  const _watchAddBtn = () => {
+    _addBtnObserver.disconnect();
+    _addBtnObserver.observe(document.body, { childList: true, subtree: true });
+    simplifyAddButton();
+  };
+
+  // ─── Home button → Overview ───────────────────────────────────────────────
+
+  function wireHomeButton() {
+    // Frappe renders the breadcrumb home as an <a> wrapping a home icon.
+    // Select any breadcrumb home link that points to /app or /app/ (the desk root).
+    document.querySelectorAll('.breadcrumb-container a[href="/app"], .breadcrumb-container a[href="/app/"]').forEach(a => {
+      if (a.dataset.ovWired) return;
+      a.dataset.ovWired = "1";
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        frappe.set_route("overview");
+      });
+    });
+  }
+
   // ─── Bootstrap ────────────────────────────────────────────────────────────
 
   function init() {
     const container = document.querySelector(CONTAINER_SEL);
     if (container) wireSidebar(container);
+    wireHomeButton();
+    _watchAddBtn();
   }
 
   document.addEventListener("DOMContentLoaded", init);
@@ -93,6 +130,7 @@
     const observer = new MutationObserver(() => {
       const container = document.querySelector(CONTAINER_SEL);
       if (container && !container.dataset.hoverWired) wireSidebar(container);
+      simplifyAddButton();
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }

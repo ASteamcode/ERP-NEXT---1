@@ -26,7 +26,12 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+app_include_js = [
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/grid_core.js",
+    "/assets/erp_next_custom/js/frappe_drawing.js",
+]
+        
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -44,7 +49,21 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Contact": "public/js/contacts_list.js",
+    "Lead": "public/js/leads_list.js",
+    "Quotation": "public/js/quotation_list.js",
+}
+
+after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
+
+doctype_js = {
+    "CRM Log":              "erp_next_custom/doctype/crm_log/crm_log.js",
+    "Site Survey":          "erp_next_custom/doctype/site_survey/site_survey.js",
+    "Measurement Take Off": "erp_next_custom/doctype/measurement_take_off/measurement_take_off.js",
+    "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
+}
+
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -290,4 +309,7 @@ doctype_list_js = {
 
 app_include_css = [
     "/assets/erp_next_custom/css/item_list.css"
+]
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
 ]
