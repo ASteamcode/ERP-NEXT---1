@@ -1,4 +1,3 @@
-
 app_name = "erp_next_custom"
 app_title = "Erp Next Custom"
 app_publisher = "ASteamcode"
@@ -28,14 +27,14 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
 app_include_js = [
-"/assets/erp_next_custom/js/custom_sidebar_hover.js",
-"/assets/erp_next_custom/js/grid_core.js",
-"/assets/erp_next_custom/js/frappe_drawing.js",
-"/assets/erp_next_custom/js/ui_annotations.js",
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/grid_core.js",
+    "/assets/erp_next_custom/js/frappe_drawing.js",
+    "/assets/erp_next_custom/js/ui_annotations.js",
 ]
 
 app_include_css = [
-"/assets/erp_next_custom/css/item_list.css"
+    "/assets/erp_next_custom/css/item_list.css"
 ]
 
 # include js, css files in header of web template
@@ -55,15 +54,13 @@ app_include_css = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_list_js = {
-"Contact": "public/js/contacts_list.js",
-"Lead": "public/js/leads_list.js",
-"Quotation": "public/js/quotation_list.js",
-"Item": "public/js/item_list.js",
+    "Contact": "public/js/contacts_list.js",
+    "Lead": "public/js/leads_list.js",
+    "Quotation": "public/js/quotation_list.js",
+    "Item": "public/js/item_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
-
-
 
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -276,35 +273,39 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+# Fixtures Configurations
 fixtures = [
-{
-"dt": "Workspace",
-"filters": [
-["name", "in", ["CRM", "Overview"]]
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["name", "in", ["CRM", "Overview"]]
+        ]
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Item"]]
+        ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "in", ["Item"]]
+        ]
+    },
+    {
+        "dt": "List View Settings",
+        "filters": [
+            ["name", "in", ["Item"]]
+        ]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["dt", "in", ["Item", "Stock Entry"]]
+        ]
+    },
+    {
+        "dt": "Translation"
+    }
 ]
-},
-{
-"dt": "Custom Field",
-"filters": [
-["dt", "in", ["Item"]]
-]
-},
-{
-"dt": "Property Setter",
-"filters": [
-["doc_type", "in", ["Item"]]
-]
-},
-{
-"dt": "List View Settings",
-"filters": [["name", "in", ["Item"]]]
-},
-{
-"dt": "Client Script",
-"filters": [["dt", "in", ["Item", "Stock Entry"]]]
-},
-{
-"dt": "Translation"
-},
-]
-
