@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "autoname": "ANN-.YYYY.-.#####",
+ "creation": "2026-06-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "page_route",
+  "tag",
+  "comment",
+  "col_break_1",
+  "pos_x",
+  "pos_y",
+  "section_meta",
+  "resolved",
+  "author"
+ ],
+ "fields": [
+  {
+   "fieldname": "page_route",
+   "fieldtype": "Data",
+   "label": "Page Route",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tag",
+   "fieldtype": "Select",
+   "label": "Tag",
+   "options": "Note\nEdit this\nRemove this\nChange this\nAdd here",
+   "default": "Note"
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pos_x",
+   "fieldtype": "Float",
+   "label": "Position X (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pos_y",
+   "fieldtype": "Float",
+   "label": "Position Y (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Meta"
+  },
+  {
+   "fieldname": "resolved",
+   "fieldtype": "Check",
+   "label": "Resolved",
+   "default": "0"
+  },
+  {
+   "fieldname": "author",
+   "fieldtype": "Link",
+   "label": "Author",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "UI Annotation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "comment"
+}

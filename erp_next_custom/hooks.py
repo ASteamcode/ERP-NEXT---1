@@ -31,6 +31,7 @@ app_include_js = [
 "/assets/erp_next_custom/js/custom_sidebar_hover.js",
 "/assets/erp_next_custom/js/grid_core.js",
 "/assets/erp_next_custom/js/frappe_drawing.js",
+"/assets/erp_next_custom/js/ui_annotations.js",
 ]
 
 app_include_css = [
@@ -301,6 +302,9 @@ fixtures = [
 {
 "dt": "Client Script",
 "filters": [["dt", "in", ["Item", "Stock Entry"]]]
+},
+{
+"dt": "Translation"
 },
 ]
 
