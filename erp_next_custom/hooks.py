@@ -26,16 +26,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = [
-    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
-    "/assets/erp_next_custom/js/grid_core.js",
-    "/assets/erp_next_custom/js/frappe_drawing.js",
-    "/assets/erp_next_custom/js/ui_annotations.js",
-]
-
-app_include_css = [
-    "/assets/erp_next_custom/css/item_list.css"
-]
+app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -53,15 +44,7 @@ app_include_css = [
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-doctype_list_js = {
-    "Contact": "public/js/contacts_list.js",
-    "Lead": "public/js/leads_list.js",
-    "Quotation": "public/js/quotation_list.js",
-    "Item": "public/js/item_list.js",
-}
-
-after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
-
+# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -273,39 +256,92 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-# Fixtures Configurations
+
+doctype_list_js = {
+    "Item": "public/js/item_list.js"
+}
+
+app_include_css = [
+    "/assets/erp_next_custom/css/item_list.css"
+]
 fixtures = [
     {
         "dt": "Workspace",
         "filters": [
-            ["name", "in", ["CRM", "Overview"]]
+            ["module", "in", ["Erp Next Custom"]]
+        ]
+    },
+    {
+        "dt": "Warehouse",
+        "filters": [
+            ["name", "in", [
+                "All Warehouses - AS",
+                "Goods In Transit - AS",
+                "Main Yard - AS",
+                "Main Yard - Damaged - AS",
+                "Main Yard - Scrap - AS",
+                "Main Yard - Under Repair - AS",
+                "Main Yard - Usable - AS",
+                "Sites - AS",
+                "Site A - AS",
+                "Site B - AS",
+                "Site C - AS"
+            ]]
         ]
     },
     {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", ["Item"]]
+            ["dt", "in", [
+                "Item",
+                "Stock Entry",
+                "Stock Entry Detail"
+            ]]
         ]
     },
     {
         "dt": "Property Setter",
         "filters": [
-            ["doc_type", "in", ["Item"]]
+            ["doc_type", "in", [
+                "Item",
+                "Stock Entry",
+                "Stock Entry Detail",
+                "Daily Site Stock Report",
+                "Daily Inventory Count Item"
+            ]]
         ]
     },
     {
         "dt": "List View Settings",
         "filters": [
-            ["name", "in", ["Item"]]
+            ["name", "in", [
+                "Item",
+                "Daily Site Stock Report"
+            ]]
         ]
     },
+{
+    "dt": "Item Group",
+    "filters": [
+        ["name", "in", [
+            "Scaffolding",
+            "Tubes",
+            "Couplers",
+            "Boards",
+            "Frames",
+            "Jacks",
+            "Accessories"
+        ]]
+    ]
+},
     {
         "dt": "Client Script",
         "filters": [
-            ["dt", "in", ["Item", "Stock Entry"]]
+            ["dt", "in", [
+                "Item",
+                "Stock Entry",
+                "Daily Site Stock Report"
+            ]]
         ]
-    },
-    {
-        "dt": "Translation"
     }
 ]
