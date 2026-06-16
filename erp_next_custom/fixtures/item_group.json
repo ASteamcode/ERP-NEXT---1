@@ -3,6 +3,17 @@
   "docstatus": 0,
   "doctype": "Item Group",
   "image": null,
+  "is_group": 1,
+  "item_group_defaults": [],
+  "item_group_name": "Scaffolding Materials",
+  "name": "Scaffolding Materials",
+  "parent_item_group": "All Item Groups",
+  "taxes": []
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Item Group",
+  "image": null,
   "is_group": 0,
   "item_group_defaults": [],
   "item_group_name": "Tubes",

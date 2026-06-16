@@ -26,7 +26,19 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
-app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
+
+# Combined JS files from both branches
+app_include_js = [
+    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/grid_core.js",
+    "/assets/erp_next_custom/js/frappe_drawing.js",
+    "/assets/erp_next_custom/js/ui_annotations.js",
+]
+
+# Combined CSS files from both branches
+app_include_css = [
+    "/assets/erp_next_custom/css/item_list.css"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
@@ -44,7 +56,17 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+
+# Combined list views scripts from both branches
+doctype_list_js = {
+    "Contact": "public/js/contacts_list.js",
+    "Lead": "public/js/leads_list.js",
+    "Quotation": "public/js/quotation_list.js",
+    "Item": "public/js/item_list.js",
+}
+
+after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
+
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -257,18 +279,13 @@ app_include_js = "/assets/erp_next_custom/js/custom_sidebar_hover.js"
 # ignore_translatable_strings_from = []
 
 
-doctype_list_js = {
-    "Item": "public/js/item_list.js"
-}
-
-app_include_css = [
-    "/assets/erp_next_custom/css/item_list.css"
-]
+# --- FIXTURES COMBINED STRATEGICALLY ---
+# Merged filters seamlessly so both of your configurations transfer on `bench migrate`
 fixtures = [
     {
         "dt": "Workspace",
         "filters": [
-            ["module", "in", ["Erp Next Custom"]]
+            ["name", "in", ["CRM", "Overview"]]
         ]
     },
     {
@@ -292,11 +309,7 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", [
-                "Item",
-                "Stock Entry",
-                "Stock Entry Detail"
-            ]]
+            ["dt", "in", ["Item", "Stock Entry", "Stock Entry Detail"]]
         ]
     },
     {
@@ -314,34 +327,32 @@ fixtures = [
     {
         "dt": "List View Settings",
         "filters": [
+            ["name", "in", ["Item", "Daily Site Stock Report"]]
+        ]
+    },
+    {
+        "dt": "Item Group",
+        "filters": [
             ["name", "in", [
-                "Item",
-                "Daily Site Stock Report"
+                "Scaffolding Materials",
+                "Scaffolding",
+                "Tubes",
+                "couplers",
+                "Couplers",
+                "Boards",
+                "Frames",
+                "Jacks",
+                "Accessories"
             ]]
         ]
     },
-{
-    "dt": "Item Group",
-    "filters": [
-        ["name", "in", [
-            "Scaffolding",
-            "Tubes",
-            "Couplers",
-            "Boards",
-            "Frames",
-            "Jacks",
-            "Accessories"
-        ]]
-    ]
-},
     {
         "dt": "Client Script",
         "filters": [
-            ["dt", "in", [
-                "Item",
-                "Stock Entry",
-                "Daily Site Stock Report"
-            ]]
+            ["dt", "in", ["Item", "Stock Entry", "Daily Site Stock Report"]]
         ]
+    },
+    {
+        "dt": "Translation"
     }
 ]
