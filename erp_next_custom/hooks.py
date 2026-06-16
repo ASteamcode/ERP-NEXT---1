@@ -276,6 +276,40 @@ doctype_js = {
 # ignore_translatable_strings_from = []
 
 fixtures = [
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["module", "=", "CRM"]
+        ]
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Item"]]
+        ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "in", ["Item"]]
+        ]
+    },
+	{
+        "dt": "List View Settings",
+        "filters": [["name", "in", ["Item"]]]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [["dt", "in", ["Item", "Stock Entry"]]]
+    }
+]
+doctype_list_js = {
+    "Item": "public/js/item_list.js"
+}
+
+app_include_css = [
+    "/assets/erp_next_custom/css/item_list.css"
+]
     {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
     {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
 ]
