@@ -4,6 +4,16 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 def setup_custom_fields():
     fields = {
+        "Lead": [
+            {
+                "fieldname": "custom_crm_log",
+                "fieldtype": "Link",
+                "label": "CRM Log",
+                "options": "CRM Log",
+                "insert_after": "source",
+                "read_only": 1,
+            }
+        ],
         "Quotation": [
             {
                 "fieldname": "custom_project_refs_section",

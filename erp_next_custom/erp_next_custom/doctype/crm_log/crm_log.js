@@ -31,6 +31,11 @@ frappe.ui.form.on("CRM Log", {
 	refresh(frm) {
 		crm_hide_raw_location(frm);
 		crm_bind_enter_navigation(frm);
+		crm_update_linked_section(frm);
+	},
+
+	category(frm) {
+		crm_update_linked_section(frm);
 	},
 
 	// Auto-set the creation datetime on every save (always overwrite).
@@ -106,4 +111,14 @@ function crm_focus_next(frm, currentField) {
 			return;
 		}
 	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKFLOW — show "Linked Records" section only when category = Lead
+// ─────────────────────────────────────────────────────────────────────────────
+
+function crm_update_linked_section(frm) {
+	const show = frm.doc.category === "Lead";
+	frm.set_df_property("workflow_section", "hidden", show ? 0 : 1);
+	frm.refresh_field("workflow_section");
 }
