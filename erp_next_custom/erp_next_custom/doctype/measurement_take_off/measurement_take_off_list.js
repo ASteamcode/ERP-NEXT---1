@@ -195,7 +195,6 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _MTO_COL_WIDTHS, getTpl);
-    GL.bindDelete($grid, MTO_DOCTYPE, listview, () => _mto_render(listview));
 
     // Bulk row selection + delete
     const _mto_del = (docname) => new Promise((res, rej) => {

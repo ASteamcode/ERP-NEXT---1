@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v6";
+    const STYLE_VERSION = "gl-v7";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {
@@ -126,7 +126,6 @@
         return (
             `<div class="gl-cell gl-rn" data-name="${doc.name}" data-row="${ri}">` +
             `<span class="gl-rn-num">${ri + 1}</span>` +
-            `<button class="gl-rn-del" data-name="${doc.name}" title="${frappe.utils.escape_html(__("Delete"))}">${SVG.del}</button>` +
             `</div>`
         );
     }
@@ -730,7 +729,6 @@
         };
 
         $grid.off("click.gl-sel").on("click.gl-sel", ".gl-rn[data-row]", function (e) {
-            if ($(e.target).closest(".gl-rn-del").length) return;
             const ri   = parseInt($(this).attr("data-row"), 10);
             const name = $(this).attr("data-name");
             if (sel.has(name)) {
@@ -1391,20 +1389,6 @@
 .gl-hdr.gl-rn { z-index: 11; }
 .gl-rn.gl-row-hover:not(.gl-hdr) { background: var(--bg-light-gray, #f7f8fa); }
 .gl-rn.gl-editing:not(.gl-hdr)   { background: var(--bg-light-gray, #f7f8fa); }
-
-/* Delete: replaces number on row-number hover */
-.gl-rn-del {
-    display: none;
-    align-items: center; justify-content: center;
-    width: 20px; height: 20px;
-    border: none; border-radius: var(--erpnx-cell-radius);
-    background: none; cursor: pointer;
-    color: var(--text-danger, #e03737);
-    transition: background 0.12s; padding: 0;
-}
-.gl-rn-del:hover { background: rgba(224,55,55,0.10); }
-.gl-cell.gl-rn:not(.gl-hdr):hover .gl-rn-num { display: none; }
-.gl-cell.gl-rn:not(.gl-hdr):hover .gl-rn-del { display: flex; }
 
 /* ── Display spans ────────────────────────────────────────────────────────── */
 .gl-d {
