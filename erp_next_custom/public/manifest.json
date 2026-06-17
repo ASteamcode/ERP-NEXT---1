@@ -1,0 +1,29 @@
+{
+    "name": "Achi Scaffolding ERP",
+    "short_name": "AchiERP",
+    "description": "Achi Scaffolding — internal operations platform",
+    "start_url": "/app/overview",
+    "display": "standalone",
+    "orientation": "any",
+    "theme_color": "#378ADD",
+    "background_color": "#f0f4f8",
+    "icons": [
+        {
+            "src": "/assets/erp_next_custom/images/achi-icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/assets/erp_next_custom/images/achi-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        { "name": "CRM",      "url": "/app/crm-log",     "description": "CRM Logs" },
+        { "name": "Contacts", "url": "/app/contact",      "description": "Contacts" },
+        { "name": "Leads",    "url": "/app/lead",         "description": "Leads" }
+    ]
+}
