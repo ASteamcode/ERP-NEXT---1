@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v5";
+    const STYLE_VERSION = "gl-v6";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {
@@ -124,7 +124,7 @@
     // ── Rownum cell HTML ───────────────────────────────────────────────────────
     function rnCell(doc, ri) {
         return (
-            `<div class="gl-cell gl-rn" data-name="${doc.name}">` +
+            `<div class="gl-cell gl-rn" data-name="${doc.name}" data-row="${ri}">` +
             `<span class="gl-rn-num">${ri + 1}</span>` +
             `<button class="gl-rn-del" data-name="${doc.name}" title="${frappe.utils.escape_html(__("Delete"))}">${SVG.del}</button>` +
             `</div>`
@@ -385,15 +385,29 @@
     }
 
     // ── Save / delete ──────────────────────────────────────────────────────────
-    const _GL_SAVING = {};
+    // Debounced batch saver: field changes for the same (doctype, name) that
+    // arrive within 80 ms are coalesced into a single set_value request.
+    const _GL_SAVE_BATCH = {};
 
     function fastSave(doctype, name, field, value) {
-        const key = `${doctype}::${name}::${field}`;
-        if (_GL_SAVING[key]) return Promise.reject("in-flight");
-        _GL_SAVING[key] = true;
-        return frappe.db.set_value(doctype, name, field, value)
-            .then(r  => { delete _GL_SAVING[key]; return r; })
-            .catch(e => { delete _GL_SAVING[key]; throw e; });
+        const docKey = `${doctype}::${name}`;
+        if (!_GL_SAVE_BATCH[docKey]) {
+            _GL_SAVE_BATCH[docKey] = { fields: {}, cbs: [], timer: null };
+        }
+        const batch = _GL_SAVE_BATCH[docKey];
+        batch.fields[field] = value;
+
+        const p = new Promise((res, rej) => batch.cbs.push({ res, rej }));
+        clearTimeout(batch.timer);
+        batch.timer = setTimeout(() => {
+            const { fields, cbs } = batch;
+            delete _GL_SAVE_BATCH[docKey];
+            frappe.db.set_value(doctype, name, fields)
+                .then(r => cbs.forEach(c => c.res(r)))
+                .catch(e => cbs.forEach(c => c.rej(e)));
+        }, 80);
+
+        return p;
     }
 
     /**
@@ -686,6 +700,86 @@
 
     function bindAddRow($host, addFn) {
         $host.off("click.gl-add").on("click.gl-add", ".gl-add-btn", addFn);
+    }
+
+    /**
+     * bindRowSelect — global row selection with bulk delete.
+     *
+     * @param $grid      jQuery grid element
+     * @param $toolbar   jQuery toolbar element (button appended here)
+     * @param rows       array of row data objects (each has .name)
+     * @param deleteFn   (name) => Promise — deletes from server AND removes from rows/listview.data
+     * @param rerenderFn () => void — called once after all deletions
+     * @returns          { getSelected(), clear() }
+     */
+    function bindRowSelect($grid, $toolbar, rows, deleteFn, rerenderFn) {
+        const sel = new Set(); // doc names
+
+        // Remove stale button from previous render cycle
+        $toolbar.find(".gl-del-sel-btn").remove();
+        $toolbar.off("click.gl-sel-del");
+
+        const $btn = $(`<button class="btn btn-danger btn-sm gl-del-sel-btn"></button>`)
+            .hide()
+            .appendTo($toolbar);
+
+        const syncBtn = () => {
+            const n = sel.size;
+            if (n > 0) $btn.text(__("Delete ({0}) Rows", [n])).show();
+            else        $btn.hide();
+        };
+
+        $grid.off("click.gl-sel").on("click.gl-sel", ".gl-rn[data-row]", function (e) {
+            if ($(e.target).closest(".gl-rn-del").length) return;
+            const ri   = parseInt($(this).attr("data-row"), 10);
+            const name = $(this).attr("data-name");
+            if (sel.has(name)) {
+                sel.delete(name);
+                $(this).removeClass("gl-rn--sel");
+                $grid.find(`.gl-cell[data-row="${ri}"]:not(.gl-rn)`).removeClass("gl-row--sel");
+            } else {
+                sel.add(name);
+                $(this).addClass("gl-rn--sel");
+                $grid.find(`.gl-cell[data-row="${ri}"]:not(.gl-rn)`).addClass("gl-row--sel");
+            }
+            syncBtn();
+        });
+
+        $toolbar.on("click.gl-sel-del", ".gl-del-sel-btn", function () {
+            const targets = [...sel];
+            if (!targets.length) return;
+            frappe.confirm(
+                __("Delete {0} selected row(s)? This cannot be undone.", [targets.length]),
+                () => {
+                    $btn.prop("disabled", true);
+                    const queue = [...targets];
+                    let deleted = 0, errors = 0;
+                    const next = () => {
+                        if (!queue.length) {
+                            sel.clear();
+                            rerenderFn();
+                            frappe.show_alert({
+                                message: __("{0} deleted · {1} errors", [deleted, errors]),
+                                indicator: errors ? "orange" : "red",
+                            }, 3);
+                            return;
+                        }
+                        Promise.resolve(deleteFn(queue.shift()))
+                            .then(() => { deleted++; next(); })
+                            .catch(() => { errors++; next(); });
+                    };
+                    next();
+                }
+            );
+        });
+
+        return {
+            /** Returns array of selected row doc objects. */
+            getSelected() {
+                return [...sel].map(n => rows.find(r => r.name === n)).filter(Boolean);
+            },
+            clear() { sel.clear(); syncBtn(); },
+        };
     }
 
     /** Textarea autogrow on input. Call after render. */
@@ -1540,6 +1634,11 @@
 .gl-mto-row      { display: grid; grid-template-columns: 1fr 120px 90px 32px; gap: 8px; align-items: center; margin-bottom: 6px; }
 .gl-mto-del      { width: 32px; text-align: center; cursor: pointer; color: #c0392b; background: none; border: none; font-size: 16px; }
 .gl-mto-add      { margin-top: 4px; align-self: flex-start; }
+
+/* ── Row selection ────────────────────────────────────────────────────────── */
+.gl-rn--sel  { background: var(--erpnx-accent) !important; color: #fff !important; }
+.gl-row--sel { background: color-mix(in srgb, var(--erpnx-accent) 8%, transparent) !important; }
+.gl-del-sel-btn { white-space: nowrap; }
 `;
 
     // ── Public API ─────────────────────────────────────────────────────────────
@@ -1605,6 +1704,7 @@
         bindDrawings,
         bindAttachments,
         bindMeasurements,
+        bindRowSelect,
         // Dialogs
         openAttachDialog,
         openMeasureDialog,

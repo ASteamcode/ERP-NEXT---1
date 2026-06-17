@@ -26,11 +26,10 @@ const CRM_COLS = [
     { field: "google_maps_url", label: "Maps",          type: "maps",     width: 120 },
     { field: "attachments",     label: "Files",         type: "attach",   width: 52 },
     { field: "drawing",         label: "Drawing",       type: "drawing",  width: 52 },
-    { field: "crm_lead",        label: "Lead",          type: "crm-lead", width: 140 },
 ];
 
 const CRM_FIELDS = [
-    ...CRM_COLS.filter(c => !["attachments","drawing","crm-lead"].includes(c.type)).map(c => c.field),
+    ...CRM_COLS.filter(c => !["attachments","drawing"].includes(c.type)).map(c => c.field),
     "name", "attachments", "has_drawing", "crm_lead",
 ];
 
@@ -87,7 +86,7 @@ function _crm_paint(listview, host, rows) {
 
     const toolbar = document.createElement("div");
     toolbar.className = "gl-toolbar";
-    toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Row")}</button>`;
+    toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Row")}</button><button class="btn btn-primary btn-sm crm-promote-btn" title="${__("Validate Lead rows — creates/updates Lead, Site Survey and MTO sequentially")}">${__("Validate Records")}</button>`;
 
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
@@ -245,8 +244,8 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
             : __("Delete this CRM Log? This cannot be undone.");
         frappe.confirm(msg, () => {
             frappe.call({
-                method: "frappe.client.delete",
-                args: { doctype: CRM_DOCTYPE, name: docname },
+                method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.delete_crm_log",
+                args: { crm_log_name: docname },
                 callback: ({ exc }) => {
                     if (exc) return;
                     frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
@@ -339,22 +338,66 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
         });
     });
 
-    // Create Lead inline — immediate, no confirm
-    $grid.on("click.crm-lead-create", ".crm-create-lead-btn", function (e) {
-        e.stopPropagation();
-        const docname = $(this).attr("data-name");
+    // Validate Records — sequential Lead → Site Survey → MTO pipeline, one row at a time
+    $host.on("click.crm-promote", ".crm-promote-btn", function () {
+        const queue = rows.filter(r => r.category === "Lead").slice();
+        if (!queue.length) {
+            frappe.show_alert({ message: __("No Lead rows to validate"), indicator: "orange" }, 2);
+            return;
+        }
+
+        const $btn = $host.find(".crm-promote-btn").prop("disabled", true);
+        let created = 0, updated = 0, errors = 0;
+        frappe.show_alert({ message: __("Validating {0} Lead row(s)…", [queue.length]), indicator: "blue" }, 2);
+
+        const finish = () => {
+            $btn.prop("disabled", false);
+            _crm_render(listview);
+            frappe.show_alert({
+                message: __("{0} created · {1} updated · {2} errors", [created, updated, errors]),
+                indicator: errors ? "orange" : "green",
+            }, 5);
+        };
+
+        const next = () => {
+            if (!queue.length) { finish(); return; }
+            const row = queue.shift();
+            frappe.call({
+                method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.validate_crm_log",
+                args: { crm_log_name: row.name },
+                callback({ message, exc }) {
+                    if (exc || !message) {
+                        errors++;
+                    } else {
+                        if (message.lead_action === "created") created++;
+                        else updated++;
+                        row.crm_lead = message.lead;
+                    }
+                    setTimeout(next, 200);
+                },
+                error() {
+                    errors++;
+                    setTimeout(next, 200);
+                },
+            });
+        };
+        next();
+    });
+
+    // Bulk row selection + delete (uses custom delete_crm_log to clear Lead backlinks)
+    const _crm_del = (docname) => new Promise((res, rej) => {
         frappe.call({
-            method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.create_lead_from_log",
+            method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.delete_crm_log",
             args: { crm_log_name: docname },
-            callback({ message }) {
-                if (!message) return;
-                frappe.show_alert({ message: __("Lead {0} created", [message.lead]), indicator: "green" }, 3);
-                const row = (listview.data || []).find(d => d.name === docname);
-                if (row) row.crm_lead = message.lead;
-                _crm_render(listview);
+            callback: ({ exc }) => {
+                if (exc) { rej(exc); return; }
+                listview.data = (listview.data || []).filter(d => d.name !== docname);
+                res();
             },
+            error: rej,
         });
     });
+    GL.bindRowSelect($grid, $host.find(".gl-toolbar"), rows, _crm_del, () => _crm_render(listview));
 
     _crm_bind_avatar_ac($grid, listview);
 }

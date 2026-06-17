@@ -1,8 +1,19 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+_EXTRA_SALUTATIONS = ["Eng", "Arch"]
+
+
+def _ensure_salutations():
+    for sal in _EXTRA_SALUTATIONS:
+        if not frappe.db.exists("Salutation", sal):
+            frappe.get_doc({"doctype": "Salutation", "salutation": sal}).insert(
+                ignore_permissions=True
+            )
+
 
 def setup_custom_fields():
+    _ensure_salutations()
     fields = {
         "Lead": [
             {
