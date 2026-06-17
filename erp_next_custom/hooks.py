@@ -58,12 +58,17 @@ app_include_css = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 
+doctype_js = {
+    "Task": "public/js/task.js",
+}
+
 # Combined list views scripts from both branches
 doctype_list_js = {
     "Contact": "public/js/contacts_list.js",
     "Lead": "public/js/leads_list.js",
     "Quotation": "public/js/quotation_list.js",
     "Item": "public/js/item_list.js",
+    "Task": "public/js/task_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
