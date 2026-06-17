@@ -14,8 +14,8 @@ const Q_STATUS_META = {
 };
 
 const Q_COLS = [
-    { field: "name",                        label: "Quotation #",  type: "id",       width: 160 },
-    { field: "status",                      label: "Status",       type: "status",   width: 120 },
+    { field: "name",                        label: "Quotation #",  type: "id",       width: 160, sticky: true },
+    { field: "status",                      label: "Status",       type: "status",   width: 120, sticky: true },
     { field: "transaction_date",            label: "Date",         type: "date",     width: 110 },
     { field: "valid_till",                  label: "Valid Till",   type: "date",     width: 110 },
     { field: "customer_name",               label: "Client",       type: "text",     width: 180 },
@@ -63,9 +63,14 @@ function _q_paint(listview, host, rows) {
     toolbar.className = "gl-toolbar";
     toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("New Quotation")}</button>`;
 
+    const so = GL.computeStickyOffsets(cols, _Q_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -75,7 +80,9 @@ function _q_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_q_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_q_cell(col, doc)}</div>`);
         });
     });
 
@@ -84,10 +91,13 @@ function _q_paint(listview, host, rows) {
     grid.style.gridTemplateColumns = getTpl();
     grid.innerHTML = html.join("");
 
+    const scrollWrap = document.createElement("div");
+    scrollWrap.className = "gl-host--scroll";
+    scrollWrap.appendChild(grid);
     host.innerHTML = "";
-    host.className = "gl-host gl-host--scroll";
+    host.className = "gl-host";
     host.appendChild(toolbar);
-    host.appendChild(grid);
+    host.appendChild(scrollWrap);
 
     _q_bind(listview, host, rows, cols, getTpl);
 }
@@ -118,8 +128,16 @@ function _q_bind(listview, host, rows, cols, getTpl) {
     const esm    = GL.editState($grid);
     const saveFn = (name, field, val) => GL.fastSave(Q_DOCTYPE, name, field, val);
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _Q_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _Q_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _Q_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
     GL.bindDelete($grid, Q_DOCTYPE, listview, () => _q_render(listview));
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindDateEdit($grid, rows, saveFn, esm);

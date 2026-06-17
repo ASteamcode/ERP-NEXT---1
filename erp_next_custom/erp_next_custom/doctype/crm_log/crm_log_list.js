@@ -7,8 +7,8 @@ const CRM_ATTACH_FIELD  = "attachments";
 const CRM_COL_WIDTH_KEY = "crm_gl_col_widths";
 
 const CRM_COLS = [
-    { field: "status",          label: "Status",        type: "select",   width: 130, options: ["Open","Scheduled","Viewed","Cancelled","Done"] },
-    { field: "category",        label: "Category",      type: "select",   width: 170, options: ["Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"] },
+    { field: "status",          label: "Status",        type: "select",   width: 130, options: ["Open","Scheduled","Viewed","Cancelled","Done"], sticky: true },
+    { field: "category",        label: "Category",      type: "select",   width: 170, options: ["Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"], sticky: true },
     { field: "date",            label: "Created",       type: "datetime", width: 150 },
     { field: "user",            label: "User",          type: "avatar",   width: 52 },
     { field: "assigned_to",     label: "To",            type: "avatar",   width: 52, variant: "grey" },
@@ -88,9 +88,14 @@ function _crm_paint(listview, host, rows) {
     toolbar.className = "gl-toolbar";
     toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Row")}</button><button class="btn btn-primary btn-sm crm-promote-btn" title="${__("Validate Lead rows — creates/updates Lead, Site Survey and MTO sequentially")}">${__("Validate Records")}</button>`;
 
+    const so = GL.computeStickyOffsets(cols, _CRM_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -100,7 +105,9 @@ function _crm_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_crm_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_crm_cell(col, doc)}</div>`);
         });
     });
 
@@ -109,10 +116,13 @@ function _crm_paint(listview, host, rows) {
     grid.style.gridTemplateColumns = getTpl();
     grid.innerHTML = html.join("");
 
+    const scrollWrap = document.createElement("div");
+    scrollWrap.className = "gl-host--scroll";
+    scrollWrap.appendChild(grid);
     host.innerHTML = "";
-    host.className = "gl-host gl-host--scroll";
+    host.className = "gl-host";
     host.appendChild(toolbar);
-    host.appendChild(grid);
+    host.appendChild(scrollWrap);
 
     _crm_bind(listview, host, rows, cols, getTpl);
 }
@@ -231,8 +241,17 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
         return GL.fastSave(CRM_DOCTYPE, name, field, val);
     };
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _CRM_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
+
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _CRM_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _CRM_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
 
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
@@ -318,7 +337,7 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
     });
 
     // Validate Records — sequential Lead → Site Survey → MTO pipeline, one row at a time
-    $host.on("click.crm-promote", ".crm-promote-btn", function () {
+    $host.off("click.crm-promote").on("click.crm-promote", ".crm-promote-btn", function () {
         const queue = rows.filter(r => r.category === "Lead").slice();
         if (!queue.length) {
             frappe.show_alert({ message: __("No Lead rows to validate"), indicator: "orange" }, 2);
