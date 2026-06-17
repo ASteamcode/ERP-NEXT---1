@@ -234,27 +234,6 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _CRM_COL_WIDTHS, getTpl);
 
-    // Custom delete: warn if this log is linked to a Lead
-    $grid.on("click.crm-del", ".gl-rn-del", function (e) {
-        e.stopPropagation();
-        const docname = $(this).attr("data-name");
-        const row     = rows.find(r => r.name === docname);
-        const msg     = row?.crm_lead
-            ? __("This log is linked to Lead {0}. The Lead will remain — only this log will be deleted. Continue?", [row.crm_lead])
-            : __("Delete this CRM Log? This cannot be undone.");
-        frappe.confirm(msg, () => {
-            frappe.call({
-                method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.delete_crm_log",
-                args: { crm_log_name: docname },
-                callback: ({ exc }) => {
-                    if (exc) return;
-                    frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
-                    listview.data = (listview.data || []).filter(d => d.name !== docname);
-                    _crm_render(listview);
-                },
-            });
-        });
-    });
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindOutsideClick($grid, esm, "crm");
