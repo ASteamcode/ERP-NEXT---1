@@ -279,4 +279,8 @@ doctype_js = {
 fixtures = [
     {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
     {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Custom Field","filters": [["dt", "in", ["Item", "Warehouse", "Item Group"]]]},
+    {"doctype": "Property Setter","filters": [["doc_type", "in", ["Item", "Warehouse", "Item Group"]]]},
+    {"doctype": "Warehouse","filters": [["name", "like", "% - AS"]]},
+    {"doctype": "Item Group"}
 ]
