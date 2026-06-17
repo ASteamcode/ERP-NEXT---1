@@ -728,19 +728,49 @@
             else        $btn.hide();
         };
 
-        $grid.off("click.gl-sel").on("click.gl-sel", ".gl-rn[data-row]", function (e) {
+        let _drag = null;
+
+        const _applyDragRange = (startRi, endRi) => {
+            if (!_drag) return;
+            const minRi = Math.min(startRi, endRi);
+            const maxRi = Math.max(startRi, endRi);
+            sel.clear();
+            _drag.preState.forEach(n => sel.add(n));
+            rows.forEach((row, ri) => {
+                if (ri >= minRi && ri <= maxRi) {
+                    if (_drag.mode === "select") sel.add(row.name);
+                    else sel.delete(row.name);
+                }
+            });
+            rows.forEach((row, ri) => {
+                const on = sel.has(row.name);
+                $grid.find(`.gl-rn[data-row="${ri}"]`).toggleClass("gl-rn--sel", on);
+                $grid.find(`.gl-cell[data-row="${ri}"]:not(.gl-rn)`).toggleClass("gl-row--sel", on);
+            });
+            syncBtn();
+        };
+
+        $grid.off("click.gl-sel mousedown.gl-sel").on("mousedown.gl-sel", ".gl-rn[data-row]", function (e) {
+            if (e.button !== 0) return;
+            e.preventDefault();
             const ri   = parseInt($(this).attr("data-row"), 10);
             const name = $(this).attr("data-name");
-            if (sel.has(name)) {
-                sel.delete(name);
-                $(this).removeClass("gl-rn--sel");
-                $grid.find(`.gl-cell[data-row="${ri}"]:not(.gl-rn)`).removeClass("gl-row--sel");
-            } else {
-                sel.add(name);
-                $(this).addClass("gl-rn--sel");
-                $grid.find(`.gl-cell[data-row="${ri}"]:not(.gl-rn)`).addClass("gl-row--sel");
-            }
-            syncBtn();
+            _drag = { startRi: ri, mode: sel.has(name) ? "deselect" : "select", preState: new Set(sel) };
+            _applyDragRange(ri, ri);
+            const onMove = (ev) => {
+                const el = document.elementFromPoint(ev.clientX, ev.clientY);
+                if (!el) return;
+                const $rn = $(el).closest(".gl-rn[data-row]");
+                if (!$rn.length || !$.contains($grid[0], $rn[0])) return;
+                _applyDragRange(_drag.startRi, parseInt($rn.attr("data-row"), 10));
+            };
+            $grid.css("user-select", "none");
+            $(document).on("mousemove.gl-sel-drag", onMove);
+            $(document).one("mouseup.gl-sel-drag", () => {
+                $(document).off("mousemove.gl-sel-drag");
+                $grid.css("user-select", "");
+                _drag = null;
+            });
         });
 
         $toolbar.on("click.gl-sel-del", ".gl-del-sel-btn", function () {

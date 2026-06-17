@@ -294,7 +294,7 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
     };
 
     // Dropdown toggle
-    $host.on("click.ss-caret", ".ss-send-caret", function (e) {
+    $host.off("click.ss-caret").on("click.ss-caret", ".ss-send-caret", function (e) {
         e.stopPropagation();
         $(this).next(".ss-send-dd").toggleClass("ss-send-dd--open");
     });
@@ -302,14 +302,14 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
         $host.find(".ss-send-dd").removeClass("ss-send-dd--open")
     );
 
-    $host.on("click.ss-send-sel", ".ss-send-sel", function () {
+    $host.off("click.ss-send-sel").on("click.ss-send-sel", ".ss-send-sel", function () {
         $host.find(".ss-send-dd").removeClass("ss-send-dd--open");
         const sel = rowSel.getSelected();
         if (!sel.length) { frappe.show_alert({ message: __("Select rows first by clicking their row number"), indicator: "orange" }, 3); return; }
         sendToMTO(sel);
     });
 
-    $host.on("click.ss-send-all", ".ss-send-all", function () {
+    $host.off("click.ss-send-all").on("click.ss-send-all", ".ss-send-all", function () {
         $host.find(".ss-send-dd").removeClass("ss-send-dd--open");
         sendToMTO([...rows]);
     });

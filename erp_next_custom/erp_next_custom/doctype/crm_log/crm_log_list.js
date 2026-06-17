@@ -318,7 +318,7 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
     });
 
     // Validate Records — sequential Lead → Site Survey → MTO pipeline, one row at a time
-    $host.on("click.crm-promote", ".crm-promote-btn", function () {
+    $host.off("click.crm-promote").on("click.crm-promote", ".crm-promote-btn", function () {
         const queue = rows.filter(r => r.category === "Lead").slice();
         if (!queue.length) {
             frappe.show_alert({ message: __("No Lead rows to validate"), indicator: "orange" }, 2);
