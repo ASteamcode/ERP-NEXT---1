@@ -4,9 +4,9 @@
 const MTO_DOCTYPE = "Measurement Take Off";
 
 const MTO_COLS = [
-    { field: "attachments",    label: "Files",         type: "attach",  width: 52 },
-    { field: "status",         label: "Status",        type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"] },
-    { field: "date",           label: "Date",           type: "date",    width: 120 },
+    { field: "attachments",    label: "Files",         type: "attach",  width: 52,  sticky: true },
+    { field: "status",         label: "Status",        type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"], sticky: true },
+    { field: "date",           label: "Date",           type: "date",    width: 120, sticky: true },
     { field: "assigned_to",    label: "Assigned To",   type: "avatar",  width: 52 },
     { field: "lead",           label: "Lead",           type: "link",    width: 160, link_doctype: "Lead",        link_namefield: "lead_name" },
     { field: "site_survey",    label: "Site Survey",   type: "link",    width: 160, link_doctype: "Site Survey", link_namefield: "name" },
@@ -76,9 +76,14 @@ function _mto_paint(listview, host, rows) {
     toolbar.className = "gl-toolbar";
     toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add MTO")}</button>`;
 
+    const so = GL.computeStickyOffsets(cols, _MTO_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -88,7 +93,9 @@ function _mto_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_mto_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_mto_cell(col, doc)}</div>`);
         });
     });
 
@@ -200,8 +207,17 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
     const esm    = GL.editState($grid);
     const saveFn = (name, field, val) => GL.fastSave(MTO_DOCTYPE, name, field, val);
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _MTO_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
+
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _MTO_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _MTO_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
 
     const _mto_del = (docname) => new Promise((res, rej) => {
         frappe.call({

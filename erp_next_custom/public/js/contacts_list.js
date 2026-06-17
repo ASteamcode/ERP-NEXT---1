@@ -8,9 +8,9 @@ const CONTACT_ATT_DT     = "Contact Attachment";
 const CONTACT_TYPE_OPTIONS = ["", "Supplier", "Employee", "Worker", "Client", "Lead", "Prospect"];
 
 const CONTACT_COLS = [
-    { field: "salutation",   label: "Pre",         type: "select", width: 72,  options: ["","Mr","Ms","Mrs","Dr","Eng","Arch"] },
-    { field: "first_name",   label: "Name",        type: "text",   width: 120 },
-    { field: "last_name",    label: "Surname",     type: "text",   width: 120 },
+    { field: "salutation",   label: "Pre",         type: "select", width: 72,  options: ["","Mr","Ms","Mrs","Dr","Eng","Arch"], sticky: true },
+    { field: "first_name",   label: "Name",        type: "text",   width: 120, sticky: true },
+    { field: "last_name",    label: "Surname",     type: "text",   width: 120, sticky: true },
     { field: "contact_type", label: "Type",        type: "select", width: 110, options: CONTACT_TYPE_OPTIONS },
     { field: "profession",   label: "Profession",  type: "text",   width: 140 },
     { field: "company_name", label: "Company",     type: "link",   width: 150, link_doctype: "Company" },
@@ -82,9 +82,14 @@ function _c_paint(listview, host, rows) {
     toolbar.className = "gl-toolbar";
     toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Contact")}</button>`;
 
+    const so = GL.computeStickyOffsets(cols, _C_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -94,7 +99,9 @@ function _c_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_c_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_c_cell(col, doc)}</div>`);
         });
     });
 
@@ -144,8 +151,16 @@ function _c_bind(listview, host, rows, cols, getTpl) {
     const esm   = GL.editState($grid);
     const saveFn = (name, field, val) => GL.fastSave(CONTACT_DOCTYPE, name, field, val);
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _C_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _C_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _C_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
     const _c_del = (docname) => new Promise((res, rej) => {
         frappe.call({
             method: "frappe.client.delete",

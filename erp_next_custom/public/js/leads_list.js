@@ -7,8 +7,8 @@ const LEAD_STATUS_OPTIONS = ["","Open","Replied","Opportunity","Interest","Do No
 const LEAD_TYPE_OPTIONS   = ["","Client","Channel Partner","Consultant"];
 
 const LEAD_COLS = [
-    { field: "status",       label: "Status",    type: "select",  width: 130, options: LEAD_STATUS_OPTIONS },
-    { field: "lead_name",    label: "Full Name", type: "text",    width: 160 },
+    { field: "status",       label: "Status",    type: "select",  width: 130, options: LEAD_STATUS_OPTIONS, sticky: true },
+    { field: "lead_name",    label: "Full Name", type: "text",    width: 160, sticky: true },
     { field: "company_name", label: "Company",   type: "text",    width: 160 },
     { field: "email_id",     label: "Email",     type: "email",   width: 190 },
     { field: "mobile_no",    label: "Mobile",    type: "tel",     width: 130 },
@@ -54,9 +54,14 @@ function _l_paint(listview, host, rows) {
     toolbar.className = "gl-toolbar";
     toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Lead")}</button>`;
 
+    const so = GL.computeStickyOffsets(cols, _L_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -66,7 +71,9 @@ function _l_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_l_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_l_cell(col, doc)}</div>`);
         });
     });
 
@@ -99,8 +106,16 @@ function _l_bind(listview, host, rows, cols, getTpl) {
     const esm    = GL.editState($grid);
     const saveFn = (name, field, val) => GL.fastSave(LEAD_DOCTYPE, name, field, val);
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _L_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _L_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _L_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
 
     // Custom delete: warn if linked Site Surveys exist
     $grid.on("click.l-del", ".gl-rn-del", function (e) {

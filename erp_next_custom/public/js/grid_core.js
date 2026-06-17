@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v7";
+    const STYLE_VERSION = "gl-v10";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {
@@ -541,6 +541,77 @@
                     persistFn?.();
                 });
         });
+    }
+
+    function bindHScroll(host, $grid) {
+        // Walk up the DOM to find .list-paging-area regardless of Frappe nesting depth
+        let $paging = $();
+        let $cur = $(host);
+        for (let i = 0; i < 8 && !$paging.length; i++) {
+            $cur = $cur.parent();
+            $paging = $cur.children('.list-paging-area');
+            if (!$paging.length) $paging = $cur.find('> .list-paging-area');
+        }
+        if (!$paging.length) return;
+
+        // Remove old scrollbar from a previous render
+        $paging.prev('.gl-hscroll-wrap').remove();
+
+        const $wrap  = $('<div class="gl-hscroll-wrap"></div>');
+        const $track = $('<div class="gl-hscroll-track"></div>');
+        const $thumb = $('<div class="gl-hscroll-thumb"></div>');
+        $track.append($thumb);
+        $wrap.append($track);
+        $wrap.insertBefore($paging);
+
+        function refresh() {
+            const totalW = host.scrollWidth;
+            const visW   = host.clientWidth;
+            if (totalW <= visW + 2) { $wrap.hide(); return; }
+            $wrap.show();
+            const trackW  = $track[0].clientWidth;
+            const thumbW  = Math.max(40, Math.round(trackW * visW / totalW));
+            const maxLeft = trackW - thumbW;
+            const left    = Math.round((host.scrollLeft / (totalW - visW)) * maxLeft);
+            $thumb.css({ width: thumbW + 'px', left: left + 'px' });
+        }
+
+        $(host).on('scroll.gl-hs', refresh);
+
+        $track.on('mousedown.gl-hs', function (e) {
+            const trackEl = $track[0];
+            const trackW  = trackEl.clientWidth;
+            const thumbW  = $thumb[0].offsetWidth;
+            const maxLeft = trackW - thumbW;
+            const totalW  = host.scrollWidth;
+            const visW    = host.clientWidth;
+
+            const clickX    = e.clientX - trackEl.getBoundingClientRect().left;
+            const initLeft  = Math.min(Math.max(0, clickX - thumbW / 2), maxLeft);
+            host.scrollLeft = (initLeft / maxLeft) * (totalW - visW);
+            refresh();
+
+            const startX     = e.clientX;
+            const startLeft  = initLeft;
+            $thumb.addClass('gl-hs-drag');
+
+            $(document)
+                .on('mousemove.gl-hs', function (mv) {
+                    const dx     = mv.clientX - startX;
+                    const newL   = Math.min(Math.max(0, startLeft + dx), maxLeft);
+                    host.scrollLeft = (newL / maxLeft) * (totalW - visW);
+                    refresh();
+                })
+                .on('mouseup.gl-hs', function () {
+                    $thumb.removeClass('gl-hs-drag');
+                    $(document).off('mousemove.gl-hs mouseup.gl-hs');
+                });
+            e.preventDefault();
+        });
+
+        $(window).on('resize.gl-hs', refresh);
+        host._glRefreshHScroll = refresh;
+        refresh();
     }
 
     function bindOutsideClick($grid, esm, ns) {
@@ -1334,6 +1405,23 @@
         $wrap.find(".gl-mto-add").on("click", () => addRow());
     }
 
+    // ── Sticky column offset calculator ───────────────────────────────────────
+    /**
+     * Returns { field: leftPx } for each contiguous sticky column (col.sticky === true)
+     * starting from column index 0. leftPx is the CSS `left` value to use for
+     * `position:sticky`, where 42px is the fixed row-number column width.
+     */
+    function computeStickyOffsets(cols, colWidths) {
+        const offsets = {};
+        let left = 42; // row-number column width
+        for (const col of cols) {
+            if (!col.sticky) break;
+            offsets[col.field] = left;
+            left += colWidths[col.field] || col.width || 120;
+        }
+        return offsets;
+    }
+
     // ── Shared CSS ─────────────────────────────────────────────────────────────
     const BASE_CSS = `
 /* ── Design tokens ──────────────────────────────────────────────────────────
@@ -1350,7 +1438,37 @@
 
 /* ── Host ─────────────────────────────────────────────────────────────────── */
 .gl-host            { width: 100%; }
-.gl-host--scroll    { overflow-x: auto; }
+.gl-host--scroll    { overflow-x: auto; scrollbar-width: none; }
+.gl-host--scroll::-webkit-scrollbar { display: none; }
+
+/* ── Custom horizontal scrollbar ─────────────────────────────────────────── */
+.gl-hscroll-wrap {
+    padding: 6px 0 2px;
+}
+.gl-hscroll-track {
+    position: relative;
+    height: 14px;
+    background: var(--bg-light-gray, #eef0f4);
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.gl-hscroll-thumb {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    min-width: 40px;
+    background: var(--erpnx-accent, #378ADD);
+    border-radius: 8px;
+    cursor: grab;
+    transition: background 0.15s;
+    opacity: 0.85;
+}
+.gl-hscroll-thumb:hover  { opacity: 1; }
+.gl-hscroll-thumb.gl-hs-drag {
+    cursor: grabbing;
+    background: color-mix(in srgb, var(--erpnx-accent, #378ADD) 80%, #000 20%);
+    opacity: 1;
+}
 
 /* ── Toolbar ──────────────────────────────────────────────────────────────── */
 .gl-toolbar    { display: flex; align-items: center; padding: 9px 12px; gap: 8px; }
@@ -1362,7 +1480,7 @@
     display: grid;
     border: var(--erpnx-border-w) solid var(--border-color, #e2e8f0);
     border-radius: var(--erpnx-grid-radius);
-    overflow: hidden;
+    overflow: clip;
     font-size: var(--erpnx-font);
     font-weight: 400;
     background: var(--card-bg, #fff);
@@ -1416,7 +1534,7 @@
     user-select: none; cursor: default;
     position: sticky; left: 0; z-index: 5;
 }
-.gl-hdr.gl-rn { z-index: 11; }
+.gl-hdr.gl-rn { z-index: 16; } /* above sticky-header cells */
 .gl-rn.gl-row-hover:not(.gl-hdr) { background: var(--bg-light-gray, #f7f8fa); }
 .gl-rn.gl-editing:not(.gl-hdr)   { background: var(--bg-light-gray, #f7f8fa); }
 
@@ -1649,6 +1767,31 @@
 .gl-mto-del      { width: 32px; text-align: center; cursor: pointer; color: #c0392b; background: none; border: none; font-size: 16px; }
 .gl-mto-add      { margin-top: 4px; align-self: flex-start; }
 
+/* ── Sticky (frozen) columns ─────────────────────────────────────────────────
+   Columns with { sticky: true } in their COLS definition get position:sticky
+   and a frosted-glass background so content scrolls behind them cleanly.
+   The last sticky col gets a soft right-edge shadow as a premium divider.    */
+.gl-col--sticky {
+    position: sticky;
+    z-index: 3;
+    background: color-mix(in srgb, var(--card-bg, #fff) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.gl-col--sticky-last {
+    box-shadow: 4px 0 14px rgba(0,0,0,.07);
+}
+.gl-hdr.gl-col--sticky {
+    z-index: 14; /* above normal headers (10) */
+}
+/* Hover / selection states must work even under backdrop-filter */
+.gl-col--sticky.gl-row-hover:not(.gl-hdr):not(.gl-rn) {
+    background: color-mix(in srgb, var(--bg-light-gray, #f7f8fa) 90%, transparent);
+}
+.gl-col--sticky.gl-row--sel:not(.gl-hdr):not(.gl-rn) {
+    background: color-mix(in srgb, var(--erpnx-accent) 10%, transparent) !important;
+}
+
 /* ── Row selection ────────────────────────────────────────────────────────── */
 .gl-rn--sel  { background: var(--erpnx-accent) !important; color: #fff !important; }
 .gl-row--sel { background: color-mix(in srgb, var(--erpnx-accent) 8%, transparent) !important; }
@@ -1670,6 +1813,7 @@
         gridTpl,
         rnCell,
         rnHeader,
+        computeStickyOffsets,
         // Renderers
         renderText,
         renderLink,
@@ -1702,6 +1846,7 @@
         bindHover,
         bindDelete,
         bindColResize,
+        bindHScroll,
         bindOutsideClick,
         bindTextEdit,
         bindUrlEdit,

@@ -8,9 +8,9 @@ const SS_MEASURE_DT      = "Site Survey Measurement";
 const SS_MEASURE_FIELD   = "measurements";
 
 const SS_COLS = [
-    { field: "status",          label: "Status",        type: "select",  width: 130, options: ["Draft","Scheduled","In Progress","Completed","Cancelled"] },
-    { field: "survey_date",     label: "Date",          type: "date",    width: 120 },
-    { field: "assigned_to",     label: "Surveyor",      type: "avatar",  width: 52 },
+    { field: "status",          label: "Status",        type: "select",  width: 130, options: ["Draft","Scheduled","In Progress","Completed","Cancelled"], sticky: true },
+    { field: "survey_date",     label: "Date",          type: "date",    width: 120, sticky: true },
+    { field: "assigned_to",     label: "Surveyor",      type: "avatar",  width: 52,  sticky: true },
     { field: "customer",        label: "Customer",      type: "link",    width: 160, link_doctype: "Customer",  link_namefield: "customer_name" },
     { field: "lead",            label: "Lead",          type: "link",    width: 160, link_doctype: "Lead",      link_namefield: "lead_name" },
     { field: "contact",         label: "Contact",       type: "link",    width: 150, link_doctype: "Contact",   link_namefield: "first_name" },
@@ -88,9 +88,14 @@ function _ss_paint(listview, host, rows) {
             </div>
         </div>`;
 
+    const so = GL.computeStickyOffsets(cols, _SS_COL_WIDTHS);
+    const stickyLast = Object.keys(so).pop() || null;
+
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
-        html.push(`<div class="gl-cell gl-hdr" data-col="${ci}" data-field="${col.field}"><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
+        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
     });
 
     if (!rows.length) {
@@ -100,7 +105,9 @@ function _ss_paint(listview, host, rows) {
     rows.forEach((doc, ri) => {
         html.push(GL.rnCell(doc, ri));
         cols.forEach((col, ci) => {
-            html.push(`<div class="gl-cell" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}">${_ss_cell(col, doc)}</div>`);
+            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
+            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
+            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_ss_cell(col, doc)}</div>`);
         });
     });
 
@@ -232,8 +239,17 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
     const esm   = GL.editState($grid);
     const saveFn = (name, field, val) => GL.fastSave(SS_DOCTYPE, name, field, val);
 
+    const getTplFull = () => {
+        const t = getTpl();
+        const _so = GL.computeStickyOffsets(cols, _SS_COL_WIDTHS);
+        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+        host._glRefreshHScroll?.();
+        return t;
+    };
+
     GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _SS_COL_WIDTHS, getTpl);
+    GL.bindColResize($grid, cols, _SS_COL_WIDTHS, getTplFull);
+    GL.bindHScroll(host, $grid);
 
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
