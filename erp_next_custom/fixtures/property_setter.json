@@ -1,6 +1,38 @@
 [
  {
   "default_value": null,
+  "doc_type": "Stock Entry",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "accounting_dimensions_section",
+  "is_system_generated": 1,
+  "modified": "2026-06-10 10:52:34.044732",
+  "module": null,
+  "name": "Stock Entry-accounting_dimensions_section-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Stock Entry Detail",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "accounting_dimensions_section",
+  "is_system_generated": 1,
+  "modified": "2026-06-10 10:52:34.222754",
+  "module": null,
+  "name": "Stock Entry Detail-accounting_dimensions_section-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
   "doc_type": "Stock Entry Detail",
   "docstatus": 0,
   "doctype": "Property Setter",
