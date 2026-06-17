@@ -4,16 +4,25 @@
 const MTO_DOCTYPE = "Measurement Take Off";
 
 const MTO_COLS = [
-    { field: "status",      label: "Status",      type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"] },
-    { field: "date",        label: "Date",         type: "date",    width: 120 },
-    { field: "assigned_to", label: "Assigned To",  type: "avatar",  width: 52 },
-    { field: "lead",        label: "Lead",         type: "link",    width: 160, link_doctype: "Lead",        link_namefield: "lead_name" },
-    { field: "site_survey", label: "Site Survey",  type: "link",    width: 160, link_doctype: "Site Survey", link_namefield: "name" },
-    { field: "contact",     label: "Contact",      type: "link",    width: 150, link_doctype: "Contact",     link_namefield: "first_name" },
-    { field: "notes",       label: "Notes",        type: "text",    width: 200 },
+    { field: "status",          label: "Status",        type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"] },
+    { field: "date",            label: "Date",           type: "date",    width: 120 },
+    { field: "assigned_to",     label: "Assigned To",   type: "avatar",  width: 52 },
+    { field: "lead",            label: "Lead",           type: "link",    width: 160, link_doctype: "Lead",        link_namefield: "lead_name" },
+    { field: "site_survey",     label: "Site Survey",   type: "link",    width: 160, link_doctype: "Site Survey", link_namefield: "name" },
+    { field: "contact",         label: "Contact",       type: "link",    width: 150, link_doctype: "Contact",     link_namefield: "first_name" },
+    { field: "site_location",   label: "Site Location", type: "text",    width: 160 },
+    { field: "google_maps_url", label: "Maps",           type: "maps",    width: 120 },
+    { field: "site_type",       label: "Site Type",     type: "select",  width: 130, options: ["","Residential","Commercial","Industrial"] },
+    { field: "roof_type",       label: "Roof Type",     type: "select",  width: 120, options: ["","Flat","Pitched","Mixed","N/A"] },
+    { field: "site_area",       label: "Area (m²)",     type: "number",  width: 100 },
+    { field: "notes",           label: "Notes",          type: "area",    width: 200 },
+    { field: "drawing",         label: "CAD Drawing",   type: "drawing", width: 52 },
 ];
 
-const MTO_FIELDS = MTO_COLS.map(c => c.field).concat(["name"]);
+const MTO_FIELDS = [
+    ...MTO_COLS.filter(c => c.type !== "drawing").map(c => c.field),
+    "name", "has_drawing",
+];
 
 const _MTO_COL_WIDTHS = {};
 
@@ -22,10 +31,15 @@ const _MTO_LINK_PENDING = new Set();
 let   _MTO_CURRENT_LISTVIEW = null;
 
 const MTO_LINK_CFG = {
-    assigned_to: { doctype: "User",        namefield: "full_name",     searchfield: "full_name",     id: "name" },
-    lead:        { doctype: "Lead",        namefield: "lead_name",     searchfield: "lead_name",     id: "name" },
-    site_survey: { doctype: "Site Survey", namefield: "name",          searchfield: "name",           id: "name" },
-    contact:     { doctype: "Contact",     namefield: "first_name",    searchfield: "first_name",     id: "name" },
+    assigned_to: { doctype: "User",        namefield: "full_name",  searchfield: "full_name",  id: "name" },
+    lead:        { doctype: "Lead",        namefield: "lead_name",  searchfield: "lead_name",  id: "name" },
+    site_survey: { doctype: "Site Survey", namefield: "name",       searchfield: "name",        id: "name" },
+    contact:     { doctype: "Contact",     namefield: "first_name", searchfield: "first_name",  id: "name" },
+};
+
+const _MTO_SVG = {
+    map: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    pen: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
 };
 
 // ── Entry point ────────────────────────────────────────────────────────────────
@@ -50,6 +64,7 @@ function _mto_render(listview) {
     if (!host) return;
     GL.hideNative(listview);
     _mto_paint(listview, host, listview.data || []);
+    _mto_inject_styles();
 }
 
 function _mto_paint(listview, host, rows) {
@@ -93,11 +108,16 @@ function _mto_paint(listview, host, rows) {
 function _mto_cell(col, doc) {
     const raw = doc[col.field];
     switch (col.type) {
-        case "select": return GL.renderSelect(col, doc.name, raw);
-        case "date":   return GL.renderDate(col, doc.name, raw);
-        case "avatar": return _mto_render_avatar(col, doc.name, raw);
-        case "link":   return _mto_render_link(col, doc.name, raw);
-        default:       return GL.renderText(col, doc.name, raw, "text");
+        case "select":  return GL.renderSelect(col, doc.name, raw);
+        case "date":    return GL.renderDate(col, doc.name, raw);
+        case "text":    return GL.renderText(col, doc.name, raw, "text");
+        case "avatar":  return _mto_render_avatar(col, doc.name, raw);
+        case "link":    return _mto_render_link(col, doc.name, raw);
+        case "maps":    return _mto_render_maps(col, doc.name, raw);
+        case "number":  return _mto_render_number(col, doc.name, raw);
+        case "area":    return _mto_render_area(col, doc.name, raw);
+        case "drawing": return frappe_drawing.render_btn(doc.name, doc.has_drawing);
+        default:        return GL.renderText(col, doc.name, raw, "text");
     }
 }
 
@@ -142,6 +162,30 @@ function _mto_render_link(col, name, raw) {
     );
 }
 
+function _mto_render_maps(col, name, raw) {
+    const esc    = frappe.utils.escape_html(raw || "");
+    const mapBtn = raw
+        ? `<a href="${esc}" target="_blank" class="gl-icon-btn mto-map-open" title="${__("Open map")}">${_MTO_SVG.map}</a>`
+        : `<span class="gl-icon-btn mto-map-open--off">${_MTO_SVG.map}</span>`;
+    return (
+        `<div class="mto-map-cell">` +
+        `<span class="mto-map-disp" title="${esc}">${raw ? __("URL set") : `<span class="gl-ph">${__("No URL")}</span>`}</span>` +
+        `<input type="text" class="mto-map-inp" data-name="${name}" data-field="${col.field}" value="${esc}" placeholder="${__("Paste Google Maps URL…")}" style="display:none">` +
+        `<button class="gl-icon-btn mto-map-pen" data-name="${name}" title="${__("Edit URL")}">${_MTO_SVG.pen}</button>` +
+        mapBtn +
+        `</div>`
+    );
+}
+
+function _mto_render_number(col, name, raw) {
+    const v = raw != null && raw !== "" ? raw : "";
+    return `<input type="number" class="mto-num" data-name="${name}" data-field="${col.field}" value="${v}" placeholder="—" step="any">`;
+}
+
+function _mto_render_area(col, name, raw) {
+    return `<textarea class="mto-area" data-name="${name}" data-field="${col.field}" rows="1" placeholder="…">${frappe.utils.escape_html(raw || "")}</textarea>`;
+}
+
 // ── Event binding ──────────────────────────────────────────────────────────────
 function _mto_bind(listview, host, rows, cols, getTpl) {
     const $host  = $(host);
@@ -152,6 +196,22 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _MTO_COL_WIDTHS, getTpl);
     GL.bindDelete($grid, MTO_DOCTYPE, listview, () => _mto_render(listview));
+
+    // Bulk row selection + delete
+    const _mto_del = (docname) => new Promise((res, rej) => {
+        frappe.call({
+            method: "frappe.client.delete",
+            args: { doctype: MTO_DOCTYPE, name: docname },
+            callback: ({ exc }) => {
+                if (exc) { rej(exc); return; }
+                listview.data = (listview.data || []).filter(d => d.name !== docname);
+                res();
+            },
+            error: rej,
+        });
+    });
+    GL.bindRowSelect($grid, $host.find(".gl-toolbar"), rows, _mto_del, () => _mto_render(listview));
+
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
     GL.bindDateEdit($grid, rows, saveFn, esm);
@@ -166,11 +226,78 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
         const n = $(this).attr("data-name"); if (n) frappe.set_route("Form", MTO_DOCTYPE, n);
     });
 
+    // Area autogrow + save
+    const autogrow = function () { this.style.height = "auto"; this.style.height = `${this.scrollHeight}px`; };
+    $grid.on("input.mto-area", ".mto-area", autogrow);
+    $grid.find(".mto-area").each(autogrow);
+    $grid.on("blur.mto-area", ".mto-area", function () {
+        const $el = $(this), name = $el.attr("data-name"), field = $el.attr("data-field");
+        const val = $el.val(), row = rows.find(r => r.name === name);
+        if (!name || !field || val === (row?.[field] || "")) return;
+        saveFn(name, field, val).then(() => { if (row) row[field] = val; });
+    });
+
+    // Number save
+    $grid.on("blur.mto-num keydown.mto-num", ".mto-num", function (e) {
+        if (e.type === "keydown" && e.key !== "Enter") return;
+        if (e.type === "keydown") { $(this).trigger("blur"); return; }
+        const $el = $(this), name = $el.attr("data-name"), field = $el.attr("data-field");
+        const val = $el.val().trim(), row = rows.find(r => r.name === name);
+        const cur = row?.[field] != null ? String(row[field]) : "";
+        if (!name || !field || val === cur) return;
+        saveFn(name, field, val || null).then(() => { if (row) row[field] = val; });
+    });
+
+    // Maps toggle + save
+    $grid.on("click.mto-map", ".mto-map-pen", function (e) {
+        e.stopPropagation();
+        const $cell = $(this).closest(".mto-map-cell");
+        const $inp  = $cell.find(".mto-map-inp");
+        const $disp = $cell.find(".mto-map-disp");
+        if ($inp.is(":visible")) { $inp.hide(); $disp.show(); $inp.trigger("blur"); }
+        else { $disp.hide(); $inp.show().focus().select(); }
+    });
+    $grid.on("blur.mto-map", ".mto-map-inp", function () {
+        const $el = $(this), name = $el.attr("data-name"), field = $el.attr("data-field");
+        const val = ($el.val() || "").trim(), row = rows.find(r => r.name === name);
+        if (!name || !field || val === (row?.[field] || "")) return;
+        saveFn(name, field, val).then(() => {
+            if (row) row[field] = val;
+            _mto_render(listview);
+        });
+    });
+
+    // CAD drawing
+    $grid.on("click.mto-draw", ".fd-draw-btn", function (e) {
+        e.stopPropagation();
+        const docname = $(this).attr("data-name");
+        frappe_drawing.open({
+            doctype: MTO_DOCTYPE, docname,
+            drawing_field: "drawing", has_drawing_field: "has_drawing",
+            on_saved(hasShapes) {
+                const row = (listview.data || []).find(d => d.name === docname);
+                if (row) row.has_drawing = hasShapes ? 1 : 0;
+                _mto_render(listview);
+            },
+        });
+    });
+
+    // Avatar blur → save
+    $grid.on("blur.mto-av", ".mto-avatar-input", function () {
+        const $el = $(this), name = $el.attr("data-name"), field = $el.attr("data-field");
+        const val = ($el.val() || "").trim();
+        if (!name || !field || !val) return;
+        saveFn(name, field, val).then(() => {
+            const row = rows.find(r => r.name === name);
+            if (row) row[field] = val;
+        });
+    });
+
     _mto_bind_link_edit($grid, rows, listview, esm, saveFn);
-    _mto_bind_avatar_blur($grid, rows, saveFn, listview);
     _mto_bind_link_ac($grid, listview);
 }
 
+// ── Link cell click-to-edit ────────────────────────────────────────────────────
 function _mto_bind_link_edit($grid, rows, listview, esm, saveFn) {
     $grid.on("click.mto-lnk", ".mto-lnk", function () {
         if ($(this).find("input").length) return;
@@ -202,18 +329,7 @@ function _mto_bind_link_edit($grid, rows, listview, esm, saveFn) {
     });
 }
 
-function _mto_bind_avatar_blur($grid, rows, saveFn, listview) {
-    $grid.on("blur.mto-av", ".mto-avatar-input", function () {
-        const $el = $(this), name = $el.attr("data-name"), field = $el.attr("data-field");
-        const val = ($el.val() || "").trim();
-        if (!name || !field || !val) return;
-        saveFn(name, field, val).then(() => {
-            const row = rows.find(r => r.name === name);
-            if (row) row[field] = val;
-        });
-    });
-}
-
+// ── Link / avatar autocomplete ─────────────────────────────────────────────────
 function _mto_bind_link_ac($grid, listview) {
     let $menu = null, activeInput = null, timer = null;
 
@@ -286,7 +402,7 @@ function _mto_add_row(listview) {
 }
 
 // ── CSS ────────────────────────────────────────────────────────────────────────
-(function _mto_inject_styles() {
+function _mto_inject_styles() {
     if (document.getElementById("mto-gl-styles")) return;
     const s = document.createElement("style");
     s.id = "mto-gl-styles";
@@ -313,6 +429,32 @@ function _mto_add_row(listview) {
 .mto-lnk:hover { border-color:var(--border-color,#e2e8f0); }
 .mto-lnk-inp   { display:block; width:100%; }
 
+.mto-map-cell  { display:flex; align-items:center; gap:4px; width:100%; overflow:hidden; }
+.mto-map-disp  { flex:1; color:var(--text-muted,#8d96a0); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; font-size:12px; }
+.mto-map-inp   { flex:1; min-width:0; border:0.5px solid #378ADD; border-radius:8px; padding:2px 6px; font-size:12px; font-family:inherit; background:var(--card-bg,#fff); }
+.mto-map-open--off { opacity:0.3; cursor:default; pointer-events:none; }
+
+.mto-area {
+    width:100%; min-width:0; resize:none; overflow:hidden; line-height:1.4;
+    min-height:28px; white-space:pre-wrap; font-size:12px; font-weight:400;
+    border:0.5px solid transparent; background:transparent; padding:3px 6px;
+    border-radius:8px; font-family:inherit; color:var(--text-color,#1f272e);
+    box-sizing:border-box;
+}
+.mto-area:hover  { border-color:var(--border-color,#e2e8f0); }
+.mto-area:focus  { border-color:#378ADD; outline:1.5px solid #378ADD; outline-offset:-1px; background:var(--card-bg,#fff); }
+.gl-cell:has(.mto-area) { align-items:flex-start; overflow:visible; }
+
+.mto-num {
+    width:100%; border:0.5px solid transparent; background:transparent;
+    padding:3px 6px; font-size:12px; border-radius:8px; text-align:right;
+    font-family:inherit; color:var(--text-color,#1f272e); box-sizing:border-box;
+}
+.mto-num:hover  { border-color:var(--border-color,#e2e8f0); }
+.mto-num:focus  { border-color:#378ADD; outline:1.5px solid #378ADD; outline-offset:-1px; background:var(--card-bg,#fff); }
+.mto-num::-webkit-outer-spin-button,.mto-num::-webkit-inner-spin-button { -webkit-appearance:none; }
+.mto-num[type=number] { -moz-appearance:textfield; }
+
 .mto-ac-menu {
     position:absolute; z-index:2000; background:var(--card-bg,#fff);
     border:0.5px solid var(--border-color,#e2e6ea); border-radius:12px;
@@ -323,4 +465,4 @@ function _mto_add_row(listview) {
 .mto-ac-item:hover { background:var(--bg-light-gray,#f4f5f6); }
     `;
     document.head.appendChild(s);
-})();
+}

@@ -79,7 +79,14 @@ function _ss_paint(listview, host, rows) {
 
     const toolbar = document.createElement("div");
     toolbar.className = "gl-toolbar";
-    toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Row")}</button>`;
+    toolbar.innerHTML = `
+        <button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Row")}</button>
+        <div class="ss-send-split">
+            <button class="btn btn-primary btn-sm ss-send-sel">${__("Send Selected to MTO")}</button><button class="btn btn-primary btn-sm ss-send-caret" title="${__("More options")}">▾</button>
+            <div class="ss-send-dd">
+                <button class="ss-send-all">${__("Send All to MTO")}</button>
+            </div>
+        </div>`;
 
     const html = [GL.rnHeader()];
     cols.forEach((col, ci) => {
@@ -255,6 +262,79 @@ function _ss_bind(listview, host, rows, cols, getTpl) {
     GL.bindDateEdit($grid, rows, saveFn, esm);
     GL.bindOutsideClick($grid, esm, "ss");
     GL.bindAddRow($host, () => _ss_add_row(listview));
+
+    // Row selection + bulk delete (global, via GL.bindRowSelect)
+    const deleteFn = (docname) => new Promise((res, rej) => {
+        frappe.call({
+            method: "frappe.client.delete",
+            args: { doctype: SS_DOCTYPE, name: docname },
+            callback: ({ exc }) => {
+                if (exc) { rej(exc); return; }
+                listview.data = (listview.data || []).filter(d => d.name !== docname);
+                res();
+            },
+            error: rej,
+        });
+    });
+    const rowSel = GL.bindRowSelect($grid, $host.find(".gl-toolbar"), rows, deleteFn, () => _ss_render(listview));
+
+    // Sequential send to MTO — processes one row at a time to avoid deadlocks
+    const sendToMTO = (targets) => {
+        if (!targets.length) {
+            frappe.show_alert({ message: __("Nothing to send"), indicator: "orange" }, 2);
+            return;
+        }
+        const queue = [...targets];
+        const $btn  = $host.find(".ss-send-sel, .ss-send-all").prop("disabled", true);
+        let created = 0, skipped = 0, errors = 0;
+
+        frappe.show_alert({ message: __("Sending {0} survey(s) to MTO…", [queue.length]), indicator: "blue" }, 2);
+
+        const next = () => {
+            if (!queue.length) {
+                $btn.prop("disabled", false);
+                frappe.show_alert({
+                    message: __("{0} MTO(s) created · {1} already existed · {2} errors", [created, skipped, errors]),
+                    indicator: errors ? "orange" : "green",
+                }, 5);
+                return;
+            }
+            const row = queue.shift();
+            frappe.call({
+                method: "erp_next_custom.erp_next_custom.doctype.site_survey.site_survey.send_survey_to_mto",
+                args: { site_survey_name: row.name },
+                callback({ message, exc }) {
+                    if (exc || !message) errors++;
+                    else if (message.existing) skipped++;
+                    else created++;
+                    setTimeout(next, 200);
+                },
+                error() { errors++; setTimeout(next, 200); },
+            });
+        };
+        next();
+    };
+
+    // Dropdown toggle
+    $host.on("click.ss-caret", ".ss-send-caret", function (e) {
+        e.stopPropagation();
+        $(this).next(".ss-send-dd").toggleClass("ss-send-dd--open");
+    });
+    $(document).off("click.ss-dd-close").on("click.ss-dd-close", () =>
+        $host.find(".ss-send-dd").removeClass("ss-send-dd--open")
+    );
+
+    $host.on("click.ss-send-sel", ".ss-send-sel", function () {
+        $host.find(".ss-send-dd").removeClass("ss-send-dd--open");
+        const sel = rowSel.getSelected();
+        if (!sel.length) { frappe.show_alert({ message: __("Select rows first by clicking their row number"), indicator: "orange" }, 3); return; }
+        sendToMTO(sel);
+    });
+
+    $host.on("click.ss-send-all", ".ss-send-all", function () {
+        $host.find(".ss-send-dd").removeClass("ss-send-dd--open");
+        sendToMTO([...rows]);
+    });
 
     $grid.on("click.ss", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function () {
         const n = $(this).attr("data-name"); if (n) esm.set(n);
@@ -755,6 +835,22 @@ function _ss_inject_styles() {
 .ss-num[type=number] { -moz-appearance:textfield; }
 
 .ss-attach-btn,.ss-measure-btn { position:relative; }
+
+.ss-send-split { position:relative; display:inline-flex; align-items:stretch; }
+.ss-send-split .ss-send-sel { border-radius:8px 0 0 8px !important; border-right:1px solid rgba(255,255,255,.35) !important; }
+.ss-send-split .ss-send-caret { border-radius:0 8px 8px 0 !important; padding:0 8px !important; }
+.ss-send-dd {
+    display:none; position:absolute; top:calc(100% + 4px); right:0; z-index:1000;
+    background:var(--card-bg,#fff); border:0.5px solid var(--border-color,#e2e6ea);
+    border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.12); min-width:180px; padding:4px;
+}
+.ss-send-dd--open { display:block; }
+.ss-send-dd button {
+    display:block; width:100%; text-align:left; background:none; border:none;
+    padding:8px 12px; font-size:12px; border-radius:8px; cursor:pointer;
+    color:var(--text-color,#1f272e);
+}
+.ss-send-dd button:hover { background:var(--bg-light-gray,#f4f5f6); }
 
 .ss-ac-menu {
     position:absolute; z-index:2000; background:var(--card-bg,#fff);

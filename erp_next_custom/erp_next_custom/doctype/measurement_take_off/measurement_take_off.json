@@ -14,10 +14,19 @@
   "lead",
   "site_survey",
   "contact",
+  "section_site",
+  "site_location",
+  "google_maps_url",
+  "site_type",
+  "col_site_break",
+  "roof_type",
+  "site_area",
   "section_notes",
   "notes",
   "section_items",
-  "items"
+  "items",
+  "has_drawing",
+  "drawing"
  ],
  "fields": [
   {
@@ -29,24 +38,24 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nIn Progress\nCompleted\nCancelled",
-   "in_list_view": 1
+   "options": "Draft\nIn Progress\nCompleted\nCancelled"
   },
   {
    "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date",
    "in_list_view": 1,
+   "label": "Date",
    "reqd": 1
   },
   {
    "fieldname": "assigned_to",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Assigned To",
-   "options": "User",
-   "in_list_view": 1
+   "options": "User"
   },
   {
    "fieldname": "column_break_1",
@@ -55,9 +64,9 @@
   {
    "fieldname": "lead",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Lead",
-   "options": "Lead",
-   "in_list_view": 1
+   "options": "Lead"
   },
   {
    "fieldname": "site_survey",
@@ -70,6 +79,42 @@
    "fieldtype": "Link",
    "label": "Contact",
    "options": "Contact"
+  },
+  {
+   "fieldname": "section_site",
+   "fieldtype": "Section Break",
+   "label": "Site Details"
+  },
+  {
+   "fieldname": "site_location",
+   "fieldtype": "Data",
+   "label": "Site Location"
+  },
+  {
+   "fieldname": "google_maps_url",
+   "fieldtype": "Data",
+   "label": "Maps"
+  },
+  {
+   "fieldname": "site_type",
+   "fieldtype": "Select",
+   "label": "Site Type",
+   "options": "\nResidential\nCommercial\nIndustrial"
+  },
+  {
+   "fieldname": "col_site_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Select",
+   "label": "Roof Type",
+   "options": "\nFlat\nPitched\nMixed\nN/A"
+  },
+  {
+   "fieldname": "site_area",
+   "fieldtype": "Float",
+   "label": "Area (m²)"
   },
   {
    "fieldname": "section_notes",
@@ -91,12 +136,25 @@
    "fieldtype": "Table",
    "label": "Items",
    "options": "MTO Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_drawing",
+   "fieldtype": "Int",
+   "label": "Has Drawing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "drawing",
+   "fieldtype": "Long Text",
+   "label": "Drawing",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 00:00:00.000000",
+ "modified": "2026-06-17 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Erp Next Custom",
  "name": "Measurement Take Off",
