@@ -104,10 +104,13 @@ function _mto_paint(listview, host, rows) {
     grid.style.gridTemplateColumns = getTpl();
     grid.innerHTML = html.join("");
 
+    const scrollWrap = document.createElement("div");
+    scrollWrap.className = "gl-host--scroll";
+    scrollWrap.appendChild(grid);
     host.innerHTML = "";
-    host.className = "gl-host gl-host--scroll";
+    host.className = "gl-host";
     host.appendChild(toolbar);
-    host.appendChild(grid);
+    host.appendChild(scrollWrap);
 
     _mto_bind(listview, host, rows, cols, getTpl);
 }

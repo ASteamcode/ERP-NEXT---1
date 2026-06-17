@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v10";
+    const STYLE_VERSION = "gl-v13";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {
@@ -544,6 +544,9 @@
     }
 
     function bindHScroll(host, $grid) {
+        // The grid's actual scroll container is the inner .gl-host--scroll child
+        const scrollEl = host.querySelector('.gl-host--scroll') || host;
+
         // Walk up the DOM to find .list-paging-area regardless of Frappe nesting depth
         let $paging = $();
         let $cur = $(host);
@@ -565,41 +568,41 @@
         $wrap.insertBefore($paging);
 
         function refresh() {
-            const totalW = host.scrollWidth;
-            const visW   = host.clientWidth;
+            const totalW = scrollEl.scrollWidth;
+            const visW   = scrollEl.clientWidth;
             if (totalW <= visW + 2) { $wrap.hide(); return; }
             $wrap.show();
             const trackW  = $track[0].clientWidth;
             const thumbW  = Math.max(40, Math.round(trackW * visW / totalW));
             const maxLeft = trackW - thumbW;
-            const left    = Math.round((host.scrollLeft / (totalW - visW)) * maxLeft);
+            const left    = Math.round((scrollEl.scrollLeft / (totalW - visW)) * maxLeft);
             $thumb.css({ width: thumbW + 'px', left: left + 'px' });
         }
 
-        $(host).on('scroll.gl-hs', refresh);
+        $(scrollEl).on('scroll.gl-hs', refresh);
 
         $track.on('mousedown.gl-hs', function (e) {
             const trackEl = $track[0];
             const trackW  = trackEl.clientWidth;
             const thumbW  = $thumb[0].offsetWidth;
             const maxLeft = trackW - thumbW;
-            const totalW  = host.scrollWidth;
-            const visW    = host.clientWidth;
+            const totalW  = scrollEl.scrollWidth;
+            const visW    = scrollEl.clientWidth;
 
             const clickX    = e.clientX - trackEl.getBoundingClientRect().left;
             const initLeft  = Math.min(Math.max(0, clickX - thumbW / 2), maxLeft);
-            host.scrollLeft = (initLeft / maxLeft) * (totalW - visW);
+            scrollEl.scrollLeft = (initLeft / maxLeft) * (totalW - visW);
             refresh();
 
-            const startX     = e.clientX;
-            const startLeft  = initLeft;
+            const startX    = e.clientX;
+            const startLeft = initLeft;
             $thumb.addClass('gl-hs-drag');
 
             $(document)
                 .on('mousemove.gl-hs', function (mv) {
-                    const dx     = mv.clientX - startX;
-                    const newL   = Math.min(Math.max(0, startLeft + dx), maxLeft);
-                    host.scrollLeft = (newL / maxLeft) * (totalW - visW);
+                    const dx  = mv.clientX - startX;
+                    const newL = Math.min(Math.max(0, startLeft + dx), maxLeft);
+                    scrollEl.scrollLeft = (newL / maxLeft) * (totalW - visW);
                     refresh();
                 })
                 .on('mouseup.gl-hs', function () {
@@ -611,7 +614,8 @@
 
         $(window).on('resize.gl-hs', refresh);
         host._glRefreshHScroll = refresh;
-        refresh();
+        // Defer first paint so browser has computed layout dimensions
+        requestAnimationFrame(refresh);
     }
 
     function bindOutsideClick($grid, esm, ns) {
@@ -1437,19 +1441,19 @@
 }
 
 /* ── Host ─────────────────────────────────────────────────────────────────── */
-.gl-host            { width: 100%; }
-.gl-host--scroll    { overflow-x: auto; scrollbar-width: none; }
+.gl-host            { width: 100%; position: relative; }
+.gl-host--scroll    { width: 100%; overflow-x: auto; scrollbar-width: none; }
 .gl-host--scroll::-webkit-scrollbar { display: none; }
 
 /* ── Custom horizontal scrollbar ─────────────────────────────────────────── */
 .gl-hscroll-wrap {
-    padding: 6px 0 2px;
+    padding: 5px 0 2px;
 }
 .gl-hscroll-track {
     position: relative;
-    height: 14px;
+    height: 8px;
     background: var(--bg-light-gray, #eef0f4);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     overflow: hidden;
 }
@@ -1457,21 +1461,35 @@
     position: absolute;
     top: 0; bottom: 0; left: 0;
     min-width: 40px;
-    background: var(--erpnx-accent, #378ADD);
-    border-radius: 8px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        #5ab3f0 22%,
+        #2474c8 50%,
+        #5ab3f0 78%,
+        transparent 100%
+    );
+    border-radius: 6px;
     cursor: grab;
-    transition: background 0.15s;
-    opacity: 0.85;
+    transition: opacity 0.15s;
+    opacity: 0.88;
 }
 .gl-hscroll-thumb:hover  { opacity: 1; }
 .gl-hscroll-thumb.gl-hs-drag {
     cursor: grabbing;
-    background: color-mix(in srgb, var(--erpnx-accent, #378ADD) 80%, #000 20%);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        #3a9be8 22%,
+        #1861b8 50%,
+        #3a9be8 78%,
+        transparent 100%
+    );
     opacity: 1;
 }
 
 /* ── Toolbar ──────────────────────────────────────────────────────────────── */
-.gl-toolbar    { display: flex; align-items: center; padding: 9px 12px; gap: 8px; }
+.gl-toolbar {
+    display: flex; align-items: center; padding: 10px 12px 14px; gap: 8px;
+}
 .gl-add-btn    { display: inline-flex; align-items: center; gap: 6px; }
 .gl-add-icon   { font-size: 14px; line-height: 1; font-weight: 500; }
 
