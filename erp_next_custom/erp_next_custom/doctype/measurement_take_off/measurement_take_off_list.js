@@ -4,30 +4,31 @@
 const MTO_DOCTYPE = "Measurement Take Off";
 
 const MTO_COLS = [
-    { field: "status",          label: "Status",        type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"] },
-    { field: "date",            label: "Date",           type: "date",    width: 120 },
-    { field: "assigned_to",     label: "Assigned To",   type: "avatar",  width: 52 },
-    { field: "lead",            label: "Lead",           type: "link",    width: 160, link_doctype: "Lead",        link_namefield: "lead_name" },
-    { field: "site_survey",     label: "Site Survey",   type: "link",    width: 160, link_doctype: "Site Survey", link_namefield: "name" },
-    { field: "contact",         label: "Contact",       type: "link",    width: 150, link_doctype: "Contact",     link_namefield: "first_name" },
-    { field: "site_location",   label: "Site Location", type: "text",    width: 160 },
-    { field: "google_maps_url", label: "Maps",           type: "maps",    width: 120 },
-    { field: "site_type",       label: "Site Type",     type: "select",  width: 130, options: ["","Residential","Commercial","Industrial"] },
-    { field: "roof_type",       label: "Roof Type",     type: "select",  width: 120, options: ["","Flat","Pitched","Mixed","N/A"] },
-    { field: "site_area",       label: "Area (m²)",     type: "number",  width: 100 },
-    { field: "notes",           label: "Notes",          type: "area",    width: 200 },
-    { field: "drawing",         label: "CAD Drawing",   type: "drawing", width: 52 },
+    { field: "attachments",    label: "Files",         type: "attach",  width: 52 },
+    { field: "status",         label: "Status",        type: "select",  width: 130, options: ["Draft","In Progress","Completed","Cancelled"] },
+    { field: "date",           label: "Date",           type: "date",    width: 120 },
+    { field: "assigned_to",    label: "Assigned To",   type: "avatar",  width: 52 },
+    { field: "lead",           label: "Lead",           type: "link",    width: 160, link_doctype: "Lead",        link_namefield: "lead_name" },
+    { field: "site_survey",    label: "Site Survey",   type: "link",    width: 160, link_doctype: "Site Survey", link_namefield: "name" },
+    { field: "contact",        label: "Contact",       type: "link",    width: 150, link_doctype: "Contact",     link_namefield: "first_name" },
+    { field: "site_location",  label: "Site Location", type: "text",    width: 160 },
+    { field: "google_maps_url",label: "Maps",           type: "maps",    width: 120 },
+    { field: "site_type",      label: "Site Type",     type: "select",  width: 130, options: ["","Residential","Commercial","Industrial"] },
+    { field: "roof_type",      label: "Roof Type",     type: "select",  width: 120, options: ["","Flat","Pitched","Mixed","N/A"] },
+    { field: "site_area",      label: "Area (m²)",     type: "number",  width: 100 },
+    { field: "notes",          label: "Notes",          type: "area",    width: 200 },
 ];
 
 const MTO_FIELDS = [
-    ...MTO_COLS.filter(c => c.type !== "drawing").map(c => c.field),
-    "name", "has_drawing",
+    ...MTO_COLS.filter(c => c.type !== "attach").map(c => c.field),
+    "name",
 ];
 
 const _MTO_COL_WIDTHS = {};
 
-const _MTO_LINK_NAMES   = new Map();
-const _MTO_LINK_PENDING = new Set();
+const _MTO_ATTACH_COUNTS = new Map();
+const _MTO_LINK_NAMES    = new Map();
+const _MTO_LINK_PENDING  = new Set();
 let   _MTO_CURRENT_LISTVIEW = null;
 
 const MTO_LINK_CFG = {
@@ -108,6 +109,7 @@ function _mto_paint(listview, host, rows) {
 function _mto_cell(col, doc) {
     const raw = doc[col.field];
     switch (col.type) {
+        case "attach":  return _mto_render_attach(doc.name);
         case "select":  return GL.renderSelect(col, doc.name, raw);
         case "date":    return GL.renderDate(col, doc.name, raw);
         case "text":    return GL.renderText(col, doc.name, raw, "text");
@@ -116,9 +118,14 @@ function _mto_cell(col, doc) {
         case "maps":    return _mto_render_maps(col, doc.name, raw);
         case "number":  return _mto_render_number(col, doc.name, raw);
         case "area":    return _mto_render_area(col, doc.name, raw);
-        case "drawing": return frappe_drawing.render_btn(doc.name, doc.has_drawing);
         default:        return GL.renderText(col, doc.name, raw, "text");
     }
+}
+
+function _mto_render_attach(name) {
+    const count = _MTO_ATTACH_COUNTS.get(name) ?? 0;
+    const badge = count ? `<span class="gl-badge">${count}</span>` : "";
+    return `<button class="gl-icon-btn mto-attach-btn" data-name="${name}" title="${count} file(s)">${GL.SVG.paperclip}${badge}</button>`;
 }
 
 function _mto_resolve_name(fieldname, id) {
@@ -196,7 +203,6 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
     GL.bindHover($grid);
     GL.bindColResize($grid, cols, _MTO_COL_WIDTHS, getTpl);
 
-    // Bulk row selection + delete
     const _mto_del = (docname) => new Promise((res, rej) => {
         frappe.call({
             method: "frappe.client.delete",
@@ -266,19 +272,10 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
         });
     });
 
-    // CAD drawing
-    $grid.on("click.mto-draw", ".fd-draw-btn", function (e) {
+    // File attach
+    $grid.on("click.mto-att", ".mto-attach-btn", function (e) {
         e.stopPropagation();
-        const docname = $(this).attr("data-name");
-        frappe_drawing.open({
-            doctype: MTO_DOCTYPE, docname,
-            drawing_field: "drawing", has_drawing_field: "has_drawing",
-            on_saved(hasShapes) {
-                const row = (listview.data || []).find(d => d.name === docname);
-                if (row) row.has_drawing = hasShapes ? 1 : 0;
-                _mto_render(listview);
-            },
-        });
+        _mto_open_attach_dialog(listview, $(this).attr("data-name"), $grid, rows);
     });
 
     // Avatar blur → save
@@ -294,6 +291,166 @@ function _mto_bind(listview, host, rows, cols, getTpl) {
 
     _mto_bind_link_edit($grid, rows, listview, esm, saveFn);
     _mto_bind_link_ac($grid, listview);
+
+    // Batch-load attachment counts for all visible rows
+    _mto_load_attach_counts(rows, $grid);
+}
+
+// ── Attachment count loader ────────────────────────────────────────────────────
+function _mto_load_attach_counts(rows, $grid) {
+    if (!rows.length) return;
+    const names = rows.map(r => r.name);
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "File",
+            filters: { attached_to_doctype: MTO_DOCTYPE, attached_to_name: ["in", names] },
+            fields: ["attached_to_name"],
+            limit_page_length: 500,
+        },
+        callback: ({ message }) => {
+            const counts = {};
+            (message || []).forEach(f => { counts[f.attached_to_name] = (counts[f.attached_to_name] || 0) + 1; });
+            rows.forEach((doc, ri) => {
+                const n = counts[doc.name] || 0;
+                _MTO_ATTACH_COUNTS.set(doc.name, n);
+                $grid.find(`.gl-cell[data-row="${ri}"][data-field="attachments"]`).html(_mto_render_attach(doc.name));
+            });
+        },
+    });
+}
+
+function _mto_update_attach_cell($grid, rows, docname) {
+    const ri = rows.findIndex(d => d.name === docname);
+    if (ri >= 0) $grid.find(`.gl-cell[data-row="${ri}"][data-field="attachments"]`).html(_mto_render_attach(docname));
+}
+
+// ── Attachments dialog ─────────────────────────────────────────────────────────
+function _mto_open_attach_dialog(listview, docname, $grid, rows) {
+    let items = [];
+
+    const dialog = new frappe.ui.Dialog({
+        title: __("Files — {0}", [docname]),
+        size: "large",
+        fields: [{ fieldname: "attach_html", fieldtype: "HTML" }],
+    });
+
+    dialog.show();
+    const $w = dialog.fields_dict.attach_html.$wrapper;
+
+    const refresh = () => {
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "File",
+                filters: { attached_to_doctype: MTO_DOCTYPE, attached_to_name: docname },
+                fields: ["name", "file_name", "file_url"],
+                limit_page_length: 100,
+            },
+            callback: ({ message }) => {
+                items = (message || []).map(f => ({ id: f.name, label: f.file_name || "", url: f.file_url || "" }));
+                _MTO_ATTACH_COUNTS.set(docname, items.length);
+                _mto_render_attach_dialog($w, items, docname, refresh);
+                _mto_update_attach_cell($grid, rows, docname);
+            },
+        });
+    };
+
+    refresh();
+
+    $w.on("click", ".mto-dlg-upload-btn", () => $w.find(".mto-dlg-file-input")[0].click());
+    $w.on("change", ".mto-dlg-file-input", function () {
+        Array.from(this.files).forEach(file => {
+            const idx = items.length;
+            items.push({ label: file.name, url: "", _uploading: true });
+            _mto_render_attach_dialog($w, items, docname, refresh);
+            _mto_upload_file(file, docname,
+                () => refresh(),
+                pct => { $w.find(`.mto-dlg-row[data-idx="${idx}"] .mto-dlg-progress`).css("width", `${pct}%`); }
+            );
+        });
+        this.value = "";
+    });
+}
+
+function _mto_render_attach_dialog($w, items, docname, refresh) {
+    const saved = items.filter(r => r.url && !r._uploading);
+    const preview = saved.length
+        ? `<div style="margin-bottom:12px"><div style="font-size:11px;text-transform:uppercase;color:#8d96a0;letter-spacing:.04em;margin-bottom:8px">${__("Preview")}</div><div style="display:flex;flex-wrap:wrap;gap:10px">${saved.map(_mto_preview_item).join("")}</div></div><hr style="border:none;border-top:1px solid #e2e6ea;margin:12px 0">`
+        : "";
+
+    $w.html(`
+        <style>
+            .mto-dlg-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;}
+            .mto-dlg-label{flex:0 0 180px;font-size:12px;color:var(--text-muted,#8d96a0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 0;}
+            .mto-dlg-url-wrap{flex:1;display:flex;flex-direction:column;gap:3px;}
+            .mto-dlg-url{flex:1;font-size:12px;color:var(--text-color,#1f272e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 0;}
+            .mto-dlg-del{flex:0 0 32px;text-align:center;cursor:pointer;color:#c0392b;background:none;border:none;font-size:16px;padding-top:2px;}
+            .mto-dlg-upload-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:0.5px solid #378ADD;background:#fff;color:#378ADD;font-size:12px;font-weight:500;cursor:pointer;}
+            .mto-dlg-upload-btn:hover{background:#f0f7ff;}
+            .mto-dlg-progress-bar{height:3px;background:#e2e6ea;border-radius:2px;overflow:hidden;}
+            .mto-dlg-progress{height:100%;background:#378ADD;border-radius:2px;transition:width .1s;}
+        </style>
+        <div>
+            ${preview}
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:12px;background:var(--bg-light-gray,#f7f9fa);border:0.5px dashed #e2e6ea;border-radius:8px">
+                <button class="mto-dlg-upload-btn">${__("Upload files")}</button>
+                <input type="file" class="mto-dlg-file-input" multiple style="display:none">
+            </div>
+            <div class="mto-dlg-rows">
+                ${items.map((r, i) => `
+                    <div class="mto-dlg-row" data-idx="${i}">
+                        <span class="mto-dlg-label" title="${frappe.utils.escape_html(r.label)}">${frappe.utils.escape_html(r.label)}</span>
+                        <div class="mto-dlg-url-wrap">
+                            ${r._uploading
+                                ? `<span class="mto-dlg-url" style="color:#8d96a0">${__("Uploading…")}</span><div class="mto-dlg-progress-bar"><div class="mto-dlg-progress" style="width:0%"></div></div>`
+                                : `<a class="mto-dlg-url" href="${frappe.utils.escape_html(r.url)}" target="_blank" rel="noopener">${frappe.utils.escape_html(r.url)}</a>`}
+                        </div>
+                        <button class="mto-dlg-del" data-file-id="${frappe.utils.escape_html(r.id || "")}"${r._uploading ? " disabled" : ""}>×</button>
+                    </div>`).join("")}
+            </div>
+            ${!items.length ? `<p style="color:#8d96a0;font-size:12px;text-align:center;padding:12px 0">${__("No files attached yet.")}</p>` : ""}
+        </div>`);
+
+    $w.off("click.mto-dlg-del").on("click.mto-dlg-del", ".mto-dlg-del", function () {
+        const fileId = $(this).attr("data-file-id");
+        if (!fileId) return;
+        frappe.call({
+            method: "frappe.client.delete",
+            args: { doctype: "File", name: fileId },
+            callback: ({ exc }) => { if (!exc) refresh(); },
+        });
+    });
+}
+
+function _mto_preview_item(r) {
+    const eu = frappe.utils.escape_html(r.url), el = frappe.utils.escape_html(r.label || r.url);
+    const isImg = /\.(jpe?g|png|gif|webp|svg|avif)(\?|$)/i.test(r.url) || /\/(thumbnail|files)\//i.test(r.url);
+    return isImg
+        ? `<a href="${eu}" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:inherit;max-width:90px" title="${el}"><img src="${eu}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e2e6ea" alt="${el}"><span style="font-size:10.5px;color:#8d96a0;text-align:center;width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${el}</span></a>`
+        : `<a href="${eu}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;border:1px solid #e2e6ea;background:#f7f9fa;text-decoration:none;color:#1f272e;font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${eu}"><span>${el}</span></a>`;
+}
+
+function _mto_upload_file(file, docname, onSuccess, onProgress) {
+    const fd = new FormData();
+    fd.append("file", file, file.name);
+    fd.append("is_private", "0");
+    fd.append("folder", "Home/Attachments");
+    fd.append("doctype", MTO_DOCTYPE);
+    fd.append("docname", docname);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/method/upload_file");
+    xhr.setRequestHeader("X-Frappe-CSRF-Token", frappe.csrf_token);
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
+    xhr.onload = () => {
+        try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.message?.file_url) onSuccess(data.message);
+            else frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2);
+        } catch { frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2); }
+    };
+    xhr.onerror = () => frappe.show_alert({ message: __("Upload failed"), indicator: "red" }, 2);
+    xhr.send(fd);
 }
 
 // ── Link cell click-to-edit ────────────────────────────────────────────────────
@@ -453,6 +610,8 @@ function _mto_inject_styles() {
 .mto-num:focus  { border-color:#378ADD; outline:1.5px solid #378ADD; outline-offset:-1px; background:var(--card-bg,#fff); }
 .mto-num::-webkit-outer-spin-button,.mto-num::-webkit-inner-spin-button { -webkit-appearance:none; }
 .mto-num[type=number] { -moz-appearance:textfield; }
+
+.mto-attach-btn { position:relative; }
 
 .mto-ac-menu {
     position:absolute; z-index:2000; background:var(--card-bg,#fff);
