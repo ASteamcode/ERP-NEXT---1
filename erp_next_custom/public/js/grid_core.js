@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v13";
+    const STYLE_VERSION = "gl-v16";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {

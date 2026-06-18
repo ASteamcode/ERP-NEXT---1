@@ -1,0 +1,13 @@
+{
+ "doctype": "Page",
+ "module": "Erp Next Custom",
+ "name": "project-board",
+ "page_name": "project-board",
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "Project Board",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Project Board"}
+ ]
+}
