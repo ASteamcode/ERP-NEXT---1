@@ -32,6 +32,7 @@ app_include_js = [
     "/assets/erp_next_custom/js/frappe_drawing.js",
     "/assets/erp_next_custom/js/ui_annotations.js",
     "/assets/erp_next_custom/js/overview_offline.js",
+    "/assets/erp_next_custom/js/quick_launch.js",
 ]
 
 # include js, css files in header of web template
@@ -80,6 +81,9 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 # home_page = "login"
 
 # website user home page (by Role)
+role_home_page = {
+    "Project Board": "project-board",
+}
 # role_home_page = {
 # 	"Role": "home_page"
 # }

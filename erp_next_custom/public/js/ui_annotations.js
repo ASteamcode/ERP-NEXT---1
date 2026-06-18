@@ -48,8 +48,15 @@
         }
 
         // ── 💬 Toggle button ───────────────────────────────────────────────────
-        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Alt+Shift+C)")}">💬</button>`).appendTo("body");
+        // Hidden — the quick_launch FAB hosts the visible trigger instead.
+        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Alt+Shift+C)")}">💬</button>`)
+            .css("display", "none")
+            .appendTo("body");
         $btn.on("click", () => open ? _closeSidebar() : _openSidebar());
+
+        // Expose toggle so quick_launch.js can drive this from its FAB
+        window.__annToggle   = () => open ? _closeSidebar() : _openSidebar();
+        window.__annIsOpen   = () => open;
 
         $(document).on("keydown.ann-esc", (e) => {
             if (e.key === "Escape" && open) { _closeSidebar(); return; }
