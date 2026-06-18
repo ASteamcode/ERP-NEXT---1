@@ -50,7 +50,11 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
-    "Item": "public/js/item_form.js",
+    "Item":                  "public/js/item_form.js",
+    "CRM Log":               "erp_next_custom/doctype/crm_log/crm_log.js",
+    "Site Survey":           "erp_next_custom/doctype/site_survey/site_survey.js",
+    "Measurement Take Off":  "erp_next_custom/doctype/measurement_take_off/measurement_take_off.js",
+    "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
 }
 doctype_list_js = {
     "Contact": "public/js/contacts_list.js",

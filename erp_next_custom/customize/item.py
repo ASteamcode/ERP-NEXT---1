@@ -81,8 +81,9 @@ _FIELD_ORDER = [
     "custom_col_break_hire",
     "custom_replacement_value",
     "custom_weekly_hire_rate",
-    # ── Remaining standard tabs (untouched) ───────────────────────
+    # ── Remaining standard tabs ───────────────────────────────────
     "dashboard_tab",
+    "custom_admin_fields",
     "inventory_section",
     "inventory_settings_section",
     "weight_uom",
@@ -322,6 +323,19 @@ FIELDS = [
         "label": "Weekly Hire Rate",
         "fieldtype": "Currency",
         "insert_after": "custom_replacement_value",
+    },
+    # ── Admin fields (purchasing tab area) ───────────────────────────────────
+    {
+        "fieldname": "custom_admin_fields",
+        "label": "Admin Fields",
+        "fieldtype": "Section Break",
+        "insert_after": "dashboard_tab",
+        "collapsible": 1,
+    },
+    {
+        "fieldname": "custom_column_break_7aail",
+        "fieldtype": "Column Break",
+        "insert_after": "is_purchase_item",
     },
 ]
 
