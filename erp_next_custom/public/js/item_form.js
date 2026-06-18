@@ -1,5 +1,6 @@
 frappe.ui.form.on('Item', {
 	refresh(frm) {
+		// Highlight the key identification fields for quick scanning
 		const highlight = (fields, bg, border) => {
 			fields.forEach(field => {
 				const f = frm.fields_dict[field];
@@ -12,8 +13,6 @@ frappe.ui.form.on('Item', {
 			});
 		};
 
-		highlight(['item_code', 'item_name', 'item_group'], '#fff5f5', '#e74c3c');
-		highlight(['standard_selling_rate', 'opening_stock'], '#fffde7', '#f1c40f');
-		highlight(['is_fixed_asset', 'asset_category'], '#f0f8ff', '#3498db');
+		highlight(['item_code', 'item_name', 'custom_arabic_name'], '#fff5f5', '#e74c3c');
 	}
 });
