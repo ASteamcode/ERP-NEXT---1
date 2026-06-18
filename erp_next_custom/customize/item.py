@@ -348,17 +348,24 @@ def setup():
 
 def _apply_property_setters():
     def ps(field, prop, value, prop_type="Data", doctype_or_field="DocField"):
-        frappe.make_property_setter(
-            {
-                "doctype": "Item",
-                "doctype_or_field": doctype_or_field,
-                "fieldname": field,
-                "property": prop,
-                "value": value,
-                "property_type": prop_type,
-            },
-            ignore_validate=True,
+        existing = frappe.db.get_value(
+            "Property Setter",
+            {"doc_type": "Item", "field_name": field, "property": prop},
         )
+        if existing:
+            frappe.db.set_value("Property Setter", existing, "value", value)
+        else:
+            frappe.make_property_setter(
+                {
+                    "doctype": "Item",
+                    "doctype_or_field": doctype_or_field,
+                    "fieldname": field,
+                    "property": prop,
+                    "value": value,
+                    "property_type": prop_type,
+                },
+                ignore_validate=True,
+            )
 
     # Label renames on standard fields
     ps("item_code", "label", "ID")
