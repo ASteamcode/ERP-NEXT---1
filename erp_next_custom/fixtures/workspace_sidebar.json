@@ -1,5 +1,36 @@
 [
  {
+  "app": null,
+  "docstatus": 0,
+  "doctype": "Workspace Sidebar",
+  "for_user": null,
+  "header_icon": null,
+  "items": [
+   {
+    "child": 0,
+    "collapsible": 1,
+    "filters": null,
+    "icon": null,
+    "indent": 0,
+    "keep_closed": 0,
+    "label": "Project Tracker",
+    "link_to": "Project Tracker",
+    "link_type": "Workspace",
+    "navigate_to_tab": null,
+    "route_options": null,
+    "show_arrow": 0,
+    "type": "Link",
+    "url": null
+   }
+  ],
+  "modified": "2026-06-18 12:16:09.219181",
+  "module": null,
+  "module_onboarding": null,
+  "name": "Project Tracker",
+  "standard": 0,
+  "title": "Project Tracker"
+ },
+ {
   "app": "erpnext",
   "docstatus": 0,
   "doctype": "Workspace Sidebar",

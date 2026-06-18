@@ -14,30 +14,6 @@ const _STATUS_FOR_COL = { open: "Open", doing: "Working On", overdue: "Open", do
 
 // ── lifecycle ──────────────────────────────────────────────────────
 frappe.pages["project-board"].on_page_load = function (wrapper) {
-    // Frappe sidebar.js reads localStorage "sidebar_item_map" to map page → workspace.
-    // If "project-board" is missing, it calls setup(undefined) → .toLowerCase() crash.
-    // Inject the mapping so Frappe finds "Project Tracker" for this page.
-    try {
-        const key = "sidebar_item_map";
-        const map = JSON.parse(localStorage.getItem(key) || "{}") || {};
-        if (!map["project-board"]) {
-            map["project-board"] = ["Project Tracker"];
-            localStorage.setItem(key, JSON.stringify(map));
-        }
-    } catch(_) {}
-
-    // Also guard the sidebar setup method itself in case mapping still misses.
-    try {
-        if (frappe.app?.sidebar) {
-            const sidebar = frappe.app.sidebar;
-            const _orig = sidebar.setup;
-            sidebar.setup = function(workspace_title) {
-                if (!workspace_title) return;
-                return _orig.call(this, workspace_title);
-            };
-        }
-    } catch(_) {}
-
     frappe.ui.make_app_page({ parent: wrapper, title: "Project Board", single_column: true });
     _pb_inject_styles();
     _pb_takeover(wrapper);
@@ -52,6 +28,14 @@ frappe.pages["project-board"].on_page_hide = function (wrapper) {
     _pb_restore(wrapper);
     $(document).off("keydown.pb");
 };
+
+// Belt-and-suspenders: strip pb-fs on ANY route change away from this page.
+// on_page_hide alone can be missed when navigating quickly or via browser back.
+$(document).on("page-change.pb_cleanup", function () {
+    if (frappe.get_route_str() !== "project-board") {
+        $("body").removeClass("pb-fs");
+    }
+});
 
 // ── full-screen takeover (covers navbar too) ───────────────────────
 function _pb_takeover(w) {

@@ -273,8 +273,8 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
-    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker"]]]},
     {"doctype": "Property Setter","filters": [["doc_type", "in", ["Item", "Warehouse", "Item Group"]]]},
     {"doctype": "Warehouse","filters": [["name", "like", "% - AS"]]},
     {"doctype": "Item Group"}
