@@ -272,4 +272,8 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 fixtures = [
     {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
     {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
+    {"doctype": "Custom Field","filters": [["dt", "in", ["Item", "Warehouse", "Item Group"]]]},
+    {"doctype": "Property Setter","filters": [["doc_type", "in", ["Item", "Warehouse", "Item Group"]]]},
+    {"doctype": "Warehouse","filters": [["name", "like", "% - AS"]]},
+    {"doctype": "Item Group"}
 ]
