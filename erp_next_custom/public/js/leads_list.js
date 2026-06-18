@@ -148,7 +148,8 @@ function _l_bind(listview, host, rows, cols, getTpl) {
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindOutsideClick($grid, esm, "leads");
 
-    $grid.on("click.l", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function () {
+    $grid.on("click.l", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function (e) {
+        e.stopPropagation();
         const name = $(this).attr("data-name"); if (name) esm.set(name);
     });
     $grid.on("dblclick.l", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function (e) {

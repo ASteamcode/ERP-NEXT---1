@@ -49,11 +49,14 @@ app_include_js = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Item": "public/js/item_form.js",
+}
 doctype_list_js = {
     "Contact": "public/js/contacts_list.js",
     "Lead": "public/js/leads_list.js",
     "Quotation": "public/js/quotation_list.js",
+    "Item": "public/js/item_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
@@ -272,7 +275,6 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 fixtures = [
     {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview"]]]},
     {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview"]]]},
-    {"doctype": "Custom Field","filters": [["dt", "in", ["Item", "Warehouse", "Item Group"]]]},
     {"doctype": "Property Setter","filters": [["doc_type", "in", ["Item", "Warehouse", "Item Group"]]]},
     {"doctype": "Warehouse","filters": [["name", "like", "% - AS"]]},
     {"doctype": "Item Group"}

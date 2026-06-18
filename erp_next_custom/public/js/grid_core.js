@@ -27,7 +27,7 @@
     "use strict";
 
     // ── Style version — bump when BASE_CSS changes ────────────────────────────
-    const STYLE_VERSION = "gl-v13";
+    const STYLE_VERSION = "gl-v16";
 
     // ── SVG icon library ──────────────────────────────────────────────────────
     const SVG = {
@@ -567,6 +567,9 @@
         $wrap.append($track);
         $wrap.insertBefore($paging);
 
+        // Stop all clicks/mousedowns from bubbling to Frappe's paging-area handlers
+        $wrap.on('click.gl-hs mousedown.gl-hs-stop', function (e) { e.stopPropagation(); });
+
         function refresh() {
             const totalW = scrollEl.scrollWidth;
             const visW   = scrollEl.clientWidth;
@@ -610,6 +613,7 @@
                     $(document).off('mousemove.gl-hs mouseup.gl-hs');
                 });
             e.preventDefault();
+            e.stopPropagation();
         });
 
         $(window).on('resize.gl-hs', refresh);
@@ -1447,40 +1451,40 @@
 
 /* ── Custom horizontal scrollbar ─────────────────────────────────────────── */
 .gl-hscroll-wrap {
-    padding: 5px 0 2px;
+    padding: 6px 48px 4px;
 }
 .gl-hscroll-track {
     position: relative;
-    height: 8px;
+    height: 14px;
     background: var(--bg-light-gray, #eef0f4);
-    border-radius: 6px;
+    border-radius: 99px;
     cursor: pointer;
     overflow: hidden;
 }
 .gl-hscroll-thumb {
     position: absolute;
-    top: 0; bottom: 0; left: 0;
-    min-width: 40px;
+    top: 2px; bottom: 2px; left: 0;
+    min-width: 24px;
     background: linear-gradient(90deg,
         transparent 0%,
-        #5ab3f0 22%,
-        #2474c8 50%,
-        #5ab3f0 78%,
+        #d0d5dc 20%,
+        #a8adb6 50%,
+        #d0d5dc 80%,
         transparent 100%
     );
-    border-radius: 6px;
+    border-radius: 99px;
     cursor: grab;
     transition: opacity 0.15s;
-    opacity: 0.88;
+    opacity: 0.9;
 }
 .gl-hscroll-thumb:hover  { opacity: 1; }
 .gl-hscroll-thumb.gl-hs-drag {
     cursor: grabbing;
     background: linear-gradient(90deg,
         transparent 0%,
-        #3a9be8 22%,
-        #1861b8 50%,
-        #3a9be8 78%,
+        #b8bec8 20%,
+        #8d949e 50%,
+        #b8bec8 80%,
         transparent 100%
     );
     opacity: 1;
