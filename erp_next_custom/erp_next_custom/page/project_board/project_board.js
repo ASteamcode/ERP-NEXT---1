@@ -187,7 +187,7 @@ function _pb_wire(wrapper) {
         _pb_render(wrapper);
     });
 
-    $sh.on("click", ".pb-back-btn", () => { window.location.href = "/"; });
+    $sh.on("click", ".pb-back-btn", () => { window.location.href = "/desk"; });
     $sh.on("click", "#pb-refresh",  () => _pb_load(wrapper));
     $sh.on("click", ".pb-new-task-btn", () => _pb_new_task_modal(wrapper, "Open"));
 
