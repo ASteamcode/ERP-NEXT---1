@@ -49,7 +49,7 @@
 
         // ── 💬 Toggle button ───────────────────────────────────────────────────
         // Hidden — the quick_launch FAB hosts the visible trigger instead.
-        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Alt+Shift+C)")}">💬</button>`)
+        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Ctrl+Right Click)")}">💬</button>`)
             .css("display", "none")
             .appendTo("body");
         $btn.on("click", () => open ? _closeSidebar() : _openSidebar());
@@ -60,10 +60,18 @@
 
         $(document).on("keydown.ann-esc", (e) => {
             if (e.key === "Escape" && open) { _closeSidebar(); return; }
-            if (e.altKey && e.shiftKey && e.code === "KeyC") {
-                e.preventDefault();
-                open ? _closeSidebar() : _openSidebar();
-            }
+        });
+
+        $(document).on("contextmenu.ann-toggle", (e) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+            if ($(e.target).closest(".frappe-dialog,.modal,#ann-sidebar,.adm-ann-btn,.ann-overlay").length) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (!open) _openSidebar();
+            _openAddDialog(
+                +(e.clientX / window.innerWidth  * 100).toFixed(2),
+                +(e.clientY / window.innerHeight * 100).toFixed(2)
+            );
         });
 
         $(document).on("page-change.ann", () => {
@@ -73,6 +81,7 @@
 
         $(document).on("contextmenu.ann", (e) => {
             if (!open) return;
+            if (e.ctrlKey || e.metaKey) return;
             if ($(e.target).closest(".frappe-dialog,.modal,#ann-sidebar,.adm-ann-btn,.ann-overlay").length) return;
             e.preventDefault();
             _openAddDialog(
@@ -399,13 +408,11 @@
             const d = new frappe.ui.Dialog({
                 title: __("New Annotation"),
                 fields: [
-                    { fieldname: "tag",     fieldtype: "Select",    label: __("Tag"),
-                      options: "Note\nEdit this\nRemove this\nChange this\nAdd here",
-                      default: "Note", reqd: 1 },
                     { fieldname: "comment", fieldtype: "Small Text", label: __("Comment"), reqd: 1 },
                 ],
                 primary_action_label: __("Add"),
-                primary_action({ tag, comment }) {
+                primary_action({ comment }) {
+                    const tag = "Note";
                     frappe.call({
                         method: "frappe.client.insert",
                         args: {
