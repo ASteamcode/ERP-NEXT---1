@@ -14,24 +14,33 @@
     // ── CSS ────────────────────────────────────────────────────────
     const CSS = `
 /* shell */
-.pg-shell{background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;overflow:clip;box-shadow:0 2px 16px rgba(0,0,0,.07);}
+.pg-shell{background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.07);}
 
-/* pill nav row */
-.pg-nav-row{display:flex;align-items:center;padding:10px 14px;gap:10px;background:transparent;}
-.pg-nav-left{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.pg-nav-center{display:flex;justify-content:center;flex:1;overflow-x:auto;scrollbar-width:none;cursor:grab;user-select:none;}
+/* nav row — CSS grid gives true centering: left | center | right */
+.pg-nav-row{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:10px 14px;
+  gap:8px;
+  position:relative;
+  z-index:20;
+  background:#fff;
+  border-bottom:1.5px solid #e8e8f0;
+}
+.pg-nav-left{display:flex;align-items:center;gap:6px;justify-content:flex-start;}
+.pg-nav-center{display:flex;justify-content:center;align-items:center;}
+.pg-nav-right{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
 
-.pg-nav-center:active{cursor:grabbing;}
-.pg-nav-center::-webkit-scrollbar{display:none;}
-.pg-nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.pg-pill-track{position:relative;display:inline-flex;align-items:center;background:#f0f0f5;border-radius:99px;padding:4px;gap:0;box-shadow:0 2px 12px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);flex-shrink:0;}
-.pg-pill-ind{position:absolute;top:4px;bottom:4px;background:#fff;border-radius:99px;box-shadow:0 1px 4px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.07);transition:transform .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;}
+/* pill track */
+.pg-pill-track{position:relative;display:inline-flex;align-items:center;background:#f0f0f5;border-radius:99px;padding:4px;gap:0;box-shadow:0 2px 12px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);}
+.pg-pill-ind{position:absolute;top:4px;bottom:4px;left:0;background:#fff;border-radius:99px;box-shadow:0 1px 4px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.07);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;width:0;}
 .pg-pill{position:relative;z-index:1;padding:7px 18px;border:none;background:transparent;border-radius:99px;font-size:12.5px;font-weight:600;color:#9ca3af;cursor:pointer;transition:color .2s;white-space:nowrap;line-height:1;}
 .pg-pill:hover{color:#6b7280;}
 .pg-pill.active{color:#111827;}
 
-/* table wrapper */
-.pg-tbl-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;}
+/* table wrapper — z-index must stay below nav (nav is z-index:20) */
+.pg-tbl-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
 .pg-tbl-outer::-webkit-scrollbar{height:4px;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
 
@@ -55,9 +64,10 @@
 .pg-v{display:none;min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
 @keyframes pg-col-in{from{opacity:0;transform:translateX(var(--pg-dir,22px))}to{opacity:1;transform:none}}
 
-/* row selection */
-.pg-row-sel td,.pg-row-sel td.pg-f{background:#dbeafe !important;}
+/* row selection — selected wins over hover */
 .pg-tbl tr:hover td,.pg-tbl tr:hover td.pg-f{background:#eff6ff !important;}
+.pg-row-sel td,.pg-row-sel td.pg-f{background:#bfdbfe !important;}
+.pg-row-sel:hover td,.pg-row-sel:hover td.pg-f{background:#93c5fd !important;}
 .pg-f-num-cell{cursor:pointer;user-select:none;text-align:center;color:#cbd5e1;font-size:11px;font-weight:700;transition:color .12s;}
 .pg-f-num-cell:hover{color:#2563eb;}
 .pg-row-num{display:inline-block;min-width:18px;text-align:center;}
@@ -91,9 +101,8 @@
 .pg-maps-btn{display:inline-flex;align-items:center;gap:5px;color:#2563eb;text-decoration:none;font-size:12.5px;font-weight:500;padding:4px 10px 4px 8px;border-radius:20px;background:#eff6ff;transition:background .15s;white-space:nowrap;}
 .pg-maps-btn:hover{background:#dbeafe;}
 .pg-maps-pin{width:14px;height:14px;color:#ef4444;stroke:currentColor;flex-shrink:0;}
-.pg-map-edit{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;color:#9ca3af;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s;flex-shrink:0;}
-.pg-maps-cell:hover .pg-map-edit{opacity:1;}
-.pg-map-edit:hover{background:#f1f5f9;border-color:#94a3b8;color:#475569;}
+.pg-map-edit{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;cursor:pointer;transition:background .15s,border-color .15s;flex-shrink:0;padding:0;}
+.pg-map-edit:hover{background:#dbeafe;}
 
 /* files */
 .pg-files{display:inline-flex;align-items:center;gap:6px;}
@@ -101,6 +110,20 @@
 .pg-file-btn:hover{background:#eff6ff;border-color:#2563eb;color:#2563eb;border-style:solid;}
 .pg-cam-btn:hover{background:#f0fdf4 !important;border-color:#16a34a !important;color:#16a34a !important;}
 .pg-file-ico{width:13px;height:13px;}
+
+/* drawing button — circle matching file buttons */
+.fd-icon-btn.fd-draw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;padding:0;}
+.fd-icon-btn.fd-draw-btn:hover{background:#eff6ff;border-color:#2563eb;color:#2563eb;border-style:solid;}
+.fd-icon-btn.fd-draw-btn.fd-draw-btn--has{background:#eff6ff;border-color:#2563eb;border-style:solid;color:#2563eb;}
+.fd-icon-btn.fd-draw-btn.fd-draw-btn--has:hover{background:#dbeafe;}
+
+/* search */
+.pg-search-wrap{position:relative;display:flex;align-items:center;}
+.pg-search-icon{position:absolute;left:10px;width:14px;height:14px;color:#9ca3af;pointer-events:none;flex-shrink:0;}
+.pg-search{height:32px;padding:0 12px 0 30px;border:1.5px solid #e0e0ea;border-radius:99px;font-size:12px;font-family:inherit;color:#374151;background:#fff;outline:none;width:170px;transition:border-color .15s,width .2s;}
+.pg-search::placeholder{color:#9ca3af;}
+.pg-search:focus{border-color:#2563eb;width:210px;}
+.pg-search:focus + .pg-search-icon,.pg-search-wrap:focus-within .pg-search-icon{color:#2563eb;}
 
 /* toolbar buttons (now in nav row) */
 .pg-tb-add{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1.5px solid #e0e0ea;border-radius:99px;background:#fff;color:#374151;font-size:12px;font-weight:600;cursor:pointer;transition:all .14s;white-space:nowrap;}
@@ -121,6 +144,7 @@
         plus:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>`,
         trash:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><polyline points="2,4 14,4"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M6 7v5m4-5v5"/><rect x="3" y="4" width="10" height="9" rx="1.5"/></svg>`,
         export: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><path d="M9 2h4v4"/><path d="M13 2L8 7"/><path d="M7 3H3a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V9"/></svg>`,
+        search: `<svg class="pg-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>`,
     };
 
     // ── Style injection ────────────────────────────────────────────
@@ -138,10 +162,13 @@
         const empty = v == null || v === "" || v === "—";
         switch (col.type) {
             case "text":
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+            case "select":
             case "link":
-                return empty ? `<span class="pg-mt">—</span>`
-                    : `<a class="pg-lnk">${_e(v)} <span class="pg-lnk-ext">↗</span></a>`;
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+            case "date": {
+                const fmt = v ? frappe.datetime.str_to_user(v) : "";
+                return fmt ? `<span>${_e(fmt)}</span>` : `<span class="pg-mt">—</span>`;
+            }
             case "phone":
                 return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-ph">${_e(v)}</span>`;
             case "num":
@@ -151,14 +178,21 @@
                 return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-badge ${cls}">${_e(v)}</span>`;
             }
             case "maps": {
-                const url = row.maps_url || "#";
-                const btn = v
-                    ? `<a class="pg-maps-btn" href="${_e(url)}" target="_blank">${SVG.pin}<span>Open Map</span></a>`
-                    : `<span class="pg-mt">—</span>`;
-                return `<span class="pg-maps-cell">${btn}<button class="pg-map-edit" data-name="${_e(row.name||'')}" title="Edit link">${SVG.pen}</button></span>`;
+                const url = v || "";
+                if (!url) return `<span class="pg-mt">—</span>`;
+                return (
+                    `<span class="pg-maps-cell">` +
+                    `<a class="pg-maps-btn" href="${_e(url)}" target="_blank" onclick="event.stopPropagation()">${SVG.pin}<span>Open in Maps</span></a>` +
+                    `<button class="pg-map-edit" title="Edit link">${SVG.pen}</button>` +
+                    `</span>`
+                );
             }
             case "files":
                 return `<span class="pg-files"><button class="pg-file-btn" title="Upload file">${SVG.upload}</button><button class="pg-file-btn pg-cam-btn" title="Take photo">${SVG.camera}</button></span>`;
+            case "drawing":
+                return typeof frappe_drawing !== "undefined"
+                    ? frappe_drawing.render_btn(_e(row.name || ""), row.has_drawing)
+                    : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(row.name||'')}" title="Drawing">${SVG.pen}</button>`;
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
         }
@@ -190,11 +224,11 @@
                 return `<td class="pg-f ${f.cls||""} pg-f-num-cell" data-row-name="${_e(name)}" style="position:sticky;left:0;min-width:${f.width||42}px;width:${f.width||42}px"><span class="pg-row-num">${idx+1}</span></td>`;
             }
             const ed = cfg.editable && f.frappe_field;
-            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}"${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
+            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}"${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}" data-ckey="${_e(f.key)}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
         }).join("");
         // Variable cols
         const vars = cfg.cols.map(c => {
-            const ed = cfg.editable && c.frappe_field && c.type !== "maps" && c.type !== "files";
+            const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
             return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
@@ -230,8 +264,17 @@
       <button class="pg-tb-add">${SVG.plus} Add Row</button>
       <button class="pg-tb-del">${SVG.trash} Delete <span class="pg-tb-cnt">0</span></button>
     </div>
-    <div class="pg-nav-center"><div class="pg-pill-track"><div class="pg-pill-ind"></div>${pillsHtml}</div></div>
+    <div class="pg-nav-center">
+      <div class="pg-pill-track">
+        <div class="pg-pill-ind"></div>
+        ${pillsHtml}
+      </div>
+    </div>
     <div class="pg-nav-right">
+      <div class="pg-search-wrap">
+        ${SVG.search}
+        <input type="text" class="pg-search" placeholder="Search prospects…">
+      </div>
       <button class="pg-tb-exp">${SVG.export} Export Leads</button>
     </div>
   </div>
@@ -256,9 +299,10 @@
 
         _wire(el, cfg);
 
-        setTimeout(() => {
+        // Use rAF so layout is complete before measuring pill position
+        requestAnimationFrame(() => {
             _positionInd(el.querySelector(".pg-pill.active"));
-        }, 0);
+        });
     }
 
     // ── Tab switch ─────────────────────────────────────────────────
@@ -292,7 +336,9 @@
         const ctype = td.dataset.ctype || "text";
         const val   = td.dataset.val   || "";
         const ckey  = td.dataset.ckey  || "";
-        const col   = (cfg.cols || []).find(c => c.key === ckey) || {};
+        const col   = (cfg.cols || []).find(c => c.key === ckey)
+                   || (cfg.fixed || []).find(f => f.key === ckey)
+                   || {};
 
         const rect = td.getBoundingClientRect();
         _eFl.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;z-index:99999;pointer-events:none;`;
@@ -308,6 +354,26 @@
                 if (o === val) opt.selected = true;
                 el.appendChild(opt);
             });
+        } else if (ctype === "select") {
+            el = document.createElement("select");
+            el.className = "pg-float-select";
+            (col.options || []).forEach(o => {
+                const opt = document.createElement("option");
+                opt.value = o; opt.textContent = o || "—";
+                if (o === val) opt.selected = true;
+                el.appendChild(opt);
+            });
+        } else if (ctype === "date") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "date";
+            el.value = val;
+        } else if (ctype === "maps") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.placeholder = "Paste Google Maps URL…";
         } else {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -325,12 +391,26 @@
 
         el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
         el.addEventListener("keydown", e => {
-            if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); }
-            else if (e.key === "Enter") { _closeEdit(true); e.preventDefault(); }
-            else if (e.key === "Tab") {
+            if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
+            if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
+            if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); _navCell(root, td, e.shiftKey ? "left" : "right"); return; }
+
+            const isText = el.tagName === "INPUT" && (el.type === "text" || el.type === "url" || el.type === "");
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 e.preventDefault();
                 _closeEdit(true);
-                _shiftFocus(root, td, e.shiftKey ? -1 : 1);
+                _navCell(root, td, e.key === "ArrowDown" ? "down" : "up");
+            } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                // In a text input let the cursor move freely; only navigate when already at the edge
+                if (isText) {
+                    const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+                    const atEnd   = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
+                    if (e.key === "ArrowLeft"  && !atStart) return;
+                    if (e.key === "ArrowRight" && !atEnd)   return;
+                }
+                e.preventDefault();
+                _closeEdit(true);
+                _navCell(root, td, e.key === "ArrowRight" ? "right" : "left");
             }
         });
     }
@@ -354,7 +434,9 @@
 
         // Update display
         const cfg = root._pgCfg;
-        const col = (cfg.cols || []).find(c => c.key === ckey) || {};
+        const col = (cfg.cols || []).find(c => c.key === ckey)
+                 || (cfg.fixed || []).find(f => f.key === ckey)
+                 || {};
         const row = { [ckey || ""]: newVal, name };
         if (ckey) {
             td.innerHTML = renderCell(Object.assign({}, col, { key: ckey || "" }), row);
@@ -369,35 +451,47 @@
         if (cfg.onEdit && name && ff) cfg.onEdit(name, ff, newVal);
     }
 
-    // Move focus to prev/next editable visible cell; switches tab when hitting the edge
-    function _shiftFocus(root, fromTd, dir) {
+    // Navigate to an adjacent cell in any of the four directions
+    function _navCell(root, fromTd, direction) {
         const tbl      = root.querySelector(".pg-tbl");
         const tabN     = parseInt(tbl.getAttribute("data-tab") || 0);
         const tabCount = (root._pgCfg.tabs || []).length;
+        const rowName  = fromTd.dataset.rowName;
 
-        const _visEd = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-            td.classList.contains("pg-f") || td.classList.contains(`pg-v-${t}`)
-        );
-
-        const allEd = _visEd(tabN);
-        const idx   = allEd.indexOf(fromTd);
-        if (idx === -1) return;
-        const next = allEd[idx + dir];
-
-        if (next) {
-            _openEdit(root, next);
+        if (direction === "up" || direction === "down") {
+            // Same column index, adjacent row
+            const colIdx  = fromTd.cellIndex;
+            const rows    = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
+            const curRow  = fromTd.closest("tr");
+            const rowIdx  = rows.indexOf(curRow);
+            const nextIdx = direction === "down" ? rowIdx + 1 : rowIdx - 1;
+            if (nextIdx < 0 || nextIdx >= rows.length) return;
+            const nextTd = rows[nextIdx].cells[colIdx];
+            if (nextTd && nextTd.classList.contains("pg-ed")) _openEdit(root, nextTd);
             return;
         }
 
-        // At edge — switch tab if possible
-        const nextTab = tabN + dir;
+        // Left / right — stay on same row, switch tab at edge
+        const hDir   = direction === "right" ? 1 : -1;
+        const rowEd  = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+            td.dataset.rowName === rowName &&
+            (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${t}`))
+        );
+        const allEd  = rowEd(tabN);
+        const idx    = allEd.indexOf(fromTd);
+        if (idx === -1) return;
+        const next   = allEd[idx + hDir];
+        if (next) { _openEdit(root, next); return; }
+
+        // End of tab's columns for this row — switch tab, same row
+        const nextTab = tabN + hDir;
         if (nextTab < 0 || nextTab >= tabCount) return;
         root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
-        // Wait for tab to activate then focus first/last cell on new tab
         requestAnimationFrame(() => {
-            const newEd = Array.from(tbl.querySelectorAll("td.pg-ed"))
-                .filter(td => td.classList.contains(`pg-v-${nextTab}`));
-            const target = dir > 0 ? newEd[0] : newEd[newEd.length - 1];
+            const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+                td.dataset.rowName === rowName && td.classList.contains(`pg-v-${nextTab}`)
+            );
+            const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
             if (target) _openEdit(root, target);
         });
     }
@@ -423,44 +517,25 @@
     function _wire(root, cfg) {
         const tabCount = cfg.tabs.length;
         let _wt = 0, _ts = null;
-        let _navDown = false, _navDragged = false, _navMx = 0, _navSl = 0;
-        const nav   = root.querySelector(".pg-nav-center");
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
 
         // ── Pill click ──────────────────────────────────────────
         root.addEventListener("click", e => {
             const pill = e.target.closest(".pg-pill");
-            if (pill && !_navDragged) _activatePill(root, pill, tabCount);
-            if (_navDragged) _navDragged = false;
+            if (pill) _activatePill(root, pill, tabCount);
         });
 
-        // ── Nav drag-to-scroll ──────────────────────────────────
-        nav.addEventListener("mousedown", e => {
-            _navDown = true; _navDragged = false;
-            _navMx = e.clientX; _navSl = nav.scrollLeft;
+        // ── Wheel tab switch on table scroll area ───────────────
+        outer.addEventListener("wheel", e => {
+            const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
+            if (ax <= ay || ax < 8) return;
             e.preventDefault();
-        });
-        document.addEventListener("mousemove", e => {
-            if (!_navDown) return;
-            const dx = e.clientX - _navMx;
-            if (Math.abs(dx) > 4) _navDragged = true;
-            nav.scrollLeft = _navSl - dx;
-        });
-        document.addEventListener("mouseup", () => { _navDown = false; });
-
-        // ── Wheel tab switch ────────────────────────────────────
-        [nav, outer].forEach(el => {
-            el.addEventListener("wheel", e => {
-                const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
-                if (ax <= ay || ax < 8) return;
-                e.preventDefault();
-                const now = Date.now();
-                if (now - _wt < 450) return;
-                _wt = now;
-                _stepTab(root, tabCount, e.deltaX);
-            }, { passive: false });
-        });
+            const now = Date.now();
+            if (now - _wt < 450) return;
+            _wt = now;
+            _stepTab(root, tabCount, e.deltaX);
+        }, { passive: false });
 
         // ── Touch swipe ─────────────────────────────────────────
         root.addEventListener("touchstart", e => { _ts = e.touches[0].clientX; }, { passive: true });
@@ -505,9 +580,23 @@
 
         document.addEventListener("mouseup", () => { _dragSelActive = false; });
 
+        // ── Deselect on outside click or Escape ─────────────────
+        const _clearSel = () => {
+            root.querySelectorAll(".pg-row-sel").forEach(r => r.classList.remove("pg-row-sel"));
+            _refreshToolbar(root);
+        };
+        document.addEventListener("mousedown", e => {
+            if (_dragSelActive) return;
+            if (!root.contains(e.target)) _clearSel();
+        });
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape" && !_eIn) _clearSel();
+        });
+
         // ── Inline edit: click on editable cell ─────────────────
         if (cfg.editable) {
             root.addEventListener("click", e => {
+                if (e.target.closest(".pg-maps-btn")) return; // let the link open
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
                 _openEdit(root, td);
@@ -548,6 +637,39 @@
             inp.addEventListener("change", () => document.body.removeChild(inp), { once: true });
         });
 
+        // ── Drawing button ──────────────────────────────────────
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".fd-draw-btn");
+            if (!btn) return;
+            e.stopPropagation();
+            const name = btn.dataset.name;
+            if (!name || typeof frappe_drawing === "undefined") return;
+            frappe_drawing.open({
+                doctype: "Prospect",
+                docname: name,
+                drawing_field: "custom_drawing",
+                has_drawing_field: "custom_has_drawing",
+                on_saved(hasShapes) {
+                    const rowObj = (cfg.rows || []).find(r => r.name === name);
+                    if (rowObj) rowObj.has_drawing = hasShapes ? 1 : 0;
+                    if (cfg.onReload) cfg.onReload();
+                },
+            });
+        });
+
+        // ── Search ──────────────────────────────────────────────
+        const $search = root.querySelector(".pg-search");
+        if ($search) {
+            $search.addEventListener("input", () => {
+                const q = $search.value.trim().toLowerCase();
+                root.querySelectorAll("tbody tr").forEach(tr => {
+                    if (!q) { tr.style.display = ""; return; }
+                    const text = tr.textContent.toLowerCase();
+                    tr.style.display = text.includes(q) ? "" : "none";
+                });
+            });
+        }
+
         // ── Toolbar buttons ─────────────────────────────────────
         root.querySelector(".pg-tb-add").addEventListener("click", () => {
             if (cfg.onAddRow) cfg.onAddRow(() => _reload(root));
@@ -575,12 +697,12 @@
         if (!ind || !track) return;
         const tr = track.getBoundingClientRect();
         const pr = pill.getBoundingClientRect();
-        const left  = pr.left - tr.left;
-        const width = pr.width;
-        if (!animate) ind.style.transition = "none";
-        ind.style.transform = `translateX(${left}px)`;
-        ind.style.width     = width + "px";
-        if (!animate) requestAnimationFrame(() => { ind.style.transition = ""; });
+        if (!animate) {
+            ind.style.transition = "none";
+            requestAnimationFrame(() => { ind.style.transition = ""; });
+        }
+        ind.style.left  = (pr.left - tr.left) + "px";
+        ind.style.width = pr.width + "px";
     }
 
     function _activatePill(root, pill, tabCount) {

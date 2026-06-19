@@ -5,23 +5,24 @@ const _PROSPECT_CFG = {
     tabs: ["Profile & Context", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
         { key: "num",     label: "#",          cls: "pg-f-num",   width: 42,  type: "rownum" },
-        { key: "title",   label: "Title",      cls: "pg-f-title", width: 54,  frappe_field: "custom_salutation"  },
+        { key: "title",   label: "Title",      cls: "pg-f-title", width: 54,  frappe_field: "custom_salutation", type: "select", options: ["", "Mr", "Ms", "Mrs", "Dr", "Arch", "Eng"] },
         { key: "first",   label: "First Name", cls: "pg-f-first", width: 105, frappe_field: "custom_first_name"  },
         { key: "last",    label: "Last Name",  cls: "pg-f-last",  width: 110, frappe_field: "custom_last_name"   },
         { key: "company", label: "Company",    cls: "pg-f-co",    width: 168, frappe_field: "company_name", shadow: true },
     ],
     cols: [
-        { tab: 0, key: "industry", label: "Industry",       type: "text",   frappe_field: "industry"              },
+        { tab: 0, key: "position", label: "Position",       type: "text",   frappe_field: "custom_position"       },
         { tab: 0, key: "status",   label: "Status",         type: "status", frappe_field: "custom_prospect_status",
           map: { Lead: "pg-badge-blue", "In Discussion": "pg-badge-amber", Contacted: "pg-badge-gray", Converted: "pg-badge-green", Lost: "pg-badge-red" } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
         { tab: 1, key: "city",     label: "Site Location",  type: "text",   frappe_field: "custom_site_location"  },
-        { tab: 1, key: "maps",     label: "Google Maps",    type: "maps"  /* edit via map-edit btn */             },
+        { tab: 1, key: "maps",     label: "Google Maps",    type: "maps",  frappe_field: "custom_maps_url"       },
         { tab: 1, key: "files",    label: "Files",          type: "files"                                         },
+        { tab: 1, key: "drawing",  label: "Drawing",        type: "drawing"                                       },
         { tab: 2, key: "pstatus",  label: "Project Status", type: "status", frappe_field: "custom_project_status",
           map: { "In Progress": "pg-badge-amber", "Not Started": "pg-badge-gray", "Starting in 2w": "pg-badge-blue", "On Hold": "pg-badge-red", Completed: "pg-badge-green" } },
-        { tab: 2, key: "pstart",   label: "Start Date",     type: "text",   frappe_field: "custom_project_start" },
+        { tab: 2, key: "pstart",   label: "Start Date",     type: "date",   frappe_field: "custom_project_start" },
         { tab: 2, key: "floors",   label: "Floors",         type: "num",    frappe_field: "custom_floors"        },
         { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
         { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "text",   frappe_field: "custom_scaffold_type" },
@@ -47,9 +48,25 @@ const _PROSPECT_CFG = {
 frappe.provide("frappe.listview_settings.Prospect");
 
 frappe.listview_settings.Prospect = {
-    onload(listview) { GL.suppressRefresh(listview); },
-    refresh(listview) { _pl_render(listview); },
+    onload(listview) {
+        GL.suppressRefresh(listview);
+        _pl_hide_chrome(listview);
+    },
+    refresh(listview) {
+        _pl_hide_chrome(listview);
+        _pl_render(listview);
+    },
 };
+
+function _pl_hide_chrome(listview) {
+    const $p = listview.$page;
+    $p.find(".page-head").hide();
+    $p.find(".page-form").hide();
+    $p.find(".standard-filter-section, .filter-section, .sort-selector, .filter-selector").hide();
+    $p.find(".list-filters-area, .list-filter-area, .sort-filter-area, .tag-filters-area").hide();
+    $p.find(".list-header-meta, .list-toolbar-wrapper, .list-toolbar").hide();
+    $p.find("header.list-row-head, .list-row-head").hide();
+}
 
 // ── Render ─────────────────────────────────────────────────────────
 function _pl_render(listview) {
@@ -219,6 +236,22 @@ function _pl_render(listview) {
     s.textContent = `
 .gl-host { padding: 12px 16px 32px; box-sizing: border-box; }
 .pl-loading { padding: 48px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+/* Strip all native Frappe chrome from the Prospect list page */
+.page-container[data-page-route="List/Prospect/List"] .page-head,
+.page-container[data-page-route="List/Prospect/List"] .page-form,
+.page-container[data-page-route="List/Prospect/List"] .standard-filter-section,
+.page-container[data-page-route="List/Prospect/List"] .filter-section,
+.page-container[data-page-route="List/Prospect/List"] .sort-selector,
+.page-container[data-page-route="List/Prospect/List"] .filter-selector,
+.page-container[data-page-route="List/Prospect/List"] .list-filters-area,
+.page-container[data-page-route="List/Prospect/List"] .list-filter-area,
+.page-container[data-page-route="List/Prospect/List"] .sort-filter-area,
+.page-container[data-page-route="List/Prospect/List"] .tag-filters-area,
+.page-container[data-page-route="List/Prospect/List"] .list-header-meta,
+.page-container[data-page-route="List/Prospect/List"] .list-toolbar-wrapper,
+.page-container[data-page-route="List/Prospect/List"] .list-toolbar,
+.page-container[data-page-route="List/Prospect/List"] .list-row-head { display: none !important; }
 `;
     document.head.appendChild(s);
 })();
