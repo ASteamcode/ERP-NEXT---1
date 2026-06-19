@@ -17,38 +17,30 @@ frappe.pages["project-board"].on_page_load = function (wrapper) {
     frappe.ui.make_app_page({ parent: wrapper, title: "Project Board", single_column: true });
     _pb_inject_styles();
     _pb_takeover(wrapper);
+    wrapper._pb_fresh_load = true;
     _pb_build(wrapper);
     _pb_load(wrapper);
 };
 frappe.pages["project-board"].on_page_show = function (wrapper) {
+    if (!wrapper._pb_fresh_load) {
+        // Arrived via SPA navigation — force a clean reload so layout is pristine.
+        window.location.reload();
+        return;
+    }
+    wrapper._pb_fresh_load = false;
     _pb_takeover(wrapper);
-    if (wrapper._pb_tasks) _pb_render(wrapper);
 };
 frappe.pages["project-board"].on_page_hide = function (wrapper) {
     _pb_restore(wrapper);
     $(document).off("keydown.pb");
 };
 
-// Belt-and-suspenders: strip pb-fs on ANY route change away from this page.
-// on_page_hide alone can be missed when navigating quickly or via browser back.
-$(document).on("page-change.pb_cleanup", function () {
-    if (frappe.get_route_str() !== "project-board") {
-        $("body").removeClass("pb-fs");
-    }
-});
-
 // ── full-screen takeover (covers navbar too) ───────────────────────
 function _pb_takeover(w) {
     $("body").addClass("pb-fs");
-    $(w).find(".page-head, .layout-side-section").addClass("pb-hid");
-    $(w).find(".layout-main-section-wrapper").addClass("pb-fw");
-    $(w).find(".layout-main-section").addClass("pb-lr");
 }
 function _pb_restore(w) {
     $("body").removeClass("pb-fs");
-    $(w).find(".pb-hid").removeClass("pb-hid");
-    $(w).find(".pb-fw").removeClass("pb-fw");
-    $(w).find(".pb-lr").removeClass("pb-lr");
 }
 
 // ── shell ──────────────────────────────────────────────────────────
@@ -80,6 +72,10 @@ function _pb_build(wrapper) {
       <button class="pb-nav" data-view="board">
         <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.2" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.2" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1.2" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor" opacity=".25"/></svg>
         Board
+      </button>
+      <button class="pb-nav" data-view="templates">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="5" rx="1.2" fill="currentColor" opacity=".9"/><rect x="1" y="8" width="6" height="7" rx="1.2" fill="currentColor" opacity=".55"/><rect x="9" y="8" width="6" height="7" rx="1.2" fill="currentColor" opacity=".3"/></svg>
+        Templates
       </button>
     </div>
 
@@ -191,7 +187,7 @@ function _pb_wire(wrapper) {
         _pb_render(wrapper);
     });
 
-    $sh.on("click", ".pb-back-btn", () => frappe.set_route(""));
+    $sh.on("click", ".pb-back-btn", () => { window.location.href = "/"; });
     $sh.on("click", "#pb-refresh",  () => _pb_load(wrapper));
     $sh.on("click", ".pb-new-task-btn", () => _pb_new_task_modal(wrapper, "Open"));
 
@@ -354,6 +350,54 @@ function _pb_wire(wrapper) {
         frappe.call({ method: "frappe.client.delete", args: { doctype: "Task", name: task } });
     });
 
+    // ── TEMPLATES ────────────────────────────────────────────────
+    $sh.on("click", ".pb-tpl-tab", function () {
+        wrapper._pb_tpl_type = $(this).data("tpl");
+        _pb_render_templates(wrapper);
+    });
+    $sh.on("input", "#pb-tpl-code", function () {
+        const type = wrapper._pb_tpl_type || "prospect";
+        if (!wrapper._pb_tpl_codes) wrapper._pb_tpl_codes = {};
+        wrapper._pb_tpl_codes[type] = $(this).val();
+        _pb_tpl_refresh_preview(wrapper);
+    });
+    $sh.on("click", ".pb-tpl-tb", function () {
+        const snip = $(this).data("snip");
+        if (snip === "reset") {
+            const type = wrapper._pb_tpl_type || "prospect";
+            if (!wrapper._pb_tpl_codes) wrapper._pb_tpl_codes = {};
+            wrapper._pb_tpl_codes[type] = _TPL_DEFAULT[type];
+            _pb_render_templates(wrapper);
+            return;
+        }
+        const $ta = $("#pb-tpl-code");
+        const el = $ta[0];
+        if (!el) return;
+        const snippet = _TPL_SNIPPETS[snip] || "";
+        const pos = el.selectionStart;
+        const val = $ta.val();
+        const newVal = val.slice(0, pos) + snippet + val.slice(pos);
+        $ta.val(newVal);
+        el.setSelectionRange(pos + snippet.length, pos + snippet.length);
+        $ta.trigger("input");
+        el.focus();
+    });
+    $sh.on("change", "#pb-tpl-upload-input", function () {
+        const type = wrapper._pb_tpl_type || "prospect";
+        if (!wrapper._pb_tpl_files) wrapper._pb_tpl_files = { prospect:[], log:[], lead:[] };
+        const files = Array.from(this.files || []);
+        wrapper._pb_tpl_files[type] = [...wrapper._pb_tpl_files[type], ...files];
+        _pb_tpl_render_files(wrapper);
+        this.value = "";
+    });
+    $sh.on("click", ".pb-tpl-file-del", function () {
+        const idx = parseInt($(this).data("idx"));
+        const type = wrapper._pb_tpl_type || "prospect";
+        if (!wrapper._pb_tpl_files) return;
+        wrapper._pb_tpl_files[type].splice(idx, 1);
+        _pb_tpl_render_files(wrapper);
+    });
+
     // ── BOARD card click → panel ──────────────────────────────────
     $sh.on("click", ".pb-card", function () { _pb_open_board_panel(wrapper, $(this).data("name")); });
     $sh.on("click", "#pb-ph-close", () => _pb_close_board_panel(wrapper));
@@ -394,7 +438,11 @@ function _pb_fill_sidebar(wrapper) {
 }
 
 function _pb_update_header(wrapper) {
-    if (wrapper._pb_view === "board") {
+    if (wrapper._pb_view === "templates") {
+        $("#pb-title").text("Templates");
+        $("#pb-subtitle").text("Visual designer playground");
+        $("#pb-search").attr("placeholder", "Search templates…");
+    } else if (wrapper._pb_view === "board") {
         $("#pb-title").text("Projects");
         $("#pb-subtitle").text((wrapper._pb_projects||[]).length + " projects");
         $("#pb-search").attr("placeholder", "Search projects…");
@@ -409,6 +457,7 @@ function _pb_update_header(wrapper) {
 
 function _pb_render(wrapper) {
     if (wrapper._pb_view === "board") _pb_render_board(wrapper);
+    else if (wrapper._pb_view === "templates") _pb_render_templates(wrapper);
     else _pb_render_kanban(wrapper, _pb_visible_tasks(wrapper));
 }
 
@@ -561,6 +610,269 @@ function _pb_sync_card_assigns(wrapper, taskName) {
         const on = assigns.includes(m.email);
         $card.find(`.pb-av-btn[data-email="${m.email}"]`).toggleClass("pb-av-on", on).toggleClass("pb-av-off", !on).css("--avc", on ? m.color : "");
     });
+}
+
+// ── template constants ─────────────────────────────────────────────
+const _TPL_STYLES = `<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;background:#f5f5f8;color:#1f2937;}
+body{padding:16px;overflow-y:auto;}
+.tg{display:flex;flex-direction:column;gap:10px;}
+.tr{display:flex;gap:10px;align-items:stretch;}
+.tc{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.card{background:#fff;border-radius:10px;border:1.5px solid #eeeef4;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);flex:1;}
+.lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;margin-bottom:5px;}
+.val{font-size:14px;font-weight:600;color:#111827;}
+.sub{font-size:11px;color:#9ca3af;margin-top:3px;}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:650;}
+.badge-green{background:#ecfdf5;color:#059669;}
+.badge-blue{background:#eff6ff;color:#2563eb;}
+.badge-red{background:#fef2f2;color:#dc2626;}
+.badge-yellow{background:#fffbeb;color:#d97706;}
+.badge-purple{background:#f5f3ff;color:#7c3aed;}
+.badge-gray{background:#f3f4f6;color:#6b7280;}
+.divider{height:1px;background:#f0f0f5;margin:6px 0;}
+.txt{font-size:12.5px;color:#374151;line-height:1.5;}
+.hd{font-size:18px;font-weight:750;color:#111827;letter-spacing:-.02em;}
+.prog-rail{height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;margin-top:6px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:99px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.row{display:flex;align-items:center;gap:8px;}
+.col{display:flex;flex-direction:column;gap:3px;}
+table{width:100%;border-collapse:collapse;margin-top:8px;}
+th{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;padding:6px 10px;text-align:left;border-bottom:1px solid #f0f0f5;}
+td{font-size:12.5px;color:#374151;padding:7px 10px;border-bottom:1px solid #f9f9fb;}
+tr:last-child td{border-bottom:none;}
+.tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;background:#f3f4f6;color:#374151;font-size:11px;font-weight:550;}
+</style></head><body>`;
+
+const _TPL_DEFAULT = {
+    prospect: `<div class="tg">
+  <div class="tr">
+    <div class="tc" style="flex:2">
+      <div class="card">
+        <div class="lbl">Company</div>
+        <div class="val">Acme Corp</div>
+        <div class="sub">acme.com · Enterprise</div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Status</div>
+        <span class="badge badge-green">Qualified</span>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Deal Value</div>
+        <div class="val">$12,000</div>
+      </div>
+    </div>
+  </div>
+  <div class="tr">
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Contact</div>
+        <div class="val">Jane Smith</div>
+        <div class="sub">jane@acme.com</div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Next Action</div>
+        <div class="val">Follow-up call</div>
+        <div class="sub" style="color:#ef4444">Due yesterday</div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Progress</div>
+        <div class="val">60%</div>
+        <div class="prog-rail"><div class="prog-fill" style="width:60%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>`,
+    log: `<div class="tg">
+  <div class="tr">
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Activity Log</div>
+        <table>
+          <tr><th>Date</th><th>Type</th><th>Description</th><th>By</th></tr>
+          <tr><td>Jan 15</td><td><span class="badge badge-blue">Call</span></td><td>Initial discovery call</td><td>Anthony</td></tr>
+          <tr><td>Jan 14</td><td><span class="badge badge-purple">Email</span></td><td>Sent proposal document</td><td>Grece</td></tr>
+          <tr><td>Jan 13</td><td><span class="badge badge-yellow">Meeting</span></td><td>Demo scheduled for next week</td><td>Pascale</td></tr>
+          <tr><td>Jan 12</td><td><span class="badge badge-gray">Note</span></td><td>Client requested custom pricing</td><td>Anthony</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="tr">
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Summary</div>
+        <div class="val" style="font-size:13px">4 activities · Last contact 1 day ago</div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Next Step</div>
+        <div class="val" style="font-size:13px">Demo on Jan 22nd</div>
+        <span class="badge badge-green" style="margin-top:6px">Scheduled</span>
+      </div>
+    </div>
+  </div>
+</div>`,
+    lead: `<div class="tg">
+  <div class="tr">
+    <div class="tc" style="flex:2">
+      <div class="card">
+        <div class="lbl">Lead</div>
+        <div class="hd">John Doe</div>
+        <div class="sub">john@example.com · +1 555 0100</div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Stage</div>
+        <span class="badge badge-blue">New</span>
+        <div class="prog-rail" style="margin-top:8px"><div class="prog-fill" style="width:20%"></div></div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Source</div>
+        <div class="val">Website</div>
+        <div class="sub">Organic Search</div>
+      </div>
+    </div>
+  </div>
+  <div class="tr">
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Pipeline Stage</div>
+        <div class="row" style="margin-top:8px;gap:4px;flex-wrap:wrap">
+          <span class="badge badge-blue">New</span>
+          <span class="badge badge-gray">Contacted</span>
+          <span class="badge badge-gray">Qualified</span>
+          <span class="badge badge-gray">Proposal</span>
+          <span class="badge badge-gray">Closed</span>
+        </div>
+      </div>
+    </div>
+    <div class="tc" style="flex:1">
+      <div class="card">
+        <div class="lbl">Assigned To</div>
+        <div class="row" style="margin-top:4px">
+          <div class="avatar">A</div>
+          <div class="col">
+            <div class="val" style="font-size:13px">Anthony</div>
+            <div class="sub">Sales Rep</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`,
+};
+
+const _TPL_SNIPPETS = {
+    row:   `\n<div class="tr">\n  <div class="tc" style="flex:1">\n    <div class="card">\n      <div class="lbl">Label</div>\n      <div class="val">Value</div>\n    </div>\n  </div>\n</div>`,
+    col:   `\n  <div class="tc" style="flex:1">\n    <div class="card">\n      <div class="lbl">Label</div>\n      <div class="val">Value</div>\n    </div>\n  </div>`,
+    card:  `\n<div class="card">\n  <div class="lbl">Label</div>\n  <div class="val">Value</div>\n</div>`,
+    badge: `<span class="badge badge-blue">Status</span>`,
+    text:  `\n<div class="txt">Text content here</div>`,
+    table: `\n<div class="card">\n  <div class="lbl">Table</div>\n  <table>\n    <tr><th>Column 1</th><th>Column 2</th><th>Column 3</th></tr>\n    <tr><td>Cell A</td><td>Cell B</td><td>Cell C</td></tr>\n    <tr><td>Cell D</td><td>Cell E</td><td>Cell F</td></tr>\n  </table>\n</div>`,
+    prog:  `\n<div class="card">\n  <div class="lbl">Progress</div>\n  <div class="val">75%</div>\n  <div class="prog-rail"><div class="prog-fill" style="width:75%"></div></div>\n</div>`,
+    avatar:`\n<div class="row">\n  <div class="avatar">AB</div>\n  <div class="col"><div class="val" style="font-size:13px">Name</div><div class="sub">Role</div></div>\n</div>`,
+};
+
+// ── templates view ─────────────────────────────────────────────────
+function _pb_render_templates(wrapper) {
+    if (!wrapper._pb_tpl_codes) {
+        wrapper._pb_tpl_codes = {
+            prospect: _TPL_DEFAULT.prospect,
+            log:      _TPL_DEFAULT.log,
+            lead:     _TPL_DEFAULT.lead,
+        };
+    }
+    if (!wrapper._pb_tpl_files) {
+        wrapper._pb_tpl_files = { prospect: [], log: [], lead: [] };
+    }
+    const type  = wrapper._pb_tpl_type || "prospect";
+    const code  = wrapper._pb_tpl_codes[type];
+    const files = wrapper._pb_tpl_files[type];
+
+    const tabsHtml = ["prospect","log","lead"].map(t =>
+        `<button class="pb-tpl-tab${t===type?" active":""}" data-tpl="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`
+    ).join("");
+
+    const filesHtml = files.length
+        ? files.map((f,i) => `<div class="pb-tpl-file-chip">${_tpl_file_icon(f.name)}<span>${_e(f.name)}</span><button class="pb-tpl-file-del" data-idx="${i}">×</button></div>`).join("")
+        : `<span class="pb-tpl-no-files">No files uploaded yet</span>`;
+
+    $("#pb-view-area").html(`<div class="pb-tpl-shell">
+  <div class="pb-tpl-tabs">${tabsHtml}</div>
+  <div class="pb-tpl-section">
+    <div class="pb-tpl-sec-hd">
+      <span>Uploaded Files</span>
+      <label class="pb-tpl-upload-btn">
+        <input type="file" multiple hidden id="pb-tpl-upload-input" accept=".pdf,.html,.css,.js,.png,.jpg,.jpeg,.svg,.fig,.sketch">
+        + Upload
+      </label>
+    </div>
+    <div class="pb-tpl-files-row" id="pb-tpl-files-row">${filesHtml}</div>
+  </div>
+  <div class="pb-tpl-section pb-tpl-design-section">
+    <div class="pb-tpl-sec-hd">
+      <span>Custom Design <span class="pb-tpl-badge">Visual Only</span></span>
+      <div class="pb-tpl-toolbar">
+        <button class="pb-tpl-tb" data-snip="row">+ Row</button>
+        <button class="pb-tpl-tb" data-snip="col">+ Column</button>
+        <button class="pb-tpl-tb" data-snip="card">+ Card</button>
+        <button class="pb-tpl-tb" data-snip="badge">+ Badge</button>
+        <button class="pb-tpl-tb" data-snip="table">+ Table</button>
+        <button class="pb-tpl-tb" data-snip="prog">+ Progress</button>
+        <button class="pb-tpl-tb" data-snip="avatar">+ Avatar</button>
+        <button class="pb-tpl-tb" data-snip="text">+ Text</button>
+        <button class="pb-tpl-tb pb-tpl-tb-reset" data-snip="reset">↺ Reset</button>
+      </div>
+    </div>
+    <div class="pb-tpl-playground">
+      <iframe id="pb-tpl-iframe" class="pb-tpl-iframe" frameborder="0"></iframe>
+      <div class="pb-tpl-editor-pane">
+        <div class="pb-tpl-editor-hd">HTML <span class="pb-tpl-editor-hint">— edits update preview instantly</span></div>
+        <textarea id="pb-tpl-code" class="pb-tpl-code" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+</div>`);
+
+    document.getElementById("pb-tpl-code").value = code;
+    _pb_tpl_refresh_preview(wrapper);
+}
+
+function _pb_tpl_refresh_preview(wrapper) {
+    const type  = wrapper._pb_tpl_type || "prospect";
+    const code  = (wrapper._pb_tpl_codes || {})[type] || "";
+    const frame = document.getElementById("pb-tpl-iframe");
+    if (frame) frame.srcdoc = _TPL_STYLES + code + `</body></html>`;
+}
+
+function _pb_tpl_render_files(wrapper) {
+    const type  = wrapper._pb_tpl_type || "prospect";
+    const files = (wrapper._pb_tpl_files || {})[type] || [];
+    const html  = files.length
+        ? files.map((f,i) => `<div class="pb-tpl-file-chip">${_tpl_file_icon(f.name)}<span>${_e(f.name)}</span><button class="pb-tpl-file-del" data-idx="${i}">×</button></div>`).join("")
+        : `<span class="pb-tpl-no-files">No files uploaded yet</span>`;
+    $("#pb-tpl-files-row").html(html);
+}
+
+function _tpl_file_icon(name) {
+    const ext = (name.split(".").pop()||"").toLowerCase();
+    const m = {pdf:"📄",html:"🌐",css:"🎨",js:"⚙️",png:"🖼️",jpg:"🖼️",jpeg:"🖼️",svg:"✏️",fig:"🎭",sketch:"🎭"};
+    return `<span class="pb-tpl-file-icon">${m[ext]||"📎"}</span>`;
 }
 
 // ── board view ─────────────────────────────────────────────────────
@@ -766,10 +1078,6 @@ body.pb-fs .main-section,
 body.pb-fs .desk-main,
 body.pb-fs .container.page-container
 { padding:0 !important; margin:0 !important; max-width:100% !important; }
-
-.pb-hid { display:none !important; }
-.pb-fw  { flex:1 !important; max-width:100% !important; width:100% !important; padding:0 !important; }
-.pb-lr  { padding:0 !important; margin:0 !important; max-width:100% !important; }
 
 /* ── shell: full screen ──────────────────────────────────────── */
 .pb-shell {
@@ -1003,6 +1311,43 @@ body.pb-fs .container.page-container
 @keyframes pb-spin { to { transform:rotate(360deg); } }
 .pb-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:260px; gap:8px; color:#c4c4d0; font-size:12.5px; }
 .pb-empty p { margin:0; }
+
+/* ── templates view ──────────────────────────────────────────── */
+.pb-tpl-shell { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; }
+.pb-tpl-tabs { display:flex; gap:2px; padding:10px 20px 0; background:#fff; border-bottom:1px solid #e8e8f0; flex-shrink:0; }
+.pb-tpl-tab { padding:7px 14px; border-radius:8px 8px 0 0; border:none; border-bottom:2px solid transparent; background:transparent; color:#9ca3af; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .12s; margin-bottom:-1px; }
+.pb-tpl-tab:hover { color:#374151; background:#f9f9fb; }
+.pb-tpl-tab.active { color:#7c3aed; border-bottom-color:#7c3aed; background:rgba(139,92,246,.05); }
+
+.pb-tpl-section { padding:12px 20px 14px; flex-shrink:0; background:#fff; border-bottom:1px solid #f0f0f5; }
+.pb-tpl-design-section { flex:1; display:flex; flex-direction:column; overflow:hidden; border-bottom:none; }
+.pb-tpl-sec-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; }
+.pb-tpl-sec-hd > span:first-child { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#9ca3af; display:flex; align-items:center; gap:7px; }
+
+.pb-tpl-badge { background:#fef3c7; color:#d97706; font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; letter-spacing:.03em; text-transform:uppercase; }
+
+.pb-tpl-upload-btn { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:7px; border:1.5px dashed #d1d5db; background:transparent; color:#6b7280; font-size:11.5px; font-weight:600; cursor:pointer; transition:all .12s; white-space:nowrap; }
+.pb-tpl-upload-btn:hover { border-color:#8b5cf6; color:#7c3aed; background:rgba(139,92,246,.04); }
+
+.pb-tpl-files-row { display:flex; flex-wrap:wrap; gap:7px; align-items:center; min-height:28px; }
+.pb-tpl-no-files { font-size:12px; color:#d1d5db; }
+.pb-tpl-file-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 8px 4px 7px; background:#f5f5fa; border:1px solid #e5e7eb; border-radius:7px; font-size:11.5px; color:#374151; }
+.pb-tpl-file-icon { font-size:13px; line-height:1; }
+.pb-tpl-file-del { border:none; background:transparent; color:#d1d5db; cursor:pointer; font-size:14px; line-height:1; padding:0 0 0 3px; transition:color .1s; }
+.pb-tpl-file-del:hover { color:#dc2626; }
+
+.pb-tpl-toolbar { display:flex; gap:5px; flex-wrap:wrap; }
+.pb-tpl-tb { padding:4px 10px; border-radius:6px; border:1px solid #e5e7eb; background:#fff; color:#374151; font-size:11.5px; font-weight:550; cursor:pointer; transition:all .1s; white-space:nowrap; }
+.pb-tpl-tb:hover { border-color:#8b5cf6; color:#7c3aed; background:rgba(139,92,246,.05); }
+.pb-tpl-tb-reset { color:#9ca3af; }
+.pb-tpl-tb-reset:hover { border-color:#d1d5db; color:#6b7280; background:#f9fafb; }
+
+.pb-tpl-playground { flex:1; display:flex; overflow:hidden; }
+.pb-tpl-iframe { flex:1; border:none; background:#f5f5f8; min-width:0; border-right:1px solid #e8e8f0; }
+.pb-tpl-editor-pane { width:360px; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden; background:#fafafa; }
+.pb-tpl-editor-hd { padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#9ca3af; background:#f5f5f8; border-bottom:1px solid #eeeef4; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.pb-tpl-editor-hint { font-size:10px; font-weight:400; color:#c4c4d0; letter-spacing:0; text-transform:none; }
+.pb-tpl-code { flex:1; resize:none; border:none; outline:none; padding:14px; font-family:"SF Mono","Fira Code","Cascadia Code","Consolas",monospace; font-size:11.5px; line-height:1.65; color:#374151; background:#fafafa; width:100%; box-sizing:border-box; tab-size:2; }
 `;
     document.head.appendChild(s);
 }
