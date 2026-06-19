@@ -47,7 +47,7 @@ FIELDS = [
     {
         "fieldname": "custom_position",
         "fieldtype": "Data",
-        "label": "Position",
+        "label": "Role",
         "insert_after": "custom_last_name",
     },
     {
@@ -133,7 +133,7 @@ FIELDS = [
         "fieldname": "custom_project_status",
         "fieldtype": "Select",
         "label": "Project Status",
-        "options": "\nNot Started\nStarting in 2w\nIn Progress\nOn Hold\nCompleted",
+        "options": "\nEmpty lot\nExcavation\nConcrete structure\nTopped out\nFinishing\nMEP\nCompleted",
         "insert_after": "custom_scope_section",
         "in_filter": 1,
     },
