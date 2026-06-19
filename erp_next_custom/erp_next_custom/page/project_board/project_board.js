@@ -847,10 +847,29 @@ function _pb_render_templates(wrapper) {
       </div>
     </div>
   </div>
+  ${type === "prospect" ? `<div class="pb-tpl-section pb-proto-section">
+    <div class="pb-tpl-sec-hd"><span>Prospects <span class="pb-tpl-badge pb-proto-badge">Live</span></span></div>
+    <div id="pb-proto-mount"><div class="pb-proto-loading">Loading prospects…</div></div>
+  </div>` : ""}
 </div>`);
 
     document.getElementById("pb-tpl-code").value = code;
     _pb_tpl_refresh_preview(wrapper);
+    if (type === "prospect") {
+        _pb_load_prospects();
+    }
+}
+
+function _pb_load_prospects() {
+    frappe.call({
+        method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
+        callback: function (r) {
+            const mount = document.getElementById("pb-proto-mount");
+            if (!mount) return;
+            const cfg = Object.assign({}, _PG_CFG, { rows: r.message && r.message.length ? r.message : _PG_CFG.rows });
+            PG.mount(mount, cfg);
+        },
+    });
 }
 
 function _pb_tpl_refresh_preview(wrapper) {
@@ -874,6 +893,83 @@ function _tpl_file_icon(name) {
     const m = {pdf:"📄",html:"🌐",css:"🎨",js:"⚙️",png:"🖼️",jpg:"🖼️",jpeg:"🖼️",svg:"✏️",fig:"🎭",sketch:"🎭"};
     return `<span class="pb-tpl-file-icon">${m[ext]||"📎"}</span>`;
 }
+
+// ── prospect grid config (consumed by PG.mount) ────────────────────
+const _PG_CFG = {
+    tabs: ["Profile & Context", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
+    fixed: [
+        { key:"num",     label:"#",          cls:"pg-f-num",   width:42,  type:"rownum" },
+        { key:"title",   label:"Title",       cls:"pg-f-title", width:54  },
+        { key:"first",   label:"First Name",  cls:"pg-f-first", width:105 },
+        { key:"last",    label:"Last Name",   cls:"pg-f-last",  width:110 },
+        { key:"company", label:"Company",     cls:"pg-f-co",    width:168, shadow:true },
+    ],
+    cols: [
+        { tab:0, key:"industry", label:"Industry",        type:"text"   },
+        { tab:0, key:"status",   label:"Status",          type:"status",
+          map:{ Lead:"pg-badge-blue","In Discussion":"pg-badge-amber",Contacted:"pg-badge-gray",Converted:"pg-badge-green",Lost:"pg-badge-red" } },
+        { tab:0, key:"mobile",   label:"Primary Mobile",  type:"phone"  },
+        { tab:0, key:"email",    label:"Email",           type:"link"   },
+        { tab:1, key:"city",     label:"Site Location",   type:"text"   },
+        { tab:1, key:"maps",     label:"Google Maps",     type:"maps"   },
+        { tab:1, key:"files",    label:"Files",           type:"files"  },
+        { tab:2, key:"pstatus",  label:"Project Status",  type:"status",
+          map:{ "In Progress":"pg-badge-amber","Not Started":"pg-badge-gray","Starting in 2w":"pg-badge-blue","On Hold":"pg-badge-red" } },
+        { tab:2, key:"pstart",   label:"Start Date",      type:"text"   },
+        { tab:2, key:"floors",   label:"Floors",          type:"num"    },
+        { tab:2, key:"area",     label:"Area (sqm)",      type:"num"    },
+        { tab:2, key:"scaffold", label:"Scaffold Type",   type:"text"   },
+        { tab:2, key:"ptype",    label:"Project Type",    type:"text"   },
+        { tab:3, key:"architect",label:"Architect",       type:"text"   },
+        { tab:3, key:"owner",    label:"Project Owner",   type:"text"   },
+        { tab:3, key:"site_eng", label:"Site Engineer",   type:"text"   },
+        { tab:3, key:"workers",  label:"Workers on Site", type:"num"    },
+        { tab:3, key:"safety",   label:"Safety Officer",  type:"text"   },
+        { tab:3, key:"contract", label:"Contract Value",  type:"text"   },
+        { tab:4, key:"telegram", label:"Telegram",        type:"text"   },
+        { tab:4, key:"linkedin", label:"LinkedIn",        type:"link"   },
+        { tab:4, key:"facebook", label:"Facebook",        type:"link"   },
+        { tab:4, key:"instagram",label:"Instagram",       type:"link"   },
+        { tab:4, key:"website",  label:"Website",         type:"link"   },
+    ],
+    rows: [
+        { num:1, title:"Mr",  first:"Anthony", last:"Karam",     company:"Achi Scaffolding",
+          industry:"Scaffolding & Formwork", status:"Lead",
+          mobile:"+961 70 123 456", email:"karamanthony08@gmail.com",
+          city:"Lebanon, Mount Lebanon, Beirut, Hamra St.", maps:true,
+          pstatus:"In Progress",   pstart:"Jul 15, 2025", floors:12, area:"4,800", scaffold:"Ringlock System", ptype:"Residential",
+          architect:"Nabil Habr",       owner:"Achi Group",     site_eng:"Karim Abi Nader", workers:18,  safety:"Georges Frem",  contract:"$48,000",
+          telegram:"@anthonykaram0", linkedin:"anthonykaram",  facebook:"anthony.karam.achi", instagram:"@anthonykaram0", website:"achiscaffolding.com" },
+        { num:2, title:"Ms",  first:"Grece",   last:"Khoury",    company:"Achi Scaffolding",
+          industry:"Scaffolding & Formwork", status:"In Discussion",
+          mobile:"+961 76 091 340", email:"grece.jack.khoury@gmail.com",
+          city:"Lebanon, North Lebanon, Tripoli, Al-Mina Rd.", maps:false,
+          pstatus:"Not Started",   pstart:"—",           floors:"—", area:"—",      scaffold:"Tube & Coupler",   ptype:"Commercial",
+          architect:"—",                owner:"Khoury Holdings", site_eng:"—",              workers:"—", safety:"—",            contract:"TBD",
+          telegram:"—",             linkedin:"grecekhoury",   facebook:"grece.khoury",       instagram:"—",               website:"—" },
+        { num:3, title:"Ms",  first:"Pascale", last:"Al-Khoury", company:"Sunset Development",
+          industry:"Real Estate Development", status:"Contacted",
+          mobile:"+961 3 234 567",  email:"pascalalkhouri.2004@gmail.com",
+          city:"Lebanon, Beirut, Beirut, Verdun St.", maps:true,
+          pstatus:"Starting in 2w", pstart:"Jul 1, 2025",  floors:8,  area:"3,200", scaffold:"Kwikstage",        ptype:"Mixed-Use",
+          architect:"Lara Saab",        owner:"Sunset Dev",     site_eng:"Fadi Moussa",     workers:12,  safety:"Rami Khodr",   contract:"$31,500",
+          telegram:"—",             linkedin:"—",             facebook:"pascale.alkhoury",   instagram:"—",               website:"sunsetdev.com" },
+        { num:4, title:"Mr",  first:"John",    last:"Smith",     company:"BuildRight Co.",
+          industry:"General Contracting", status:"Converted",
+          mobile:"+971 50 123 456", email:"j.smith@buildright.co",
+          city:"UAE, Dubai, Business Bay, Sheikh Zayed Rd.", maps:true,
+          pstatus:"In Progress",   pstart:"Jan 10, 2025", floors:24, area:"12,000", scaffold:"Ringlock System", ptype:"High-Rise",
+          architect:"Ahmed Al-Rashid",  owner:"BuildRight Co.", site_eng:"Omar Khalil",     workers:45,  safety:"Paul Hanna",   contract:"$210,000",
+          telegram:"@johnsmith",    linkedin:"johnsmith",     facebook:"john.smith.buildright", instagram:"@johnsmith.br",   website:"buildright.co" },
+        { num:5, title:"Ms",  first:"Sara",    last:"Mansour",   company:"Al-Faris Group",
+          industry:"Industrial Construction", status:"Lost",
+          mobile:"+961 1 234 567",  email:"sara.mansour@alfaris.com",
+          city:"Lebanon, South Lebanon, Sidon, Riad Al-Solh St.", maps:false,
+          pstatus:"On Hold",       pstart:"—",           floors:5,  area:"1,800", scaffold:"Suspended",        ptype:"Industrial",
+          architect:"Tony Khoury",      owner:"Al-Faris Group", site_eng:"—",              workers:"—", safety:"—",            contract:"$14,200",
+          telegram:"—",             linkedin:"—",             facebook:"—",                  instagram:"—",               website:"alfarisgroup.com" },
+    ],
+};
 
 // ── board view ─────────────────────────────────────────────────────
 function _pb_render_board(wrapper) {
@@ -1348,6 +1444,17 @@ body.pb-fs .container.page-container
 .pb-tpl-editor-hd { padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#9ca3af; background:#f5f5f8; border-bottom:1px solid #eeeef4; display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .pb-tpl-editor-hint { font-size:10px; font-weight:400; color:#c4c4d0; letter-spacing:0; text-transform:none; }
 .pb-tpl-code { flex:1; resize:none; border:none; outline:none; padding:14px; font-family:"SF Mono","Fira Code","Cascadia Code","Consolas",monospace; font-size:11.5px; line-height:1.65; color:#374151; background:#fafafa; width:100%; box-sizing:border-box; tab-size:2; }
+
+/* ── tpl shell scroll (so prototype section is reachable) ─────── */
+.pb-tpl-shell { overflow-y:auto; }
+.pb-tpl-design-section { flex:none; }
+.pb-tpl-playground { height:420px; }
+
+/* ── proposed prototype section wrapper ───────────────────────── */
+.pb-proto-section { background:#f8f8fc; border-top:2px solid #e8e8f0; }
+.pb-proto-badge   { background:#e8eaf6; color:#3949ab; }
+.pb-proto-loading { padding:32px; text-align:center; color:#9ca3af; font-size:13px; }
 `;
+
     document.head.appendChild(s);
 }

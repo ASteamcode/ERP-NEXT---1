@@ -29,6 +29,7 @@ app_license = "mit"
 app_include_js = [
     "/assets/erp_next_custom/js/custom_sidebar_hover.js",
     "/assets/erp_next_custom/js/grid_core.js",
+    "/assets/erp_next_custom/js/prospect_grid.js",
     "/assets/erp_next_custom/js/frappe_drawing.js",
     "/assets/erp_next_custom/js/ui_annotations.js",
     "/assets/erp_next_custom/js/overview_offline.js",
@@ -58,10 +59,11 @@ doctype_js = {
     "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
 }
 doctype_list_js = {
-    "Contact": "public/js/contacts_list.js",
-    "Lead": "public/js/leads_list.js",
-    "Quotation": "public/js/quotation_list.js",
-    "Item": "public/js/item_list.js",
+    "Contact":  "public/js/contacts_list.js",
+    "Lead":     "public/js/leads_list.js",
+    "Quotation":"public/js/quotation_list.js",
+    "Item":     "public/js/item_list.js",
+    "Prospect": "public/js/prospect_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
@@ -286,3 +288,5 @@ fixtures = [
     {"doctype": "Warehouse", "filters": [["name", "like", "% - AS"]]},
     {"doctype": "Item Group"},
 ]
+
+website_route_rules = [{'from_route': '/frontend/<path:app_path>', 'to_route': 'frontend'},]

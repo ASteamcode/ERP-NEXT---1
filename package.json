@@ -1,0 +1,24 @@
+{
+  "name": "erp_next_custom",
+  "version": "1.0.0",
+  "description": "Customizations for ERPNext",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "cd frontend && yarn install",
+    "dev": "cd frontend && yarn dev",
+    "build": "cd frontend && yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ASteamcode/ERP-NEXT---1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ASteamcode/ERP-NEXT---1/issues"
+  },
+  "homepage": "https://github.com/ASteamcode/ERP-NEXT---1#readme"
+}

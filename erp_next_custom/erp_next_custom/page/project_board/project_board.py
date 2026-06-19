@@ -124,3 +124,60 @@ def set_task_status(task_name, new_status):
     _check_access()
     frappe.db.set_value("Task", task_name, "status", new_status)
     return {"status": new_status}
+
+
+@frappe.whitelist()
+def get_prospects():
+    """Return all Prospect records mapped to the prospect grid schema."""
+    rows = frappe.get_all(
+        "Prospect",
+        fields=[
+            "name", "company_name", "industry", "website",
+            "custom_salutation", "custom_first_name", "custom_last_name",
+            "custom_prospect_status", "custom_mobile", "custom_email",
+            "custom_site_location", "custom_maps_url",
+            "custom_project_status", "custom_project_start",
+            "custom_floors", "custom_area", "custom_scaffold_type", "custom_project_type",
+            "custom_architect", "custom_project_owner", "custom_site_engineer",
+            "custom_workers_count", "custom_safety_officer", "custom_contract_value",
+            "custom_telegram", "custom_linkedin", "custom_facebook", "custom_instagram",
+        ],
+        order_by="creation asc",
+    )
+
+    result = []
+    for i, r in enumerate(rows):
+        result.append({
+            "name":     r.name,
+            "num":      i + 1,
+            "title":    r.custom_salutation or "",
+            "first":    r.custom_first_name or "",
+            "last":     r.custom_last_name or "",
+            "company":  r.company_name or "",
+            "industry": r.industry or "",
+            "status":   r.custom_prospect_status or "Lead",
+            "mobile":   r.custom_mobile or "",
+            "email":    r.custom_email or "",
+            "city":     r.custom_site_location or "",
+            "maps":     bool(r.custom_maps_url),
+            "maps_url": r.custom_maps_url or "",
+            "pstatus":  r.custom_project_status or "",
+            "pstart":   str(r.custom_project_start) if r.custom_project_start else "",
+            "floors":   r.custom_floors or "",
+            "area":     r.custom_area or "",
+            "scaffold": r.custom_scaffold_type or "",
+            "ptype":    r.custom_project_type or "",
+            "architect":r.custom_architect or "",
+            "owner":    r.custom_project_owner or "",
+            "site_eng": r.custom_site_engineer or "",
+            "workers":  r.custom_workers_count or "",
+            "safety":   r.custom_safety_officer or "",
+            "contract": ("${:,.0f}".format(r.custom_contract_value) if r.custom_contract_value else ""),
+            "telegram": r.custom_telegram or "",
+            "linkedin": r.custom_linkedin or "",
+            "facebook": r.custom_facebook or "",
+            "instagram":r.custom_instagram or "",
+            "website":  r.website or "",
+        })
+
+    return result
