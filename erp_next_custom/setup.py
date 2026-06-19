@@ -1,6 +1,6 @@
 import frappe
 
-from erp_next_custom.customize import item, lead, quotation
+from erp_next_custom.customize import item, lead, prospect, quotation
 
 _EXTRA_SALUTATIONS = ["Eng", "Arch"]
 
@@ -12,6 +12,7 @@ def setup_custom_fields():
 
     item.setup()
     lead.setup()
+    prospect.setup()
     quotation.setup()
 
 

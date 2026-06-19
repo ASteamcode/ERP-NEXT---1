@@ -59,10 +59,11 @@ doctype_js = {
     "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
 }
 doctype_list_js = {
-    "Contact": "public/js/contacts_list.js",
-    "Lead": "public/js/leads_list.js",
-    "Quotation": "public/js/quotation_list.js",
-    "Item": "public/js/item_list.js",
+    "Contact":  "public/js/contacts_list.js",
+    "Lead":     "public/js/leads_list.js",
+    "Quotation":"public/js/quotation_list.js",
+    "Item":     "public/js/item_list.js",
+    "Prospect": "public/js/prospect_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]

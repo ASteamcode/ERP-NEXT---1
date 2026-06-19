@@ -848,16 +848,28 @@ function _pb_render_templates(wrapper) {
     </div>
   </div>
   ${type === "prospect" ? `<div class="pb-tpl-section pb-proto-section">
-    <div class="pb-tpl-sec-hd"><span>Proposed Prototype <span class="pb-tpl-badge pb-proto-badge">DocType Mock</span></span></div>
-    <div id="pb-proto-mount"></div>
+    <div class="pb-tpl-sec-hd"><span>Prospects <span class="pb-tpl-badge pb-proto-badge">Live</span></span></div>
+    <div id="pb-proto-mount"><div class="pb-proto-loading">Loading prospects…</div></div>
   </div>` : ""}
 </div>`);
 
     document.getElementById("pb-tpl-code").value = code;
     _pb_tpl_refresh_preview(wrapper);
     if (type === "prospect") {
-        PG.mount(document.getElementById("pb-proto-mount"), _PG_CFG);
+        _pb_load_prospects();
     }
+}
+
+function _pb_load_prospects() {
+    frappe.call({
+        method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
+        callback: function (r) {
+            const mount = document.getElementById("pb-proto-mount");
+            if (!mount) return;
+            const cfg = Object.assign({}, _PG_CFG, { rows: r.message && r.message.length ? r.message : _PG_CFG.rows });
+            PG.mount(mount, cfg);
+        },
+    });
 }
 
 function _pb_tpl_refresh_preview(wrapper) {
@@ -1441,6 +1453,7 @@ body.pb-fs .container.page-container
 /* ── proposed prototype section wrapper ───────────────────────── */
 .pb-proto-section { background:#f8f8fc; border-top:2px solid #e8e8f0; }
 .pb-proto-badge   { background:#e8eaf6; color:#3949ab; }
+.pb-proto-loading { padding:32px; text-align:center; color:#9ca3af; font-size:13px; }
 `;
 
     document.head.appendChild(s);
