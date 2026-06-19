@@ -45,6 +45,12 @@ FIELDS = [
         "bold": 1,
     },
     {
+        "fieldname": "custom_position",
+        "fieldtype": "Data",
+        "label": "Position",
+        "insert_after": "custom_last_name",
+    },
+    {
         "fieldname": "custom_prospect_status",
         "fieldtype": "Select",
         "label": "Prospect Status",
@@ -99,6 +105,20 @@ FIELDS = [
         "fieldtype": "Data",
         "label": "Google Maps URL",
         "insert_after": "custom_site_location",
+    },
+    {
+        "fieldname": "custom_drawing",
+        "fieldtype": "Long Text",
+        "label": "Drawing",
+        "insert_after": "custom_maps_url",
+        "hidden": 1,
+    },
+    {
+        "fieldname": "custom_has_drawing",
+        "fieldtype": "Check",
+        "label": "Has Drawing",
+        "insert_after": "custom_drawing",
+        "hidden": 1,
     },
 
     # ── Scope & specs ────────────────────────────────────────────
