@@ -126,13 +126,38 @@ def set_task_status(task_name, new_status):
     return {"status": new_status}
 
 
+@frappe.whitelist(allow_guest=False)
+def resolve_maps_url(url):
+    """Follow redirects on a Google Maps short URL and extract coordinates."""
+    import re, requests as _req
+    try:
+        r = _req.head(url, allow_redirects=True, timeout=6, headers={"User-Agent": "Mozilla/5.0"})
+        final = r.url
+    except Exception:
+        return {"url": url}
+    patterns = [
+        r'@(-?\d+\.?\d+),\+?(-?\d+\.?\d+)',            # @lat,lng or @lat,+lng
+        r'/maps/search/(-?\d+\.?\d+),\+?(-?\d+\.?\d+)',# /maps/search/lat,+lng
+        r'[?&]q=(-?\d+\.?\d+),\+?(-?\d+\.?\d+)',       # ?q=lat,lng
+        r'll=(-?\d+\.?\d+),\+?(-?\d+\.?\d+)',           # ll=lat,lng
+    ]
+    for pat in patterns:
+        m = re.search(pat, final)
+        if m:
+            return {"lat": float(m.group(1)), "lng": float(m.group(2)), "url": final}
+    place = re.search(r'/maps/place/([^/@?]+)', final)
+    if place:
+        return {"place": place.group(1).replace("+", " "), "url": final}
+    return {"url": final}
+
+
 @frappe.whitelist()
 def get_prospects():
     """Return all Prospect records mapped to the prospect grid schema."""
     rows = frappe.get_all(
         "Prospect",
         fields=[
-            "name", "company_name", "industry", "website",
+            "name", "company_name", "industry", "website", "owner",
             "custom_salutation", "custom_first_name", "custom_last_name",
             "custom_prospect_status", "custom_mobile", "custom_email",
             "custom_site_location", "custom_maps_url", "custom_position",
@@ -146,8 +171,23 @@ def get_prospects():
         order_by="creation asc",
     )
 
+    # Bulk-fetch owner full names
+    unique_owners = list(set(r.owner for r in rows if r.owner))
+    owner_names = {}
+    if unique_owners:
+        users = frappe.get_all("User", filters=[["name", "in", unique_owners]], fields=["name", "full_name"])
+        owner_names = {u.name: u.full_name for u in users}
+
+    def _initials(email):
+        full = owner_names.get(email, "")
+        words = [w for w in full.split() if w]
+        if words:
+            return "".join(w[0].upper() for w in words[:2])
+        return email[:2].upper() if email else "?"
+
     result = []
     for i, r in enumerate(rows):
+        owner_email = r.owner or ""
         result.append({
             "name":     r.name,
             "num":      i + 1,
@@ -155,13 +195,15 @@ def get_prospects():
             "first":    r.custom_first_name or "",
             "last":     r.custom_last_name or "",
             "company":  r.company_name or "",
-            "position": r.custom_position or "",
+            "role":     r.custom_position or "",
             "status":   r.custom_prospect_status or "Lead",
             "mobile":   r.custom_mobile or "",
             "email":    r.custom_email or "",
             "city":     r.custom_site_location or "",
             "maps":        r.custom_maps_url or "",
             "has_drawing": r.custom_has_drawing or 0,
+            "owner_initials": _initials(owner_email),
+            "owner_name":     owner_names.get(owner_email, owner_email),
             "pstatus":  r.custom_project_status or "",
             "pstart":   str(r.custom_project_start) if r.custom_project_start else "",
             "floors":   r.custom_floors or "",
@@ -169,15 +211,15 @@ def get_prospects():
             "scaffold": r.custom_scaffold_type or "",
             "ptype":    r.custom_project_type or "",
             "architect":r.custom_architect or "",
-            "owner":    r.custom_project_owner or "",
+            "proj_owner": r.custom_project_owner or "",
             "site_eng": r.custom_site_engineer or "",
             "workers":  r.custom_workers_count or "",
             "safety":   r.custom_safety_officer or "",
             "contract": ("${:,.0f}".format(r.custom_contract_value) if r.custom_contract_value else ""),
-            "telegram": r.custom_telegram or "",
+            "instagram":r.custom_instagram or "",
             "linkedin": r.custom_linkedin or "",
             "facebook": r.custom_facebook or "",
-            "instagram":r.custom_instagram or "",
+            "telegram": r.custom_telegram or "",
             "website":  r.website or "",
         })
 

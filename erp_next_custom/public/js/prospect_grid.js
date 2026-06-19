@@ -104,6 +104,12 @@
 .pg-map-edit{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;cursor:pointer;transition:background .15s,border-color .15s;flex-shrink:0;padding:0;}
 .pg-map-edit:hover{background:#dbeafe;}
 
+/* maps popup */
+.pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;pointer-events:none;width:240px;opacity:0;transition:opacity .15s;}
+.pg-maps-popup.pg-popup-vis{opacity:1;}
+.pg-maps-popup iframe{width:240px;height:160px;border:none;display:block;}
+.pg-maps-popup-url{padding:7px 12px;font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid #f0f0f5;}
+
 /* files */
 .pg-files{display:inline-flex;align-items:center;gap:6px;}
 .pg-file-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
@@ -111,11 +117,27 @@
 .pg-cam-btn:hover{background:#f0fdf4 !important;border-color:#16a34a !important;color:#16a34a !important;}
 .pg-file-ico{width:13px;height:13px;}
 
+/* files popup */
+.pg-files-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;min-width:160px;max-width:320px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.pg-files-popup.pg-popup-vis{opacity:1;}
+.pg-fp-items{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;}
+.pg-fp-thumb{width:68px;height:68px;object-fit:cover;border-radius:8px;border:2px solid #e8e8f0;display:block;}
+.pg-fp-file{width:64px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f8fafc;border-radius:8px;border:1.5px solid #e8e8f0;}
+.pg-fp-fname{font-size:9px;color:#6b7280;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pg-fp-empty{color:#9ca3af;font-size:12px;text-align:center;padding:8px 16px;}
+
 /* drawing button — circle matching file buttons */
 .fd-icon-btn.fd-draw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;padding:0;}
 .fd-icon-btn.fd-draw-btn:hover{background:#eff6ff;border-color:#2563eb;color:#2563eb;border-style:solid;}
 .fd-icon-btn.fd-draw-btn.fd-draw-btn--has{background:#eff6ff;border-color:#2563eb;border-style:solid;color:#2563eb;}
 .fd-icon-btn.fd-draw-btn.fd-draw-btn--has:hover{background:#dbeafe;}
+
+/* WhatsApp button */
+.pg-wa-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f0fdf4;color:#16a34a;text-decoration:none;transition:background .15s,color .15s;flex-shrink:0;margin-left:4px;}
+.pg-wa-btn:hover{background:#dcfce7;color:#15803d;}
+
+/* owner avatar */
+.pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:default;}
 
 /* search */
 .pg-search-wrap{position:relative;display:flex;align-items:center;}
@@ -145,7 +167,17 @@
         trash:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><polyline points="2,4 14,4"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M6 7v5m4-5v5"/><rect x="3" y="4" width="10" height="9" rx="1.5"/></svg>`,
         export: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><path d="M9 2h4v4"/><path d="M13 2L8 7"/><path d="M7 3H3a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V9"/></svg>`,
         search: `<svg class="pg-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>`,
+        wa:     `<svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+        file:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:22px;height:22px;color:#94a3b8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
     };
+
+    // ── Owner avatar color (deterministic from initials) ───────────
+    const _OWNER_COLORS = ["#2563eb","#7c3aed","#db2777","#dc2626","#d97706","#059669","#0891b2","#4f46e5"];
+    function _ownerColor(initials) {
+        let h = 0;
+        for (let i = 0; i < initials.length; i++) h = (h * 31 + initials.charCodeAt(i)) & 0xffffffff;
+        return _OWNER_COLORS[Math.abs(h) % _OWNER_COLORS.length];
+    }
 
     // ── Style injection ────────────────────────────────────────────
     function injectStyles() {
@@ -169,8 +201,15 @@
                 const fmt = v ? frappe.datetime.str_to_user(v) : "";
                 return fmt ? `<span>${_e(fmt)}</span>` : `<span class="pg-mt">—</span>`;
             }
-            case "phone":
-                return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-ph">${_e(v)}</span>`;
+            case "phone": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const digits = String(v).replace(/\D/g, "");
+                const waUrl  = `https://wa.me/${digits}`;
+                return (
+                    `<span class="pg-ph">${_e(v)}</span>` +
+                    `<a class="pg-wa-btn" href="${_e(waUrl)}" target="_blank" title="WhatsApp" onclick="event.stopPropagation()">${SVG.wa}</a>`
+                );
+            }
             case "num":
                 return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-num-val">${_e(v)}</span>`;
             case "status": {
@@ -193,6 +232,12 @@
                 return typeof frappe_drawing !== "undefined"
                     ? frappe_drawing.render_btn(_e(row.name || ""), row.has_drawing)
                     : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(row.name||'')}" title="Drawing">${SVG.pen}</button>`;
+            case "owner": {
+                const initials = v || "?";
+                const color    = _ownerColor(initials);
+                const title    = row.owner_name ? _e(row.owner_name) : _e(initials);
+                return `<span class="pg-owner-av" style="background:${color}" title="${title}">${_e(initials)}</span>`;
+            }
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
         }
@@ -223,6 +268,10 @@
             if (f.type === "rownum") {
                 return `<td class="pg-f ${f.cls||""} pg-f-num-cell" data-row-name="${_e(name)}" style="position:sticky;left:0;min-width:${f.width||42}px;width:${f.width||42}px"><span class="pg-row-num">${idx+1}</span></td>`;
             }
+            if (f.type === "owner") {
+                // render avatar; not editable
+                return `<td class="pg-f ${f.cls||""}" data-row-name="${_e(name)}">${renderCell(f, row)}</td>`;
+            }
             const ed = cfg.editable && f.frappe_field;
             return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}"${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}" data-ckey="${_e(f.key)}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
         }).join("");
@@ -234,6 +283,143 @@
             return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
+    }
+
+    // ── Popup helpers ──────────────────────────────────────────────
+    let _mapsPopup = null, _mapsTimer = null;
+    let _filesPopup = null, _filesTimer = null;
+    const _filesCache = {}; // name → files array
+
+    function _parseMapsCoords(url) {
+        const pats = [
+            /@(-?\d+\.?\d+),\+?(-?\d+\.?\d+)/,
+            /\/maps\/search\/(-?\d+\.?\d+),\+?(-?\d+\.?\d+)/,
+            /[?&]q=(-?\d+\.?\d+),\+?(-?\d+\.?\d+)/,
+            /ll=(-?\d+\.?\d+),\+?(-?\d+\.?\d+)/,
+        ];
+        for (const p of pats) {
+            const m = url.match(p);
+            if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+        }
+        return null;
+    }
+
+    function _ensureMapsPopup() {
+        if (_mapsPopup) return;
+        _mapsPopup = document.createElement("div");
+        _mapsPopup.className = "pg-maps-popup";
+        document.body.appendChild(_mapsPopup);
+    }
+
+    function _renderMapsEmbed(coords, url) {
+        if (!_mapsPopup) return;
+        const { lat, lng } = coords;
+        const d = 0.004;
+        const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
+        _mapsPopup.innerHTML = `<iframe src="${_e(src)}" loading="lazy"></iframe><div class="pg-maps-popup-url">${_e(url)}</div>`;
+    }
+
+    function _showMapsPopup(anchor, url) {
+        _ensureMapsPopup();
+        const coords = _parseMapsCoords(url);
+        if (coords) {
+            _renderMapsEmbed(coords, url);
+        } else {
+            // Show loading card, then resolve server-side
+            _mapsPopup.innerHTML = `<div class="pg-maps-popup-url" style="padding:14px 12px;font-size:12px;color:#9ca3af;">Resolving location…</div>`;
+            frappe.call({
+                method: "erp_next_custom.erp_next_custom.page.project_board.project_board.resolve_maps_url",
+                args: { url },
+                callback(r) {
+                    if (!_mapsPopup || !_mapsPopup.classList.contains("pg-popup-vis")) return;
+                    const d = r.message || {};
+                    if (d.lat != null && d.lng != null) {
+                        _renderMapsEmbed({ lat: d.lat, lng: d.lng }, d.url || url);
+                    } else {
+                        const label = d.place || (d.url || url);
+                        _mapsPopup.innerHTML = `<div class="pg-maps-popup-url" style="padding:14px 12px;font-size:12px;color:#374151;white-space:normal;word-break:break-all;">${_e(label)}</div>`;
+                    }
+                    _positionPopup(_mapsPopup, anchor);
+                },
+            });
+        }
+        _positionPopup(_mapsPopup, anchor);
+        _mapsPopup.classList.add("pg-popup-vis");
+    }
+
+    function _hideMapsPopup() {
+        if (_mapsPopup) _mapsPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _ensureFilesPopup() {
+        if (_filesPopup) return;
+        _filesPopup = document.createElement("div");
+        _filesPopup.className = "pg-files-popup";
+        document.body.appendChild(_filesPopup);
+    }
+
+    function _showFilesPopup(anchor, name) {
+        _ensureFilesPopup();
+        _filesPopup.innerHTML = `<div class="pg-fp-empty">Loading…</div>`;
+        _positionPopup(_filesPopup, anchor);
+        _filesPopup.classList.add("pg-popup-vis");
+
+        if (_filesCache[name] !== undefined) {
+            _renderFilesPopup(_filesCache[name]);
+            return;
+        }
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "File",
+                filters: { attached_to_doctype: "Prospect", attached_to_name: name },
+                fields: ["name", "file_name", "file_url", "is_private"],
+                limit: 12,
+            },
+            callback(r) {
+                _filesCache[name] = r.message || [];
+                if (_filesPopup.classList.contains("pg-popup-vis")) {
+                    _renderFilesPopup(_filesCache[name]);
+                    _positionPopup(_filesPopup, anchor);
+                }
+            },
+        });
+    }
+
+    function _renderFilesPopup(files) {
+        if (!files.length) {
+            _filesPopup.innerHTML = `<div class="pg-fp-empty">No files attached</div>`;
+            return;
+        }
+        const imgs = ["jpg","jpeg","png","gif","webp","svg","bmp"];
+        const rotations = [-4,-2,0,2,3,-3,1,-1,4,-4,2,0];
+        const items = files.map((f, i) => {
+            const ext = (f.file_name || "").split(".").pop().toLowerCase();
+            const rot = rotations[i % rotations.length];
+            if (imgs.includes(ext)) {
+                return `<img class="pg-fp-thumb" src="${_e(f.file_url)}" title="${_e(f.file_name)}" style="transform:rotate(${rot}deg)" loading="lazy">`;
+            }
+            return `<div class="pg-fp-file" title="${_e(f.file_name)}" style="transform:rotate(${rot}deg)">${SVG.file}<span class="pg-fp-fname">${_e(f.file_name)}</span></div>`;
+        }).join("");
+        _filesPopup.innerHTML = `<div class="pg-fp-items">${items}</div>`;
+    }
+
+    function _hideFilesPopup() {
+        if (_filesPopup) _filesPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _positionPopup(popup, anchor) {
+        const r   = anchor.getBoundingClientRect();
+        const pw  = popup.offsetWidth  || 240;
+        const ph  = popup.offsetHeight || 80;
+        const vw  = window.innerWidth;
+        const vh  = window.innerHeight;
+        let left  = r.left;
+        let top   = r.bottom + 6;
+        if (left + pw > vw - 8) left = Math.max(8, vw - pw - 8);
+        if (top  + ph > vh - 8) top  = Math.max(8, r.top - ph - 6);
+        popup.style.left = left + "px";
+        popup.style.top  = top  + "px";
     }
 
     // ── Mount ──────────────────────────────────────────────────────
@@ -286,7 +472,7 @@
   </div>
 </div>`;
 
-        // Apply sticky offsets — must set left+width inline; CSS class sets position:sticky
+        // Apply sticky offsets
         const tblOuter = el.querySelector(".pg-tbl-outer");
         cfg.fixed.forEach((f, fi) => {
             tblOuter.querySelectorAll(`.pg-f:nth-child(${fi+1})`).forEach(cell => {
@@ -299,7 +485,6 @@
 
         _wire(el, cfg);
 
-        // Use rAF so layout is complete before measuring pill position
         requestAnimationFrame(() => {
             _positionInd(el.querySelector(".pg-pill.active"));
         });
@@ -316,9 +501,9 @@
     }
 
     // ── Floating edit input (one shared per page) ──────────────────
-    let _eFl = null;  // floating wrapper div
-    let _eIn = null;  // input or select inside
-    let _eTd = null;  // active td
+    let _eFl = null;
+    let _eIn = null;
+    let _eTd = null;
     let _eRoot = null;
 
     function _ensureFloat() {
@@ -401,7 +586,6 @@
                 _closeEdit(true);
                 _navCell(root, td, e.key === "ArrowDown" ? "down" : "up");
             } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                // In a text input let the cursor move freely; only navigate when already at the edge
                 if (isText) {
                     const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
                     const atEnd   = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
@@ -424,15 +608,13 @@
 
         if (!save || newVal === td.dataset.val) return;
 
-        const name = td.dataset.rowName;
-        const ff   = td.dataset.ff;
+        const name  = td.dataset.rowName;
+        const ff    = td.dataset.ff;
         const ctype = td.dataset.ctype;
         const ckey  = td.dataset.ckey;
 
-        // Update stored val
         td.dataset.val = newVal;
 
-        // Update display
         const cfg = root._pgCfg;
         const col = (cfg.cols || []).find(c => c.key === ckey)
                  || (cfg.fixed || []).find(f => f.key === ckey)
@@ -444,14 +626,12 @@
             td.textContent = newVal;
         }
 
-        // Update row data
         const rowObj = (cfg.rows || []).find(r => r.name === name);
         if (rowObj && ckey) rowObj[ckey] = newVal;
 
         if (cfg.onEdit && name && ff) cfg.onEdit(name, ff, newVal);
     }
 
-    // Navigate to an adjacent cell in any of the four directions
     function _navCell(root, fromTd, direction) {
         const tbl      = root.querySelector(".pg-tbl");
         const tabN     = parseInt(tbl.getAttribute("data-tab") || 0);
@@ -459,7 +639,6 @@
         const rowName  = fromTd.dataset.rowName;
 
         if (direction === "up" || direction === "down") {
-            // Same column index, adjacent row
             const colIdx  = fromTd.cellIndex;
             const rows    = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
             const curRow  = fromTd.closest("tr");
@@ -471,19 +650,17 @@
             return;
         }
 
-        // Left / right — stay on same row, switch tab at edge
-        const hDir   = direction === "right" ? 1 : -1;
-        const rowEd  = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+        const hDir  = direction === "right" ? 1 : -1;
+        const rowEd = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
             td.dataset.rowName === rowName &&
             (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${t}`))
         );
-        const allEd  = rowEd(tabN);
-        const idx    = allEd.indexOf(fromTd);
+        const allEd = rowEd(tabN);
+        const idx   = allEd.indexOf(fromTd);
         if (idx === -1) return;
-        const next   = allEd[idx + hDir];
+        const next  = allEd[idx + hDir];
         if (next) { _openEdit(root, next); return; }
 
-        // End of tab's columns for this row — switch tab, same row
         const nextTab = tabN + hDir;
         if (nextTab < 0 || nextTab >= tabCount) return;
         root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
@@ -526,7 +703,7 @@
             if (pill) _activatePill(root, pill, tabCount);
         });
 
-        // ── Wheel tab switch on table scroll area ───────────────
+        // ── Wheel tab switch ────────────────────────────────────
         outer.addEventListener("wheel", e => {
             const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
             if (ax <= ay || ax < 8) return;
@@ -546,7 +723,7 @@
             _stepTab(root, tabCount, -dx);
         });
 
-        // ── Row number: click to select/deselect, drag to range-select ─
+        // ── Row number selection ─────────────────────────────────
         tbody.addEventListener("mousedown", e => {
             const numTd = e.target.closest(".pg-f-num-cell");
             if (!numTd) return;
@@ -561,7 +738,6 @@
                 const wasSel  = tr.classList.contains("pg-row-sel");
                 const selOnly = root.querySelectorAll(".pg-row-sel").length === 1 && wasSel;
                 rows.forEach(r => r.classList.remove("pg-row-sel"));
-                // Re-select only if it wasn't the sole selection (i.e. clicking sole selected row deselects)
                 if (!selOnly) { _toggleRow(root, tr, true); } else { _refreshToolbar(root); }
             }
         });
@@ -593,15 +769,49 @@
             if (e.key === "Escape" && !_eIn) _clearSel();
         });
 
-        // ── Inline edit: click on editable cell ─────────────────
+        // ── Inline edit ─────────────────────────────────────────
         if (cfg.editable) {
             root.addEventListener("click", e => {
-                if (e.target.closest(".pg-maps-btn")) return; // let the link open
+                if (e.target.closest(".pg-maps-btn")) return;
+                if (e.target.closest(".pg-wa-btn"))   return;
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
                 _openEdit(root, td);
             });
         }
+
+        // ── Maps hover popup ─────────────────────────────────────
+        root.addEventListener("mouseenter", e => {
+            const btn = e.target.closest(".pg-maps-btn");
+            if (!btn) return;
+            const url = btn.getAttribute("href") || "";
+            if (!url) return;
+            clearTimeout(_mapsTimer);
+            _mapsTimer = setTimeout(() => _showMapsPopup(btn, url), 180);
+        }, true);
+
+        root.addEventListener("mouseleave", e => {
+            if (!e.target.closest(".pg-maps-btn")) return;
+            clearTimeout(_mapsTimer);
+            _mapsTimer = setTimeout(_hideMapsPopup, 120);
+        }, true);
+
+        // ── Files hover popup ────────────────────────────────────
+        root.addEventListener("mouseenter", e => {
+            const filesCell = e.target.closest(".pg-files");
+            if (!filesCell) return;
+            const td   = filesCell.closest("td");
+            const name = td && td.dataset.rowName;
+            if (!name) return;
+            clearTimeout(_filesTimer);
+            _filesTimer = setTimeout(() => _showFilesPopup(filesCell, name), 200);
+        }, true);
+
+        root.addEventListener("mouseleave", e => {
+            if (!e.target.closest(".pg-files")) return;
+            clearTimeout(_filesTimer);
+            _filesTimer = setTimeout(_hideFilesPopup, 120);
+        }, true);
 
         // ── File upload / camera ────────────────────────────────
         root.addEventListener("click", e => {
@@ -622,6 +832,7 @@
             inp.onchange = () => {
                 const file = inp.files && inp.files[0];
                 if (!file) return;
+                delete _filesCache[name]; // invalidate cache
                 const uploader = new frappe.ui.FileUploader({
                     doctype: cfg.doctype || "Prospect",
                     docname: name,
@@ -664,8 +875,7 @@
                 const q = $search.value.trim().toLowerCase();
                 root.querySelectorAll("tbody tr").forEach(tr => {
                     if (!q) { tr.style.display = ""; return; }
-                    const text = tr.textContent.toLowerCase();
-                    tr.style.display = text.includes(q) ? "" : "none";
+                    tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
                 });
             });
         }

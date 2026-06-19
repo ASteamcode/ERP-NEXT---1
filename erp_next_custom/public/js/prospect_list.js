@@ -11,32 +11,33 @@ const _PROSPECT_CFG = {
         { key: "company", label: "Company",    cls: "pg-f-co",    width: 168, frappe_field: "company_name", shadow: true },
     ],
     cols: [
-        { tab: 0, key: "position", label: "Position",       type: "text",   frappe_field: "custom_position"       },
+        { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
+        { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
         { tab: 0, key: "status",   label: "Status",         type: "status", frappe_field: "custom_prospect_status",
           map: { Lead: "pg-badge-blue", "In Discussion": "pg-badge-amber", Contacted: "pg-badge-gray", Converted: "pg-badge-green", Lost: "pg-badge-red" } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
         { tab: 1, key: "city",     label: "Site Location",  type: "text",   frappe_field: "custom_site_location"  },
-        { tab: 1, key: "maps",     label: "Google Maps",    type: "maps",  frappe_field: "custom_maps_url"       },
+        { tab: 1, key: "maps",     label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url"       },
         { tab: 1, key: "files",    label: "Files",          type: "files"                                         },
         { tab: 1, key: "drawing",  label: "Drawing",        type: "drawing"                                       },
         { tab: 2, key: "pstatus",  label: "Project Status", type: "status", frappe_field: "custom_project_status",
-          map: { "In Progress": "pg-badge-amber", "Not Started": "pg-badge-gray", "Starting in 2w": "pg-badge-blue", "On Hold": "pg-badge-red", Completed: "pg-badge-green" } },
+          map: { "Empty lot": "pg-badge-gray", "Excavation": "pg-badge-amber", "Concrete structure": "pg-badge-amber", "Topped out": "pg-badge-blue", "Finishing": "pg-badge-blue", "MEP": "pg-badge-amber", "Completed": "pg-badge-green" } },
         { tab: 2, key: "pstart",   label: "Start Date",     type: "date",   frappe_field: "custom_project_start" },
         { tab: 2, key: "floors",   label: "Floors",         type: "num",    frappe_field: "custom_floors"        },
         { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
         { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "text",   frappe_field: "custom_scaffold_type" },
         { tab: 2, key: "ptype",    label: "Project Type",   type: "text",   frappe_field: "custom_project_type"  },
-        { tab: 3, key: "architect",label: "Architect",      type: "text",   frappe_field: "custom_architect"     },
-        { tab: 3, key: "owner",    label: "Project Owner",  type: "text",   frappe_field: "custom_project_owner" },
-        { tab: 3, key: "site_eng", label: "Site Engineer",  type: "text",   frappe_field: "custom_site_engineer" },
-        { tab: 3, key: "workers",  label: "Workers on Site",type: "num",    frappe_field: "custom_workers_count" },
-        { tab: 3, key: "safety",   label: "Safety Officer", type: "text",   frappe_field: "custom_safety_officer"},
-        { tab: 3, key: "contract", label: "Contract Value", type: "text",   frappe_field: "custom_contract_value"},
-        { tab: 4, key: "telegram", label: "Telegram",       type: "text",   frappe_field: "custom_telegram"     },
+        { tab: 3, key: "architect",  label: "Architect",       type: "text",   frappe_field: "custom_architect"     },
+        { tab: 3, key: "proj_owner", label: "Project Owner",   type: "text",   frappe_field: "custom_project_owner" },
+        { tab: 3, key: "site_eng",   label: "Site Engineer",   type: "text",   frappe_field: "custom_site_engineer" },
+        { tab: 3, key: "workers",    label: "Workers on Site", type: "num",    frappe_field: "custom_workers_count" },
+        { tab: 3, key: "safety",     label: "Safety Officer",  type: "text",   frappe_field: "custom_safety_officer"},
+        { tab: 3, key: "contract",   label: "Contract Value",  type: "text",   frappe_field: "custom_contract_value"},
+        { tab: 4, key: "instagram",label: "Instagram",      type: "link",   frappe_field: "custom_instagram"    },
         { tab: 4, key: "linkedin", label: "LinkedIn",       type: "link",   frappe_field: "custom_linkedin"     },
         { tab: 4, key: "facebook", label: "Facebook",       type: "link",   frappe_field: "custom_facebook"     },
-        { tab: 4, key: "instagram",label: "Instagram",      type: "link",   frappe_field: "custom_instagram"    },
+        { tab: 4, key: "telegram", label: "Telegram",       type: "text",   frappe_field: "custom_telegram"     },
         { tab: 4, key: "website",  label: "Website",        type: "link",   frappe_field: "website"             },
     ],
     rows: [],
@@ -176,14 +177,12 @@ function _pl_render(listview) {
                                             company_name: row.company || "",
                                             mobile_no:    row.mobile  || "",
                                             email_id:     row.email   || "",
-                                            industry:     row.industry|| "",
                                             website:      row.website || "",
                                             lead_name:    [row.first, row.last].filter(Boolean).join(" ") || row.company || "Lead",
                                         },
                                     },
                                     callback()  { created++; done++; _checkDone(); },
                                     error(err)  {
-                                        // DuplicateEntryError means a Lead with same unique field exists
                                         const msg = (err && err.message) || "";
                                         if (msg.includes("Duplicate") || msg.includes("duplicate")) {
                                             skipped++;
@@ -195,7 +194,6 @@ function _pl_render(listview) {
                                 });
                             }
 
-                            // Check for existing leads by email (or company if no email), then insert
                             leads.forEach(row => {
                                 if (row.email) {
                                     frappe.call({
