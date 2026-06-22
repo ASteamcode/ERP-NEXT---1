@@ -58,36 +58,41 @@
         window.__annToggle   = () => open ? _closeSidebar() : _openSidebar();
         window.__annIsOpen   = () => open;
 
+        // Track mouse position so keyboard shortcut can drop pin at cursor
+        let _mx = 50, _my = 50;
+        document.addEventListener("mousemove", e => {
+            _mx = +(e.clientX / window.innerWidth  * 100).toFixed(2);
+            _my = +(e.clientY / window.innerHeight * 100).toFixed(2);
+        }, { passive: true });
+
+        const _isMac = navigator.platform.toUpperCase().includes("MAC") ||
+                       navigator.userAgent.toUpperCase().includes("MAC");
+
         $(document).on("keydown.ann-esc", (e) => {
             if (e.key === "Escape" && open) { _closeSidebar(); return; }
-        });
 
-        $(document).on("contextmenu.ann-toggle", (e) => {
-            if (!e.ctrlKey && !e.metaKey) return;
-            if ($(e.target).closest(".frappe-dialog,.modal,#ann-sidebar,.adm-ann-btn,.ann-overlay").length) return;
+            // Mac: Command+C  |  Windows/Linux: Shift+C
+            const isAnnotateKey = _isMac
+                ? (e.metaKey && !e.ctrlKey && e.key.toLowerCase() === "c")
+                : (e.shiftKey && !e.metaKey && !e.ctrlKey && e.key.toLowerCase() === "c");
+
+            if (!isAnnotateKey) return;
+            // Don't steal copy when text is selected
+            if (window.getSelection()?.toString().length) return;
+            // Don't trigger inside inputs / textareas
+            const tag = document.activeElement?.tagName.toLowerCase();
+            if (tag === "input" || tag === "textarea" || document.activeElement?.isContentEditable) return;
+            if ($(document.activeElement).closest(".frappe-dialog,.modal,#ann-sidebar").length) return;
+
             e.preventDefault();
             e.stopImmediatePropagation();
             if (!open) _openSidebar();
-            _openAddDialog(
-                +(e.clientX / window.innerWidth  * 100).toFixed(2),
-                +(e.clientY / window.innerHeight * 100).toFixed(2)
-            );
+            _openAddDialog(_mx, _my);
         });
 
         $(document).on("page-change.ann", () => {
             _loadCurrent();
             if (open) _loadAll(_showSidebar);
-        });
-
-        $(document).on("contextmenu.ann", (e) => {
-            if (!open) return;
-            if (e.ctrlKey || e.metaKey) return;
-            if ($(e.target).closest(".frappe-dialog,.modal,#ann-sidebar,.adm-ann-btn,.ann-overlay").length) return;
-            e.preventDefault();
-            _openAddDialog(
-                +(e.clientX / window.innerWidth  * 100).toFixed(2),
-                +(e.clientY / window.innerHeight * 100).toFixed(2)
-            );
         });
 
         function _route() {
