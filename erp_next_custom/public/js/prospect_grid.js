@@ -105,8 +105,9 @@
 .pg-map-edit:hover{background:#dbeafe;}
 
 /* maps popup */
-.pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;pointer-events:none;width:240px;opacity:0;transition:opacity .15s;}
-.pg-maps-popup.pg-popup-vis{opacity:1;}
+.pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;width:240px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-maps-popup.pg-popup-vis{opacity:1;pointer-events:all;}
+.pg-maps-popup-inner{position:relative;}
 .pg-maps-popup iframe{width:240px;height:160px;border:none;display:block;}
 .pg-maps-popup-url{padding:7px 12px;font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid #f0f0f5;}
 
@@ -118,13 +119,35 @@
 .pg-file-ico{width:13px;height:13px;}
 
 /* files popup */
-.pg-files-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;min-width:160px;max-width:320px;pointer-events:none;opacity:0;transition:opacity .15s;}
-.pg-files-popup.pg-popup-vis{opacity:1;}
+.pg-files-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;min-width:160px;max-width:320px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-files-popup.pg-popup-vis{opacity:1;pointer-events:all;}
 .pg-fp-items{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;}
 .pg-fp-thumb{width:68px;height:68px;object-fit:cover;border-radius:8px;border:2px solid #e8e8f0;display:block;}
 .pg-fp-file{width:64px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f8fafc;border-radius:8px;border:1.5px solid #e8e8f0;}
 .pg-fp-fname{font-size:9px;color:#6b7280;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
 .pg-fp-empty{color:#9ca3af;font-size:12px;text-align:center;padding:8px 16px;}
+
+/* expand button inside popup */
+.pg-popup-expand{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.88);border:1.5px solid #e8e8f0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;color:#6b7280;transition:background .12s,color .12s,border-color .12s;padding:0;flex-shrink:0;}
+.pg-popup-expand:hover{background:#eff6ff;color:#2563eb;border-color:#2563eb;}
+.pg-fp-expand-wrap{position:relative;}
+
+/* large modal */
+.pg-modal-overlay{position:fixed;inset:0;z-index:999990;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;animation:pg-modal-in .18s ease both;}
+@keyframes pg-modal-in{from{opacity:0}to{opacity:1}}
+.pg-modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;max-width:90vw;max-height:90vh;}
+.pg-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1.5px solid #e8e8f0;flex-shrink:0;gap:12px;}
+.pg-modal-title{font-size:13px;font-weight:600;color:#111827;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pg-modal-close{width:28px;height:28px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,color .12s;padding:0;}
+.pg-modal-close:hover{background:#fee2e2;color:#dc2626;}
+.pg-modal-body{overflow:auto;flex:1;}
+.pg-modal-map-iframe{width:700px;height:500px;border:none;display:block;}
+.pg-modal-files-grid{display:flex;flex-wrap:wrap;gap:14px;padding:20px;align-items:flex-start;}
+.pg-modal-thumb{width:130px;height:130px;object-fit:cover;border-radius:10px;border:2px solid #e8e8f0;cursor:zoom-in;display:block;transition:transform .12s,box-shadow .12s;}
+.pg-modal-thumb:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.14);}
+.pg-modal-file-item{width:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#f8fafc;border-radius:10px;border:1.5px solid #e8e8f0;padding:14px 8px;}
+.pg-modal-fname{font-size:10px;color:#6b7280;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pg-modal-empty{color:#9ca3af;font-size:13px;text-align:center;padding:40px;}
 
 /* drawing button — circle matching file buttons */
 .fd-icon-btn.fd-draw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;padding:0;}
@@ -167,6 +190,8 @@
         trash:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><polyline points="2,4 14,4"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M6 7v5m4-5v5"/><rect x="3" y="4" width="10" height="9" rx="1.5"/></svg>`,
         export: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><path d="M9 2h4v4"/><path d="M13 2L8 7"/><path d="M7 3H3a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V9"/></svg>`,
         search: `<svg class="pg-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>`,
+        expand: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polyline points="10,2 14,2 14,6"/><polyline points="6,14 2,14 2,10"/><line x1="14" y1="2" x2="9" y2="7"/><line x1="2" y1="14" x2="7" y2="9"/></svg>`,
+        close:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>`,
         wa:     `<svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
         file:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:22px;height:22px;color:#94a3b8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
     };
@@ -308,6 +333,8 @@
         if (_mapsPopup) return;
         _mapsPopup = document.createElement("div");
         _mapsPopup.className = "pg-maps-popup";
+        _mapsPopup.addEventListener("mouseenter", () => clearTimeout(_mapsTimer));
+        _mapsPopup.addEventListener("mouseleave", () => { _mapsTimer = setTimeout(_hideMapsPopup, 120); });
         document.body.appendChild(_mapsPopup);
     }
 
@@ -316,7 +343,12 @@
         const { lat, lng } = coords;
         const d = 0.004;
         const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
-        _mapsPopup.innerHTML = `<iframe src="${_e(src)}" loading="lazy"></iframe><div class="pg-maps-popup-url">${_e(url)}</div>`;
+        _mapsPopup.innerHTML =
+            `<div class="pg-maps-popup-inner">` +
+            `<iframe src="${_e(src)}" loading="lazy" style="width:240px;height:160px;border:none;display:block;"></iframe>` +
+            `<button class="pg-popup-expand" data-expand="maps" data-lat="${lat}" data-lng="${lng}" data-url="${_e(url)}" title="Expand map">${SVG.expand}</button>` +
+            `</div>` +
+            `<div class="pg-maps-popup-url">${_e(url)}</div>`;
     }
 
     function _showMapsPopup(anchor, url) {
@@ -355,11 +387,14 @@
         if (_filesPopup) return;
         _filesPopup = document.createElement("div");
         _filesPopup.className = "pg-files-popup";
+        _filesPopup.addEventListener("mouseenter", () => clearTimeout(_filesTimer));
+        _filesPopup.addEventListener("mouseleave", () => { _filesTimer = setTimeout(_hideFilesPopup, 120); });
         document.body.appendChild(_filesPopup);
     }
 
     function _showFilesPopup(anchor, name) {
         _ensureFilesPopup();
+        _filesPopup.dataset.rowName = name;
         _filesPopup.innerHTML = `<div class="pg-fp-empty">Loading…</div>`;
         _positionPopup(_filesPopup, anchor);
         _filesPopup.classList.add("pg-popup-vis");
@@ -387,6 +422,7 @@
     }
 
     function _renderFilesPopup(files) {
+        const name = _filesPopup.dataset.rowName || "";
         if (!files.length) {
             _filesPopup.innerHTML = `<div class="pg-fp-empty">No files attached</div>`;
             return;
@@ -401,11 +437,67 @@
             }
             return `<div class="pg-fp-file" title="${_e(f.file_name)}" style="transform:rotate(${rot}deg)">${SVG.file}<span class="pg-fp-fname">${_e(f.file_name)}</span></div>`;
         }).join("");
-        _filesPopup.innerHTML = `<div class="pg-fp-items">${items}</div>`;
+        _filesPopup.innerHTML =
+            `<div class="pg-fp-expand-wrap" style="position:relative;">` +
+            `<button class="pg-popup-expand" data-expand="files" data-name="${_e(name)}" title="Expand files" style="top:0;right:0;">${SVG.expand}</button>` +
+            `<div class="pg-fp-items">${items}</div>` +
+            `</div>`;
     }
 
     function _hideFilesPopup() {
         if (_filesPopup) _filesPopup.classList.remove("pg-popup-vis");
+    }
+
+    // ── Expand modal ───────────────────────────────────────────────
+    function _openExpandModal(btn) {
+        const type = btn.dataset.expand;
+        let title = "", bodyHtml = "";
+
+        if (type === "maps") {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
+            const url = btn.dataset.url || "";
+            const d   = 0.01;
+            const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
+            title    = "Map Preview";
+            bodyHtml = `<iframe class="pg-modal-map-iframe" src="${_e(src)}" loading="lazy"></iframe>`;
+        } else if (type === "files") {
+            const name  = btn.dataset.name || "";
+            const files = _filesCache[name] || [];
+            const imgs  = ["jpg","jpeg","png","gif","webp","svg","bmp"];
+            title = "Attached Files";
+            if (!files.length) {
+                bodyHtml = `<div class="pg-modal-empty">No files attached</div>`;
+            } else {
+                const items = files.map(f => {
+                    const ext = (f.file_name || "").split(".").pop().toLowerCase();
+                    if (imgs.includes(ext)) {
+                        return `<img class="pg-modal-thumb" src="${_e(f.file_url)}" title="${_e(f.file_name)}" loading="lazy">`;
+                    }
+                    return `<div class="pg-modal-file-item">${SVG.file}<span class="pg-modal-fname">${_e(f.file_name)}</span></div>`;
+                }).join("");
+                bodyHtml = `<div class="pg-modal-files-grid">${items}</div>`;
+            }
+        }
+
+        _hideMapsPopup();
+        _hideFilesPopup();
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-modal-overlay";
+        overlay.innerHTML =
+            `<div class="pg-modal-box">` +
+            `<div class="pg-modal-header"><span class="pg-modal-title">${_e(title)}</span><button class="pg-modal-close">${SVG.close}</button></div>` +
+            `<div class="pg-modal-body">${bodyHtml}</div>` +
+            `</div>`;
+
+        const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+        const onKey = e => { if (e.key === "Escape") close(); };
+
+        overlay.querySelector(".pg-modal-close").addEventListener("click", close);
+        overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+        document.addEventListener("keydown", onKey);
+        document.body.appendChild(overlay);
     }
 
     function _positionPopup(popup, anchor) {
@@ -777,6 +869,17 @@
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
                 _openEdit(root, td);
+            });
+        }
+
+        // ── Expand button (inside popup) — wired once ────────────
+        if (!document._pgExpandWired) {
+            document._pgExpandWired = true;
+            document.addEventListener("click", e => {
+                const btn = e.target.closest(".pg-popup-expand");
+                if (!btn) return;
+                e.stopPropagation();
+                _openExpandModal(btn);
             });
         }
 
