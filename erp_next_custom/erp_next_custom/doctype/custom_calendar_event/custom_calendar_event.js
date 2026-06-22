@@ -1,3 +1,4 @@
+(() => {
 // Custom Calendar Event — Form Script
 
 const CCE_TAB_ORDER = [
@@ -45,3 +46,5 @@ function cce_focus_next(frm, currentField) {
 		if ($next && $next.length && next.df.hidden !== 1) { $next.trigger("focus"); return; }
 	}
 }
+
+})();

@@ -1,3 +1,4 @@
+(() => {
 // Measurement Take Off — Form Script
 
 const MTO_TAB_ORDER = [
@@ -43,3 +44,5 @@ function mto_focus_next(frm, currentField) {
 		}
 	}
 }
+
+})();
