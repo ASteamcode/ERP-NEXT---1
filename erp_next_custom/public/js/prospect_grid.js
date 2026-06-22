@@ -128,26 +128,28 @@
 .pg-fp-empty{color:#9ca3af;font-size:12px;text-align:center;padding:8px 16px;}
 
 /* expand button inside popup */
-.pg-popup-expand{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.88);border:1.5px solid #e8e8f0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;color:#6b7280;transition:background .12s,color .12s,border-color .12s;padding:0;flex-shrink:0;}
+.pg-popup-expand{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.88);border:1.5px solid #e8e8f0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;color:#6b7280;transition:background .12s,color .12s,border-color .12s;padding:0;flex-shrink:0;}
 .pg-popup-expand:hover{background:#eff6ff;color:#2563eb;border-color:#2563eb;}
 .pg-fp-expand-wrap{position:relative;}
 
 /* large modal */
 .pg-modal-overlay{position:fixed;inset:0;z-index:999990;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;animation:pg-modal-in .18s ease both;}
 @keyframes pg-modal-in{from{opacity:0}to{opacity:1}}
-.pg-modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;max-width:90vw;max-height:90vh;}
+.pg-modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;width:80vw;height:80vh;}
 .pg-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1.5px solid #e8e8f0;flex-shrink:0;gap:12px;}
 .pg-modal-title{font-size:13px;font-weight:600;color:#111827;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pg-modal-close{width:28px;height:28px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,color .12s;padding:0;}
 .pg-modal-close:hover{background:#fee2e2;color:#dc2626;}
 .pg-modal-body{overflow:auto;flex:1;}
 .pg-modal-map-iframe{width:700px;height:500px;border:none;display:block;}
-.pg-modal-files-grid{display:flex;flex-wrap:wrap;gap:14px;padding:20px;align-items:flex-start;}
-.pg-modal-thumb{width:130px;height:130px;object-fit:cover;border-radius:10px;border:2px solid #e8e8f0;cursor:zoom-in;display:block;transition:transform .12s,box-shadow .12s;}
-.pg-modal-thumb:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.14);}
-.pg-modal-file-item{width:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#f8fafc;border-radius:10px;border:1.5px solid #e8e8f0;padding:14px 8px;}
-.pg-modal-fname{font-size:10px;color:#6b7280;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
-.pg-modal-empty{color:#9ca3af;font-size:13px;text-align:center;padding:40px;}
+.pg-modal-files-grid{display:flex;flex-wrap:wrap;gap:16px;padding:24px;align-items:flex-start;}
+.pg-modal-file-link{display:block;text-decoration:none;color:inherit;}
+.pg-modal-thumb{width:180px;height:180px;object-fit:cover;border-radius:12px;border:2px solid #e8e8f0;display:block;transition:transform .12s,box-shadow .12s,border-color .12s;}
+.pg-modal-file-link:hover .pg-modal-thumb{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.16);border-color:#93c5fd;}
+.pg-modal-file-item{width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border-radius:12px;border:1.5px solid #e8e8f0;padding:20px 10px;transition:border-color .12s,box-shadow .12s;}
+.pg-modal-file-link:hover .pg-modal-file-item{border-color:#93c5fd;box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.pg-modal-fname{font-size:11px;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pg-modal-empty{color:#9ca3af;font-size:13px;text-align:center;padding:60px;}
 
 /* drawing button — circle matching file buttons */
 .fd-icon-btn.fd-draw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;padding:0;}
@@ -439,7 +441,7 @@
         }).join("");
         _filesPopup.innerHTML =
             `<div class="pg-fp-expand-wrap" style="position:relative;">` +
-            `<button class="pg-popup-expand" data-expand="files" data-name="${_e(name)}" title="Expand files" style="top:0;right:0;">${SVG.expand}</button>` +
+            `<button class="pg-popup-expand" data-expand="files" data-name="${_e(name)}" title="Expand files">${SVG.expand}</button>` +
             `<div class="pg-fp-items">${items}</div>` +
             `</div>`;
     }
@@ -460,7 +462,7 @@
             const d   = 0.01;
             const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
             title    = "Map Preview";
-            bodyHtml = `<iframe class="pg-modal-map-iframe" src="${_e(src)}" loading="lazy"></iframe>`;
+            bodyHtml = `<iframe src="${_e(src)}" loading="lazy" style="width:100%;height:100%;border:none;display:block;"></iframe>`;
         } else if (type === "files") {
             const name  = btn.dataset.name || "";
             const files = _filesCache[name] || [];
@@ -470,11 +472,12 @@
                 bodyHtml = `<div class="pg-modal-empty">No files attached</div>`;
             } else {
                 const items = files.map(f => {
-                    const ext = (f.file_name || "").split(".").pop().toLowerCase();
+                    const ext  = (f.file_name || "").split(".").pop().toLowerCase();
+                    const href = _e(f.file_url);
                     if (imgs.includes(ext)) {
-                        return `<img class="pg-modal-thumb" src="${_e(f.file_url)}" title="${_e(f.file_name)}" loading="lazy">`;
+                        return `<a class="pg-modal-file-link" href="${href}" target="_blank" rel="noopener" title="${_e(f.file_name)}"><img class="pg-modal-thumb" src="${href}" loading="lazy"></a>`;
                     }
-                    return `<div class="pg-modal-file-item">${SVG.file}<span class="pg-modal-fname">${_e(f.file_name)}</span></div>`;
+                    return `<a class="pg-modal-file-link" href="${href}" target="_blank" rel="noopener" title="${_e(f.file_name)}"><div class="pg-modal-file-item">${SVG.file}<span class="pg-modal-fname">${_e(f.file_name)}</span></div></a>`;
                 }).join("");
                 bodyHtml = `<div class="pg-modal-files-grid">${items}</div>`;
             }
@@ -935,16 +938,27 @@
             inp.onchange = () => {
                 const file = inp.files && inp.files[0];
                 if (!file) return;
-                delete _filesCache[name]; // invalidate cache
-                const uploader = new frappe.ui.FileUploader({
-                    doctype: cfg.doctype || "Prospect",
-                    docname: name,
-                    file_obj: file,
-                    on_success(f) {
-                        frappe.show_alert({ message: `Uploaded: ${f.file_name}`, indicator: "green" }, 3);
-                    },
+                delete _filesCache[name];
+                frappe.show_alert({ message: `Uploading ${file.name}…`, indicator: "blue" }, 4);
+                const fd = new FormData();
+                fd.append("file", file, file.name);
+                fd.append("doctype",  cfg.doctype || "Prospect");
+                fd.append("docname",  name);
+                fd.append("is_private", "0");
+                fd.append("folder",   "Home/Attachments");
+                fetch("/api/method/upload_file", {
+                    method: "POST",
+                    headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+                    body: fd,
+                }).then(r => r.json()).then(data => {
+                    if (data.message && data.message.file_name) {
+                        frappe.show_alert({ message: `Uploaded: ${data.message.file_name}`, indicator: "green" }, 3);
+                    } else {
+                        frappe.show_alert({ message: "Upload failed", indicator: "red" }, 4);
+                    }
+                }).catch(() => {
+                    frappe.show_alert({ message: "Upload failed", indicator: "red" }, 4);
                 });
-                uploader.upload_file();
             };
             document.body.appendChild(inp);
             inp.click();
