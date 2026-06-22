@@ -65,21 +65,12 @@
             _my = +(e.clientY / window.innerHeight * 100).toFixed(2);
         }, { passive: true });
 
-        const _isMac = navigator.platform.toUpperCase().includes("MAC") ||
-                       navigator.userAgent.toUpperCase().includes("MAC");
-
         $(document).on("keydown.ann-esc", (e) => {
             if (e.key === "Escape" && open) { _closeSidebar(); return; }
 
-            // Mac: Command+C  |  Windows/Linux: Shift+C
-            const isAnnotateKey = _isMac
-                ? (e.metaKey && !e.ctrlKey && e.key.toLowerCase() === "c")
-                : (e.shiftKey && !e.metaKey && !e.ctrlKey && e.key.toLowerCase() === "c");
-
-            if (!isAnnotateKey) return;
-            // Don't steal copy when text is selected
-            if (window.getSelection()?.toString().length) return;
-            // Don't trigger inside inputs / textareas
+            // Shift+C — works on Mac and Windows, no browser conflict
+            if (!(e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "c")) return;
+            // Don't trigger inside inputs / textareas / dialogs
             const tag = document.activeElement?.tagName.toLowerCase();
             if (tag === "input" || tag === "textarea" || document.activeElement?.isContentEditable) return;
             if ($(document.activeElement).closest(".frappe-dialog,.modal,#ann-sidebar").length) return;
