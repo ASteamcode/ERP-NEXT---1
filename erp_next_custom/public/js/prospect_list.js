@@ -37,7 +37,7 @@ const _PROSPECT_CFG = {
         { tab: 4, key: "instagram",label: "Instagram",      type: "link",   frappe_field: "custom_instagram"    },
         { tab: 4, key: "linkedin", label: "LinkedIn",       type: "link",   frappe_field: "custom_linkedin"     },
         { tab: 4, key: "facebook", label: "Facebook",       type: "link",   frappe_field: "custom_facebook"     },
-        { tab: 4, key: "telegram", label: "Telegram",       type: "text",   frappe_field: "custom_telegram"     },
+        { tab: 4, key: "telegram", label: "Telegram",       type: "link",   frappe_field: "custom_telegram"     },
         { tab: 4, key: "website",  label: "Website",        type: "link",   frappe_field: "website"             },
     ],
     rows: [],
