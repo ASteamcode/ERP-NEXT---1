@@ -149,21 +149,32 @@ function _pl_render(listview) {
                         return;
                     }
                     frappe.confirm(
-                        `Export ${leads.length} prospect(s) to Lead? Existing leads with the same email will be skipped.`,
+                        `Export ${leads.length} prospect(s) to Lead and Contact? Duplicates (matched by email) will be skipped.`,
                         () => {
-                            let done = 0, created = 0, skipped = 0, errs = 0;
+                            // Two operations per row (Lead + Contact)
+                            const total = leads.length * 2;
+                            let done = 0;
+                            let lCreated = 0, lSkipped = 0;
+                            let cCreated = 0, cSkipped = 0;
+                            let errs = 0;
 
                             function _checkDone() {
-                                if (done < leads.length) return;
+                                if (done < total) return;
                                 const parts = [];
-                                if (created) parts.push(`${created} created`);
-                                if (skipped) parts.push(`${skipped} already exist`);
-                                if (errs)    parts.push(`${errs} failed`);
+                                if (lCreated) parts.push(`${lCreated} lead${lCreated > 1 ? "s" : ""} created`);
+                                if (lSkipped) parts.push(`${lSkipped} lead${lSkipped > 1 ? "s" : ""} skipped`);
+                                if (cCreated) parts.push(`${cCreated} contact${cCreated > 1 ? "s" : ""} created`);
+                                if (cSkipped) parts.push(`${cSkipped} contact${cSkipped > 1 ? "s" : ""} skipped`);
+                                if (errs)     parts.push(`${errs} failed`);
                                 frappe.show_alert({
-                                    message: "Export: " + parts.join(", "),
+                                    message: "Export: " + (parts.join(", ") || "nothing to do"),
                                     indicator: errs ? "orange" : "green",
-                                }, 6);
+                                }, 7);
                                 reload();
+                            }
+
+                            function _isDupe(msg) {
+                                return msg.includes("Duplicate") || msg.includes("duplicate") || msg.includes("already exists");
                             }
 
                             function _insertLead(row) {
@@ -181,40 +192,63 @@ function _pl_render(listview) {
                                             lead_name:    [row.first, row.last].filter(Boolean).join(" ") || row.company || "Lead",
                                         },
                                     },
-                                    callback()  { created++; done++; _checkDone(); },
+                                    callback()  { lCreated++; done++; _checkDone(); },
                                     error(err)  {
-                                        const msg = (err && err.message) || "";
-                                        if (msg.includes("Duplicate") || msg.includes("duplicate")) {
-                                            skipped++;
-                                        } else {
-                                            errs++;
-                                        }
+                                        _isDupe((err && err.message) || "") ? lSkipped++ : errs++;
+                                        done++; _checkDone();
+                                    },
+                                });
+                            }
+
+                            function _insertContact(row) {
+                                const doc = {
+                                    doctype:      "Contact",
+                                    first_name:   row.first   || row.company || "Unknown",
+                                    last_name:    row.last    || "",
+                                    company_name: row.company || "",
+                                };
+                                if (row.email)  doc.email_ids  = [{ email_id: row.email,  is_primary: 1 }];
+                                if (row.mobile) doc.phone_nos  = [{ phone: row.mobile, is_primary_mobile_no: 1 }];
+                                frappe.call({
+                                    method: "frappe.client.insert",
+                                    args: { doc },
+                                    callback()  { cCreated++; done++; _checkDone(); },
+                                    error(err)  {
+                                        _isDupe((err && err.message) || "") ? cSkipped++ : errs++;
                                         done++; _checkDone();
                                     },
                                 });
                             }
 
                             leads.forEach(row => {
+                                // ── Lead: check by email then insert ──
                                 if (row.email) {
                                     frappe.call({
                                         method: "frappe.client.get_list",
-                                        args: {
-                                            doctype: "Lead",
-                                            filters: { email_id: row.email },
-                                            fields: ["name"],
-                                            limit: 1,
-                                        },
+                                        args: { doctype: "Lead", filters: { email_id: row.email }, fields: ["name"], limit: 1 },
                                         callback(r) {
-                                            if (r.message && r.message.length) {
-                                                skipped++; done++; _checkDone();
-                                            } else {
-                                                _insertLead(row);
-                                            }
+                                            if (r.message && r.message.length) { lSkipped++; done++; _checkDone(); }
+                                            else _insertLead(row);
                                         },
                                         error() { _insertLead(row); },
                                     });
                                 } else {
                                     _insertLead(row);
+                                }
+
+                                // ── Contact: check by email then insert ──
+                                if (row.email) {
+                                    frappe.call({
+                                        method: "frappe.client.get_list",
+                                        args: { doctype: "Contact Email", filters: { email_id: row.email }, fields: ["parent"], limit: 1 },
+                                        callback(r) {
+                                            if (r.message && r.message.length) { cSkipped++; done++; _checkDone(); }
+                                            else _insertContact(row);
+                                        },
+                                        error() { _insertContact(row); },
+                                    });
+                                } else {
+                                    _insertContact(row);
                                 }
                             });
                         }
