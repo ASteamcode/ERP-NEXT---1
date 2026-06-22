@@ -65,10 +65,12 @@ window.frappe_drawing = (() => {
         let displayPxPerMeter = scale.pxPerMeter;
         let scaleAnimFrame = null;
         let history = [];
+        let redoStack = [];
 
         const saveState = () => {
             const json = JSON.stringify(shapes);
             if (!history.length || history[history.length - 1] !== json) history.push(json);
+            redoStack = [];
         };
 
         let tool = "line";
@@ -122,6 +124,31 @@ window.frappe_drawing = (() => {
         });
 
         dialog.show();
+
+        // Modal chrome tweaks
+        dialog.$wrapper.find(".modal-body").css({ padding: "0" });
+        dialog.$wrapper.find(".modal-footer").css({ borderTop: "1.5px solid #e8e8f0", padding: "10px 16px" });
+        dialog.$wrapper.find(".btn-primary").css({
+            background: "linear-gradient(135deg,#2563eb,#1d4ed8)",
+            border: "none", borderRadius: "99px", padding: "6px 22px",
+            fontWeight: 600, boxShadow: "none",
+        });
+
+        // Close button — round, glows red on hover
+        const $closeBtn = dialog.$wrapper.find(".modal-header .close, .btn-modal-close, [data-dismiss='modal']");
+        $closeBtn.css({
+            width: "28px", height: "28px", padding: "0",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            borderRadius: "50%", transition: "background .15s, color .15s, box-shadow .15s",
+            lineHeight: "1",
+        });
+        $closeBtn.on("mouseenter", function () {
+            $(this).css({ background: "#fee2e2", color: "#dc2626", boxShadow: "0 0 0 3px #fecaca" });
+        });
+        $closeBtn.on("mouseleave", function () {
+            $(this).css({ background: "", color: "", boxShadow: "" });
+        });
+
         const $wrap = dialog.fields_dict.draw_wrap.$wrapper;
         const unitOpts = Object.keys(DRAW_UNITS).map(u =>
             `<option value="${u}"${u === scale.unit ? " selected" : ""}>${u}</option>`
@@ -158,15 +185,24 @@ window.frappe_drawing = (() => {
                         <div class="fd-draw-sep"></div>
                         <button class="fd-draw-tool fd-draw-color-btn fd-draw-color-active" data-color="#1f272e" title="Black"><span class="fd-draw-swatch" style="background:#1f272e"></span></button>
                         <button class="fd-draw-tool fd-draw-color-btn" data-color="#e74c3c" title="Red"><span class="fd-draw-swatch" style="background:#e74c3c"></span></button>
-                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#378ADD" title="Blue"><span class="fd-draw-swatch" style="background:#378ADD"></span></button>
-                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#27ae60" title="Green"><span class="fd-draw-swatch" style="background:#27ae60"></span></button>
-                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#f39c12" title="Orange"><span class="fd-draw-swatch" style="background:#f39c12"></span></button>
+                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#2563eb" title="Blue"><span class="fd-draw-swatch" style="background:#2563eb"></span></button>
+                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#16a34a" title="Green"><span class="fd-draw-swatch" style="background:#16a34a"></span></button>
+                        <button class="fd-draw-tool fd-draw-color-btn" data-color="#d97706" title="Amber"><span class="fd-draw-swatch" style="background:#d97706"></span></button>
                         <div class="fd-draw-sep"></div>
+                        <span class="fd-draw-unit-label">${__("Units")}</span>
                         <select class="fd-draw-unit" title="${__("Display unit")}">${unitOpts}</select>
-                        <button class="fd-draw-undo-btn" title="${__("Undo")}">${__("Undo")}</button>
+                        <div class="fd-draw-sep"></div>
+                        <button class="fd-draw-undo-btn" title="${__("Undo (Ctrl+Z)")}">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                            ${__("Undo")}
+                        </button>
+                        <button class="fd-draw-redo-btn" title="${__("Redo (Ctrl+Shift+Z)")}">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+                            ${__("Redo")}
+                        </button>
                     </div>
                     <button class="fd-draw-clear-btn">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                         ${__("Clear")}
                     </button>
                 </div>
@@ -178,23 +214,32 @@ window.frappe_drawing = (() => {
         const canvas = $wrap.find(".fd-draw-canvas")[0];
         const wrapEl = $wrap.find(".fd-draw-canvas-wrap")[0];
         const dpr = window.devicePixelRatio || 1;
-        const cssW = Math.max(wrapEl.offsetWidth || 800, 600);
-        const cssH = Math.round(cssW * 0.52);
-
-        canvas.style.width = cssW + "px";
-        canvas.style.height = cssH + "px";
-        canvas.width = Math.round(cssW * dpr);
-        canvas.height = Math.round(cssH * dpr);
-
         const ctx = canvas.getContext("2d");
-        ctx.scale(dpr, dpr);
 
-        if (saved._legacy_jpeg) {
-            const img = new Image();
-            img.onload = () => { ctx.drawImage(img, 0, 0, cssW, cssH); render(); };
-            img.src = saved._legacy_jpeg;
-        }
+        // Mutable dimensions — set after layout in RAF so canvas fills full dialog width
+        let cssW = 900, cssH = 468;
 
+        const _initCanvas = () => {
+            // Double-RAF: first frame triggers layout, second reads settled dimensions
+            requestAnimationFrame(() => {
+                cssW = Math.max(Math.round(wrapEl.getBoundingClientRect().width) || 900, 600);
+                cssH = Math.round(cssW * 0.52);
+                // Set canvas CSS size = logical pixels → no browser scaling → sharp
+                canvas.style.width  = cssW + "px";
+                canvas.style.height = cssH + "px";
+                canvas.width  = Math.round(cssW * dpr);
+                canvas.height = Math.round(cssH * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                if (saved._legacy_jpeg) {
+                    const img = new Image();
+                    img.onload = () => { ctx.drawImage(img, 0, 0, cssW, cssH); render(); };
+                    img.src = saved._legacy_jpeg;
+                } else {
+                    render();
+                }
+            });
+        };
+        requestAnimationFrame(_initCanvas);
         // ── coordinate / snap helpers ─────────────────────────────────────────
         const canvasPos = (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -399,7 +444,7 @@ window.frappe_drawing = (() => {
 
         const drawSelectionBox = (bb) => {
             if (!bb) return;
-            ctx.save(); ctx.strokeStyle = "#378ADD"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+            ctx.save(); ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
             const pad = 4;
             ctx.strokeRect(bb.minX - pad, bb.minY - pad, bb.maxX - bb.minX + pad * 2, bb.maxY - bb.minY + pad * 2);
             ctx.setLineDash([]); ctx.fillStyle = "#fff";
@@ -461,7 +506,7 @@ window.frappe_drawing = (() => {
             if (ghost) drawShape(ghost, false, true);
             if (selectedShapeIndices.length > 0) drawSelectionBox(getGroupBBox(selectedShapeIndices));
             if (boxSelectDraft) {
-                ctx.save(); ctx.fillStyle = "rgba(55,138,221,0.15)"; ctx.strokeStyle = "#378ADD"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+                ctx.save(); ctx.fillStyle = "rgba(37,99,235,0.12)"; ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
                 const x = Math.min(boxSelectDraft.x1, boxSelectDraft.x2), y = Math.min(boxSelectDraft.y1, boxSelectDraft.y2);
                 const w = Math.abs(boxSelectDraft.x2 - boxSelectDraft.x1), h = Math.abs(boxSelectDraft.y2 - boxSelectDraft.y1);
                 ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h); ctx.restore();
@@ -469,7 +514,7 @@ window.frappe_drawing = (() => {
             
             if (arcDraft) {
                 if (Math.abs(arcDraft.bulge) > 2) {
-                    drawShape({ type: "arc", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, bulge: arcDraft.bulge, color: "#378ADD" }, false, false);
+                    drawShape({ type: "arc", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, bulge: arcDraft.bulge, color: "#2563eb" }, false, false);
                     const geom = arcGeom(arcDraft.startX, arcDraft.startY, arcDraft.endX, arcDraft.endY, arcDraft.bulge);
                     if (geom) {
                         const deg = Math.round(Math.abs(geom.sweep) * 180 / Math.PI) + "°";
@@ -478,21 +523,19 @@ window.frappe_drawing = (() => {
                         const nx = -dy / dist, ny = dx / dist;
                         const midX = arcDraft.startX + dx / 2 + arcDraft.bulge * nx;
                         const midY = arcDraft.startY + dy / 2 + arcDraft.bulge * ny;
-                        ctx.save(); ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#378ADD";
+                        ctx.save(); ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#2563eb";
                         ctx.fillText(deg, midX + nx * 14, midY + ny * 14); ctx.restore();
                     }
                 } else {
-                    drawShape({ type: "line", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, color: "#378ADD" }, false, false);
+                    drawShape({ type: "line", x1: arcDraft.startX, y1: arcDraft.startY, x2: arcDraft.endX, y2: arcDraft.endY, color: "#2563eb" }, false, false);
                 }
             } else if (tool === "line" && chainStart) {
                 ctx.beginPath(); ctx.arc(chainStart.x, chainStart.y, 5, 0, Math.PI * 2);
-                ctx.strokeStyle = "#378ADD"; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 1.5; ctx.stroke();
             }
             
             ctx.restore();
         };
-
-        render();
 
         // ── scale animation ───────────────────────────────────────────────────
         const animateScaleTo = (target) => {
@@ -539,7 +582,7 @@ window.frappe_drawing = (() => {
             removeOverlayInputs(); hidePropsPanel(); selectedShapeIndices = [];
             const inp = document.createElement("input");
             inp.type = "text"; inp.placeholder = "Enter text...";
-            inp.style.cssText = `position:absolute;left:${x}px;top:${y - 10}px;font-size:14px;font-family:sans-serif;border:1px solid #378ADD;border-radius:4px;padding:4px 6px;background:#fff;z-index:20;outline:none;`;
+            inp.style.cssText = `position:absolute;left:${x}px;top:${y - 10}px;font-size:14px;font-family:sans-serif;border:1px solid #2563eb;border-radius:4px;padding:4px 6px;background:#fff;z-index:20;outline:none;`;
             wrapEl.style.position = "relative"; wrapEl.appendChild(inp); textInputEl = inp; inp.focus();
             const commit = () => {
                 const val = inp.value.trim(); removeOverlayInputs();
@@ -803,10 +846,32 @@ window.frappe_drawing = (() => {
         canvas.addEventListener("dblclick", (e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
         canvas.addEventListener("contextmenu", (e) => { e.preventDefault(); if (chainStart) { chainStart = null; render(); } });
 
+        const _undo = () => {
+            if (!history.length) return;
+            redoStack.push(JSON.stringify(shapes));
+            shapes = JSON.parse(history.pop());
+            chainStart = null; draftShape = null; arcDraft = null; selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
+            removeOverlayInputs(); hidePropsPanel(); render();
+        };
+
+        const _redo = () => {
+            if (!redoStack.length) return;
+            history.push(JSON.stringify(shapes));
+            shapes = JSON.parse(redoStack.pop());
+            chainStart = null; draftShape = null; arcDraft = null; selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
+            removeOverlayInputs(); hidePropsPanel(); render();
+        };
+
         const keydownHandler = (e) => {
+            const tag = document.activeElement?.tagName.toLowerCase();
+            const inInput = tag === "input" || tag === "textarea";
+            const ctrl = e.ctrlKey || e.metaKey;
+
+            if (ctrl && e.key === "z" && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); _undo(); return; }
+            if (ctrl && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); e.stopPropagation(); _redo(); return; }
+
             if ((e.key === "Delete" || e.key === "Backspace") && tool === "select" && selectedShapeIndices.length > 0) {
-                const tag = document.activeElement?.tagName.toLowerCase();
-                if (tag !== "input" && tag !== "textarea") {
+                if (!inInput) {
                     e.preventDefault(); e.stopPropagation();
                     saveState();
                     [...selectedShapeIndices].sort((a, b) => b - a).forEach(i => shapes.splice(i, 1));
@@ -851,13 +916,8 @@ window.frappe_drawing = (() => {
 
         $toolbar.on("change", ".fd-draw-unit", function () { scale.unit = $(this).val(); render(); });
 
-        $toolbar.on("click", ".fd-draw-undo-btn", () => {
-            if (history.length > 0) {
-                shapes = JSON.parse(history.pop());
-                chainStart = null; draftShape = null; arcDraft = null; selectedShapeIndices = []; transformState = null; boxSelectDraft = null;
-                removeOverlayInputs(); hidePropsPanel(); render();
-            }
-        });
+        $toolbar.on("click", ".fd-draw-undo-btn", () => _undo());
+        $toolbar.on("click", ".fd-draw-redo-btn", () => _redo());
 
         $toolbar.on("click", ".fd-draw-clear-btn", () => {
             if (!shapes.length || confirm(__("Clear all? Cannot be undone."))) {
@@ -876,36 +936,43 @@ window.frappe_drawing = (() => {
         if (document.getElementById("fd-draw-styles")) return;
         const style = Object.assign(document.createElement("style"), { id: "fd-draw-styles" });
         style.textContent = `
-            .fd-draw-dialog { display:flex; flex-direction:column; gap:0; }
+            .fd-draw-dialog {
+                display:flex; flex-direction:column; overflow:hidden;
+            }
             .fd-draw-toolbar {
                 display:flex; align-items:center; justify-content:space-between;
-                padding:8px 12px; border-bottom:0.5px solid var(--border-color,#e2e6ea);
-                background:var(--card-bg,#fff); flex-wrap:wrap; gap:6px;
+                padding:8px 14px; background:#fff;
+                border-bottom:1.5px solid #e8e8f0; flex-wrap:wrap; gap:6px;
             }
-            .fd-draw-tools { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+            .fd-draw-tools { display:flex; align-items:center; gap:3px; flex-wrap:wrap; }
             .fd-draw-tool {
                 display:inline-flex; align-items:center; justify-content:center;
-                width:28px; height:28px; border:0.5px solid transparent; border-radius:6px;
-                background:transparent; cursor:pointer; color:var(--text-muted,#8d96a0);
-                transition:background .1s, border-color .1s, color .1s;
+                width:30px; height:30px; border:1px solid #e8e8f0; border-radius:99px;
+                background:transparent; cursor:pointer; color:#64748b;
+                transition:background .12s, border-color .12s, color .12s;
             }
-            .fd-draw-tool:hover               { background:var(--bg-light-gray,#f4f5f6); border-color:var(--border-color,#e2e6ea); color:var(--text-color,#1f272e); }
-            .fd-draw-tool--active             { background:#EBF3FF; border-color:#378ADD; color:#378ADD; }
-            .fd-draw-sep                      { width:1px; height:20px; background:var(--border-color,#e2e6ea); margin:0 2px; }
-            .fd-draw-swatch                   { display:block; width:12px; height:12px; border-radius:3px; }
-            .fd-draw-color-active             { border-color:#378ADD !important; }
+            .fd-draw-tool:hover    { background:#f1f5f9; border-color:#cbd5e1; color:#1e293b; }
+            .fd-draw-tool--active  { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
+            .fd-draw-sep           { width:1px; height:18px; background:#e8e8f0; margin:0 3px; }
+            .fd-draw-swatch        { display:block; width:13px; height:13px; border-radius:50%; box-shadow:0 0 0 1.5px rgba(0,0,0,0.12); }
+            .fd-draw-color-active .fd-draw-swatch { box-shadow:0 0 0 2px #2563eb; }
+            .fd-draw-unit-label    { font-size:11px; font-weight:600; color:#94a3b8; letter-spacing:.03em; white-space:nowrap; }
             .fd-draw-unit {
-                height:28px; border:0.5px solid var(--border-color,#e2e6ea); border-radius:6px;
-                padding:0 6px; font-size:12px; background:var(--card-bg,#fff); cursor:pointer;
+                height:28px; border:1px solid #e8e8f0; border-radius:99px;
+                padding:0 10px; font-size:12px; cursor:pointer;
+                background:#f8fafc; color:#374151; font-weight:500;
+                transition:border-color .12s;
             }
-            .fd-draw-undo-btn, .fd-draw-clear-btn {
-                height:28px; padding:0 10px; border:0.5px solid var(--border-color,#e2e6ea);
-                border-radius:6px; background:transparent; cursor:pointer; font-size:12px;
-                color:var(--text-muted,#8d96a0); display:inline-flex; align-items:center; gap:4px;
-                transition:background .1s, border-color .1s, color .1s;
+            .fd-draw-unit:focus { outline:none; border-color:#2563eb; }
+            .fd-draw-undo-btn, .fd-draw-redo-btn, .fd-draw-clear-btn {
+                height:28px; padding:0 12px; border:1px solid #e8e8f0;
+                border-radius:99px; background:transparent; cursor:pointer; font-size:12px;
+                color:#64748b; display:inline-flex; align-items:center; gap:5px; font-weight:500;
+                transition:background .12s, border-color .12s, color .12s;
             }
-            .fd-draw-undo-btn:hover, .fd-draw-clear-btn:hover { background:var(--bg-light-gray,#f4f5f6); border-color:var(--border-color,#e2e6ea); color:var(--text-color,#1f272e); }
-            .fd-draw-canvas-wrap { overflow:hidden; border-radius:0 0 8px 8px; }
+            .fd-draw-undo-btn:hover, .fd-draw-redo-btn:hover { background:#f1f5f9; border-color:#cbd5e1; color:#1e293b; }
+            .fd-draw-clear-btn:hover { background:#fff1f2; border-color:#fecdd3; color:#e11d48; }
+            .fd-draw-canvas-wrap { overflow:hidden; width:100%; background:#fff; }
             .fd-draw-canvas      { display:block; cursor:crosshair; }
 
             /* list-view button (shared across consumers) */
@@ -915,7 +982,7 @@ window.frappe_drawing = (() => {
                 background:transparent; cursor:pointer; color:var(--text-muted,#8d96a0);
                 transition:background .12s, border-color .12s, color .12s;
             }
-            .fd-draw-btn--has { color:#378ADD; }
+            .fd-draw-btn--has { color:#2563eb; }
         `;
         document.head.appendChild(style);
     }

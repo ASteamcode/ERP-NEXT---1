@@ -49,13 +49,10 @@
 .pg-tbl th{background:#f8f8fc;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;padding:0 14px;height:38px;text-align:left;border-bottom:2px solid #e8e8f0;white-space:nowrap;}
 .pg-tbl td{font-size:12.5px;color:#374151;padding:0 14px;height:46px;border-bottom:1px solid #f0f0f5;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;}
 .pg-tr-alt td{background:#fafafa;}
-.pg-tbl tr:hover td{background:#dbeafe !important;}
-
 /* sticky fixed cols */
 .pg-f{position:sticky;z-index:2;}
 .pg-tbl td.pg-f{background:#fff;}
 .pg-tr-alt td.pg-f{background:#fafafa;}
-.pg-tbl tr:hover td.pg-f{background:#f5f8ff !important;}
 .pg-tbl th.pg-f{z-index:3;background:#f8f8fc;}
 .pg-f-shadow{box-shadow:2px 0 6px -1px rgba(0,0,0,.09);}
 .pg-tbl th.pg-f-shadow{box-shadow:2px 0 6px -1px rgba(0,0,0,.07);}
@@ -64,10 +61,9 @@
 .pg-v{display:none;min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
 @keyframes pg-col-in{from{opacity:0;transform:translateX(var(--pg-dir,22px))}to{opacity:1;transform:none}}
 
-/* row selection — selected wins over hover */
-.pg-tbl tr:hover td,.pg-tbl tr:hover td.pg-f{background:#eff6ff !important;}
-.pg-row-sel td,.pg-row-sel td.pg-f{background:#bfdbfe !important;}
-.pg-row-sel:hover td,.pg-row-sel:hover td.pg-f{background:#93c5fd !important;}
+/* row selection */
+.pg-tbl .pg-row-sel td,.pg-tbl .pg-row-sel td.pg-f{background:#eff6ff !important;}
+.pg-tbl .pg-row-sel:hover td,.pg-tbl .pg-row-sel:hover td.pg-f{background:#eff6ff !important;}
 .pg-f-num-cell{cursor:pointer;user-select:none;text-align:center;color:#cbd5e1;font-size:11px;font-weight:700;transition:color .12s;}
 .pg-f-num-cell:hover{color:#2563eb;}
 .pg-row-num{display:inline-block;min-width:18px;text-align:center;}
@@ -80,6 +76,10 @@
 @keyframes pg-float-in{from{opacity:0;transform:scaleY(.6) scaleX(.97);box-shadow:none}to{opacity:1;transform:none;box-shadow:0 4px 20px rgba(37,99,235,.18);}}
 .pg-float-input,.pg-float-select{position:absolute;inset:0;width:100%;height:100%;border:2px solid #2563eb;border-radius:3px;background:#fff;padding:0 12px;font-size:12.5px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;pointer-events:all;transform-origin:top center;animation:pg-float-in .14s cubic-bezier(.2,0,.2,1) both;}
 .pg-float-select{padding:0 8px;cursor:pointer;}
+.pg-ac-drop{position:fixed;z-index:100001;background:#fff;border:1.5px solid #e8e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.1);max-height:220px;overflow-y:auto;display:none;}
+.pg-ac-item{padding:7px 13px;cursor:pointer;font-size:12.5px;color:#374151;white-space:nowrap;}
+.pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
+.pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
 
 /* status badges */
 .pg-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:650;white-space:nowrap;}
@@ -92,7 +92,72 @@
 /* cell types */
 .pg-lnk{color:#2563eb;text-decoration:none;font-size:12.5px;display:inline-flex;align-items:center;gap:3px;cursor:default;}
 .pg-lnk-ext{font-size:10px;color:#93c5fd;}
+.pg-social-lnk{display:inline-flex;align-items:center;gap:4px;color:#2563eb;text-decoration:none;font-size:12.5px;border-radius:4px;transition:color .12s;}
+.pg-social-lnk:hover{color:#1d4ed8;text-decoration:underline;}
+.pg-email-btn{display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#2563eb;font-size:12.5px;font-family:inherit;cursor:pointer;padding:0;border-radius:4px;transition:color .12s;}
+.pg-email-btn:hover{color:#1d4ed8;text-decoration:underline;}
 .pg-ph{font-variant-numeric:tabular-nums;color:#374151;letter-spacing:.01em;}
+
+/* email compose panel */
+.pg-compose{position:fixed;bottom:0;right:28px;z-index:999995;width:480px;border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.16);overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1.5px solid #e8e8f0;border-bottom:none;animation:pg-compose-in .18s cubic-bezier(.2,0,.2,1) both;}
+@keyframes pg-compose-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.pg-compose-head{background:linear-gradient(135deg,#1e3a8a 0%,#2d52a8 100%);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;user-select:none;}
+.pg-compose-title{color:#fff;font-size:13px;font-weight:600;letter-spacing:.01em;display:flex;align-items:center;gap:7px;}
+.pg-compose-head-btns{display:flex;gap:6px;align-items:center;}
+.pg-compose-hbtn{background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,transform .1s;padding:0;flex-shrink:0;}
+.pg-compose-hbtn:hover{background:rgba(255,255,255,.32);transform:scale(1.08);}
+/* all rows: centered by default; TO row overrides to flex-start for tag wrapping */
+.pg-compose-row{display:flex;align-items:center;border-bottom:1px solid #f0f0f5;padding:0 20px;position:relative;min-height:44px;}
+.pg-compose-row.pg-compose-row--tags{align-items:flex-start;padding:8px 20px;}
+.pg-compose-lbl{font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;width:64px;flex-shrink:0;}
+.pg-compose-row--tags .pg-compose-lbl{padding-top:6px;}
+/* tag-input container */
+.pg-compose-tags{flex:1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:28px;}
+.pg-compose-tag{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;color:#1e40af;font-weight:500;line-height:1;}
+.pg-compose-tag-x{background:none;border:none;color:#93c5fd;cursor:pointer;padding:0;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:color .1s,background .1s;}
+.pg-compose-tag-x svg{display:block;}
+.pg-compose-tag-x:hover{color:#dc2626;background:#fee2e2;}
+.pg-compose-tag-inp{border:none;outline:none;font-size:13px;color:#111827;font-family:inherit;background:transparent;min-width:140px;padding:3px 0;line-height:1.4;}
+.pg-compose-tag-inp::placeholder{color:#d1d5db;}
+.pg-compose-bulk-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid #e0e0ea;background:#f8fafc;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;padding:0;margin-left:6px;align-self:flex-start;margin-top:7px;}
+.pg-compose-bulk-btn:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
+.pg-compose-ac{position:absolute;top:100%;left:0;right:0;z-index:10;background:#fff;border:1.5px solid #e8e8f0;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;}
+.pg-compose-ac-item{display:flex;flex-direction:column;padding:9px 20px;cursor:pointer;gap:1px;transition:background .1s;}
+.pg-compose-ac-item:hover{background:#f0f5ff;}
+.pg-compose-ac-name{font-size:12.5px;font-weight:600;color:#111827;}
+.pg-compose-ac-email{font-size:11px;color:#6b7280;}
+.pg-compose-inp{flex:1;border:none;outline:none;font-size:13px;color:#111827;padding:0;font-family:inherit;background:transparent;}
+.pg-compose-inp::placeholder{color:#d1d5db;}
+.pg-compose-body{flex:1;border:none;outline:none;font-size:13px;color:#374151;padding:16px 20px;font-family:inherit;resize:none;min-height:210px;line-height:1.7;}
+.pg-compose-body::placeholder{color:#d1d5db;}
+.pg-compose-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1.5px solid #e8e8f0;background:#fafafa;}
+.pg-compose-send{display:inline-flex;align-items:center;gap:6px;padding:8px 22px;background:linear-gradient(135deg,#1e3a8a 0%,#2d52a8 100%);color:#fff;border:none;border-radius:99px;font-size:12.5px;font-weight:600;cursor:pointer;transition:opacity .14s;box-shadow:0 2px 8px rgba(30,58,138,.3);}
+.pg-compose-send:hover{opacity:.88;}
+.pg-compose-mailto{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#fff;color:#6b7280;border:1.5px solid #e0e0ea;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;transition:all .14s;}
+.pg-compose-mailto:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
+/* broadcast / bulk-select modal */
+.pg-bcast-overlay{position:fixed;inset:0;z-index:999996;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}
+.pg-bcast-box{background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.24);width:460px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
+.pg-bcast-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid #e8e8f0;flex-shrink:0;}
+.pg-bcast-title{font-size:13.5px;font-weight:700;color:#111827;}
+.pg-bcast-close{width:28px;height:28px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:background .12s;}
+.pg-bcast-close:hover{background:#fee2e2;color:#dc2626;}
+.pg-bcast-search{padding:10px 16px;border-bottom:1px solid #f0f0f5;flex-shrink:0;}
+.pg-bcast-search-inp{width:100%;height:32px;border:1.5px solid #e0e0ea;border-radius:99px;padding:0 14px;font-size:12.5px;font-family:inherit;outline:none;color:#374151;box-sizing:border-box;}
+.pg-bcast-search-inp:focus{border-color:#1e3a8a;}
+.pg-bcast-selall{display:flex;align-items:center;gap:8px;padding:8px 18px;border-bottom:1px solid #f0f0f5;flex-shrink:0;cursor:pointer;font-size:12px;font-weight:600;color:#6b7280;}
+.pg-bcast-selall:hover{color:#111827;}
+.pg-bcast-list{overflow-y:auto;flex:1;}
+.pg-bcast-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;transition:background .1s;}
+.pg-bcast-item:hover{background:#f0f5ff;}
+.pg-bcast-item input[type=checkbox]{width:15px;height:15px;accent-color:#1e3a8a;flex-shrink:0;cursor:pointer;}
+.pg-bcast-item-info{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.pg-bcast-item-name{font-size:12.5px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pg-bcast-item-email{font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pg-bcast-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1.5px solid #e8e8f0;flex-shrink:0;background:#fafafa;}
+.pg-bcast-count{font-size:12px;color:#6b7280;}
+.pg-bcast-confirm{padding:8px 22px;background:#1e3a8a;color:#fff;border:none;border-radius:99px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .14s;}
+.pg-bcast-confirm:hover{background:#1e40af;}
 .pg-num-val{font-variant-numeric:tabular-nums;color:#374151;font-weight:600;}
 .pg-mt{color:#d1d5db;}
 
@@ -105,8 +170,9 @@
 .pg-map-edit:hover{background:#dbeafe;}
 
 /* maps popup */
-.pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;pointer-events:none;width:240px;opacity:0;transition:opacity .15s;}
-.pg-maps-popup.pg-popup-vis{opacity:1;}
+.pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;width:240px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-maps-popup.pg-popup-vis{opacity:1;pointer-events:all;}
+.pg-maps-popup-inner{position:relative;}
 .pg-maps-popup iframe{width:240px;height:160px;border:none;display:block;}
 .pg-maps-popup-url{padding:7px 12px;font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid #f0f0f5;}
 
@@ -118,13 +184,37 @@
 .pg-file-ico{width:13px;height:13px;}
 
 /* files popup */
-.pg-files-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;min-width:160px;max-width:320px;pointer-events:none;opacity:0;transition:opacity .15s;}
-.pg-files-popup.pg-popup-vis{opacity:1;}
+.pg-files-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px;min-width:160px;max-width:320px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-files-popup.pg-popup-vis{opacity:1;pointer-events:all;}
 .pg-fp-items{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;}
 .pg-fp-thumb{width:68px;height:68px;object-fit:cover;border-radius:8px;border:2px solid #e8e8f0;display:block;}
 .pg-fp-file{width:64px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f8fafc;border-radius:8px;border:1.5px solid #e8e8f0;}
 .pg-fp-fname{font-size:9px;color:#6b7280;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
 .pg-fp-empty{color:#9ca3af;font-size:12px;text-align:center;padding:8px 16px;}
+
+/* expand button inside popup */
+.pg-popup-expand{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.88);border:1.5px solid #e8e8f0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;color:#6b7280;transition:background .12s,color .12s,border-color .12s;padding:0;flex-shrink:0;}
+.pg-popup-expand:hover{background:#eff6ff;color:#2563eb;border-color:#2563eb;}
+.pg-fp-expand-wrap{position:relative;}
+
+/* large modal */
+.pg-modal-overlay{position:fixed;inset:0;z-index:999990;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;animation:pg-modal-in .18s ease both;}
+@keyframes pg-modal-in{from{opacity:0}to{opacity:1}}
+.pg-modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;width:80vw;height:80vh;}
+.pg-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1.5px solid #e8e8f0;flex-shrink:0;gap:12px;}
+.pg-modal-title{font-size:13px;font-weight:600;color:#111827;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pg-modal-close{width:28px;height:28px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,color .12s;padding:0;}
+.pg-modal-close:hover{background:#fee2e2;color:#dc2626;}
+.pg-modal-body{overflow:auto;flex:1;}
+.pg-modal-map-iframe{width:700px;height:500px;border:none;display:block;}
+.pg-modal-files-grid{display:flex;flex-wrap:wrap;gap:16px;padding:24px;align-items:flex-start;}
+.pg-modal-file-link{display:block;text-decoration:none;color:inherit;}
+.pg-modal-thumb{width:180px;height:180px;object-fit:cover;border-radius:12px;border:2px solid #e8e8f0;display:block;transition:transform .12s,box-shadow .12s,border-color .12s;}
+.pg-modal-file-link:hover .pg-modal-thumb{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.16);border-color:#93c5fd;}
+.pg-modal-file-item{width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border-radius:12px;border:1.5px solid #e8e8f0;padding:20px 10px;transition:border-color .12s,box-shadow .12s;}
+.pg-modal-file-link:hover .pg-modal-file-item{border-color:#93c5fd;box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.pg-modal-fname{font-size:11px;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pg-modal-empty{color:#9ca3af;font-size:13px;text-align:center;padding:60px;}
 
 /* drawing button — circle matching file buttons */
 .fd-icon-btn.fd-draw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed #cbd5e1;background:#f8fafc;color:#94a3b8;cursor:pointer;transition:background .15s,border-color .15s,color .15s;padding:0;}
@@ -137,7 +227,18 @@
 .pg-wa-btn:hover{background:#dcfce7;color:#15803d;}
 
 /* owner avatar */
-.pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:default;}
+.pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:box-shadow .15s;}
+.pg-owner-av:hover{box-shadow:0 0 0 3px rgba(37,99,235,.22);}
+/* owner popup */
+.pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.16);padding:16px;width:220px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-owner-popup.pg-popup-vis{opacity:1;pointer-events:all;}
+.pg-owner-popup-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.pg-owner-popup-av{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
+.pg-owner-popup-name{font-size:13px;font-weight:700;color:#111827;line-height:1.3;}
+.pg-owner-popup-rows{display:flex;flex-direction:column;gap:6px;}
+.pg-owner-popup-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;}
+.pg-owner-popup-icon{width:14px;height:14px;color:#9ca3af;flex-shrink:0;}
+.pg-owner-popup-loc{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f5;}
 
 /* search */
 .pg-search-wrap{position:relative;display:flex;align-items:center;}
@@ -167,6 +268,10 @@
         trash:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><polyline points="2,4 14,4"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M6 7v5m4-5v5"/><rect x="3" y="4" width="10" height="9" rx="1.5"/></svg>`,
         export: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:13px;height:13px"><path d="M9 2h4v4"/><path d="M13 2L8 7"/><path d="M7 3H3a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V9"/></svg>`,
         search: `<svg class="pg-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>`,
+        expand: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polyline points="10,2 14,2 14,6"/><polyline points="6,14 2,14 2,10"/><line x1="14" y1="2" x2="9" y2="7"/><line x1="2" y1="14" x2="7" y2="9"/></svg>`,
+        close:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>`,
+        mail:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><rect x="1" y="3" width="14" height="10" rx="1.5"/><polyline points="1,3 8,9 15,3"/></svg>`,
+        extlnk: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;opacity:.5"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7"/><path d="M8 1h3v3"/><line x1="11" y1="1" x2="5" y2="7"/></svg>`,
         wa:     `<svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
         file:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:22px;height:22px;color:#94a3b8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
     };
@@ -195,8 +300,23 @@
         switch (col.type) {
             case "text":
             case "select":
-            case "link":
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+            case "link": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const val = String(v);
+                // Email → compose button
+                if (col.key === "email" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                    return `<button class="pg-email-btn" data-email="${_e(val)}" title="Compose email">${SVG.mail}<span>${_e(val)}</span></button>`;
+                }
+                // Social / URL → external link
+                let href = val;
+                if (!/^https?:\/\//i.test(href)) {
+                    if (col.key === "instagram" && href.startsWith("@")) href = "https://instagram.com/" + href.slice(1);
+                    else if (col.key === "telegram" && href.startsWith("@"))  href = "https://t.me/" + href.slice(1);
+                    else href = "https://" + href;
+                }
+                return `<a class="pg-social-lnk" href="${_e(href)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${_e(val)}${SVG.extlnk}</a>`;
+            }
             case "date": {
                 const fmt = v ? frappe.datetime.str_to_user(v) : "";
                 return fmt ? `<span>${_e(fmt)}</span>` : `<span class="pg-mt">—</span>`;
@@ -235,8 +355,8 @@
             case "owner": {
                 const initials = v || "?";
                 const color    = _ownerColor(initials);
-                const title    = row.owner_name ? _e(row.owner_name) : _e(initials);
-                return `<span class="pg-owner-av" style="background:${color}" title="${title}">${_e(initials)}</span>`;
+                const owner    = row.owner || "";
+                return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
@@ -288,7 +408,9 @@
     // ── Popup helpers ──────────────────────────────────────────────
     let _mapsPopup = null, _mapsTimer = null;
     let _filesPopup = null, _filesTimer = null;
+    let _ownerPopup = null, _ownerTimer = null;
     const _filesCache = {}; // name → files array
+    const _ownerCache = {}; // owner email → user data
 
     function _parseMapsCoords(url) {
         const pats = [
@@ -308,6 +430,8 @@
         if (_mapsPopup) return;
         _mapsPopup = document.createElement("div");
         _mapsPopup.className = "pg-maps-popup";
+        _mapsPopup.addEventListener("mouseenter", () => clearTimeout(_mapsTimer));
+        _mapsPopup.addEventListener("mouseleave", () => { _mapsTimer = setTimeout(_hideMapsPopup, 120); });
         document.body.appendChild(_mapsPopup);
     }
 
@@ -316,7 +440,12 @@
         const { lat, lng } = coords;
         const d = 0.004;
         const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
-        _mapsPopup.innerHTML = `<iframe src="${_e(src)}" loading="lazy"></iframe><div class="pg-maps-popup-url">${_e(url)}</div>`;
+        _mapsPopup.innerHTML =
+            `<div class="pg-maps-popup-inner">` +
+            `<iframe src="${_e(src)}" loading="lazy" style="width:240px;height:160px;border:none;display:block;"></iframe>` +
+            `<button class="pg-popup-expand" data-expand="maps" data-lat="${lat}" data-lng="${lng}" data-url="${_e(url)}" title="Expand map">${SVG.expand}</button>` +
+            `</div>` +
+            `<div class="pg-maps-popup-url">${_e(url)}</div>`;
     }
 
     function _showMapsPopup(anchor, url) {
@@ -355,11 +484,14 @@
         if (_filesPopup) return;
         _filesPopup = document.createElement("div");
         _filesPopup.className = "pg-files-popup";
+        _filesPopup.addEventListener("mouseenter", () => clearTimeout(_filesTimer));
+        _filesPopup.addEventListener("mouseleave", () => { _filesTimer = setTimeout(_hideFilesPopup, 120); });
         document.body.appendChild(_filesPopup);
     }
 
     function _showFilesPopup(anchor, name) {
         _ensureFilesPopup();
+        _filesPopup.dataset.rowName = name;
         _filesPopup.innerHTML = `<div class="pg-fp-empty">Loading…</div>`;
         _positionPopup(_filesPopup, anchor);
         _filesPopup.classList.add("pg-popup-vis");
@@ -387,6 +519,7 @@
     }
 
     function _renderFilesPopup(files) {
+        const name = _filesPopup.dataset.rowName || "";
         if (!files.length) {
             _filesPopup.innerHTML = `<div class="pg-fp-empty">No files attached</div>`;
             return;
@@ -401,11 +534,433 @@
             }
             return `<div class="pg-fp-file" title="${_e(f.file_name)}" style="transform:rotate(${rot}deg)">${SVG.file}<span class="pg-fp-fname">${_e(f.file_name)}</span></div>`;
         }).join("");
-        _filesPopup.innerHTML = `<div class="pg-fp-items">${items}</div>`;
+        _filesPopup.innerHTML =
+            `<div class="pg-fp-expand-wrap" style="position:relative;">` +
+            `<button class="pg-popup-expand" data-expand="files" data-name="${_e(name)}" title="Expand files">${SVG.expand}</button>` +
+            `<div class="pg-fp-items">${items}</div>` +
+            `</div>`;
     }
 
     function _hideFilesPopup() {
         if (_filesPopup) _filesPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _ensureOwnerPopup() {
+        if (_ownerPopup) return;
+        _ownerPopup = document.createElement("div");
+        _ownerPopup.className = "pg-owner-popup";
+        _ownerPopup.addEventListener("mouseenter", () => clearTimeout(_ownerTimer));
+        _ownerPopup.addEventListener("mouseleave", () => { _ownerTimer = setTimeout(_hideOwnerPopup, 120); });
+        document.body.appendChild(_ownerPopup);
+    }
+
+    function _hideOwnerPopup() {
+        if (_ownerPopup) _ownerPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _renderOwnerPopup(u, initials, color) {
+        const name  = u.full_name  || initials;
+        const email = u.email      || "";
+        const phone = u.phone      || u.mobile_no || "";
+        const loc   = "Beirut";
+        _ownerPopup.innerHTML =
+            `<div class="pg-owner-popup-top">` +
+            `<span class="pg-owner-popup-av" style="background:${_e(color)}">${_e(initials)}</span>` +
+            `<span class="pg-owner-popup-name">${_e(name)}</span>` +
+            `</div>` +
+            `<div class="pg-owner-popup-rows">` +
+            (email ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
+            (phone ? `<div class="pg-owner-popup-row"><svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg><span>${_e(phone)}</span></div>` : "") +
+            `</div>` +
+            `<div class="pg-owner-popup-loc"><svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 1a5 5 0 00-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 00-5-5z"/><circle cx="8" cy="6" r="1.5"/></svg><span>${_e(loc)}</span></div>`;
+    }
+
+    function _showOwnerPopup(anchor, owner, initials, color) {
+        _ensureOwnerPopup();
+        _ownerPopup.classList.add("pg-popup-vis");
+
+        if (!owner) {
+            _renderOwnerPopup({ full_name: initials }, initials, color);
+            _positionPopup(_ownerPopup, anchor);
+            return;
+        }
+        if (_ownerCache[owner]) {
+            _renderOwnerPopup(_ownerCache[owner], initials, color);
+            _positionPopup(_ownerPopup, anchor);
+            return;
+        }
+        _ownerPopup.innerHTML = `<div style="padding:16px;font-size:12px;color:#9ca3af;text-align:center">Loading…</div>`;
+        _positionPopup(_ownerPopup, anchor);
+        frappe.call({
+            method: "frappe.client.get",
+            args: { doctype: "User", name: owner },
+            callback(r) {
+                _ownerCache[owner] = r.message || { full_name: initials, email: owner };
+                if (_ownerPopup.classList.contains("pg-popup-vis")) {
+                    _renderOwnerPopup(_ownerCache[owner], initials, color);
+                    _positionPopup(_ownerPopup, anchor);
+                }
+            },
+            error() {
+                _ownerCache[owner] = { full_name: initials, email: owner };
+                if (_ownerPopup.classList.contains("pg-popup-vis")) {
+                    _renderOwnerPopup(_ownerCache[owner], initials, color);
+                    _positionPopup(_ownerPopup, anchor);
+                }
+            },
+        });
+    }
+
+    // ── Email compose panel ────────────────────────────────────────
+    function _openCompose(email, rowName, cfg) {
+        const existing = document.querySelector(".pg-compose");
+        if (existing) existing.remove();
+
+        const panel = document.createElement("div");
+        panel.className = "pg-compose";
+        panel.innerHTML =
+            `<div class="pg-compose-head">` +
+            `<span class="pg-compose-title">${SVG.mail} New Message</span>` +
+            `<div class="pg-compose-head-btns">` +
+            `<button class="pg-compose-hbtn pg-compose-mailto-head" title="Open in mail app">${SVG.extlnk}</button>` +
+            `<button class="pg-compose-hbtn pg-compose-close-btn">${SVG.close}</button>` +
+            `</div></div>` +
+            `<div class="pg-compose-row pg-compose-row--tags" id="pg-to-row">` +
+            `<span class="pg-compose-lbl">To</span>` +
+            `<div class="pg-compose-tags"><input class="pg-compose-tag-inp" type="text" placeholder="Add recipient…" autocomplete="off"></div>` +
+            `<button class="pg-compose-bulk-btn" title="Broadcast / select multiple">${SVG.plus}</button>` +
+            `</div>` +
+            `<div class="pg-compose-row"><span class="pg-compose-lbl">Subject</span><input class="pg-compose-inp pg-compose-subject" type="text" placeholder="Subject…"></div>` +
+            `<textarea class="pg-compose-body" placeholder="Write your message…"></textarea>` +
+            `<div class="pg-compose-foot">` +
+            `<button class="pg-compose-send">${SVG.mail} Send</button>` +
+            `<button class="pg-compose-mailto">${SVG.extlnk} Open in mail app</button>` +
+            `</div>`;
+
+        document.body.appendChild(panel);
+
+        const $toRow   = panel.querySelector("#pg-to-row");
+        const $tags    = panel.querySelector(".pg-compose-tags");
+        const $subject = panel.querySelector(".pg-compose-subject");
+        const $body    = panel.querySelector(".pg-compose-body");
+        const close    = () => panel.remove();
+        let   _recipients = [];
+
+        panel.querySelector(".pg-compose-close-btn").addEventListener("click", close);
+
+        // ── Tag input helpers ──────────────────────────────────
+        function _getInp() { return $tags.querySelector(".pg-compose-tag-inp"); }
+
+        function _addTag(addr) {
+            addr = addr.trim();
+            if (!addr || _recipients.includes(addr)) return;
+            _recipients.push(addr);
+            const tag = document.createElement("span");
+            tag.className = "pg-compose-tag";
+            tag.innerHTML = `${_e(addr)}<button class="pg-compose-tag-x" title="Remove"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:8px;height:8px"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`;
+            tag.querySelector(".pg-compose-tag-x").addEventListener("click", () => {
+                _recipients = _recipients.filter(r => r !== addr);
+                tag.remove();
+            });
+            $tags.insertBefore(tag, _getInp());
+            _getInp().value = "";
+        }
+
+        // Seed initial email as a tag
+        if (email) _addTag(email);
+
+        // Confirm on comma / Enter
+        $tags.addEventListener("keydown", e => {
+            const inp = _getInp();
+            if ((e.key === "," || e.key === "Enter") && inp.value.trim()) {
+                e.preventDefault();
+                _addTag(inp.value.replace(",",""));
+                _closeAc();
+            }
+            if (e.key === "Backspace" && !inp.value && _recipients.length) {
+                const last = _recipients[_recipients.length - 1];
+                _recipients.pop();
+                [...$tags.querySelectorAll(".pg-compose-tag")].at(-1)?.remove();
+            }
+        });
+
+        // Click anywhere in tags area focuses the input
+        $tags.addEventListener("click", () => _getInp().focus());
+
+        // ── Autocomplete ──────────────────────────────────────
+        let _acTimer = null, _acDropdown = null;
+
+        function _closeAc() {
+            if (_acDropdown) { _acDropdown.remove(); _acDropdown = null; }
+        }
+
+        function _showAc(results) {
+            _closeAc();
+            const visible = results.filter(r => r.custom_email && !_recipients.includes(r.custom_email));
+            if (!visible.length) return;
+            _acDropdown = document.createElement("div");
+            _acDropdown.className = "pg-compose-ac";
+            visible.forEach(r => {
+                const name = [r.custom_first_name, r.custom_last_name].filter(Boolean).join(" ") || r.company_name || r.name;
+                const item = document.createElement("div");
+                item.className = "pg-compose-ac-item";
+                item.innerHTML = `<span class="pg-compose-ac-name">${_e(name)}</span><span class="pg-compose-ac-email">${_e(r.custom_email)}</span>`;
+                item.addEventListener("mousedown", e => {
+                    e.preventDefault();
+                    _addTag(r.custom_email);
+                    _closeAc();
+                });
+                _acDropdown.appendChild(item);
+            });
+            if (_acDropdown.children.length) $toRow.appendChild(_acDropdown);
+        }
+
+        $tags.addEventListener("input", e => {
+            if (e.target !== _getInp()) return;
+            clearTimeout(_acTimer);
+            const seg = _getInp().value.trim();
+            if (seg.length < 2) { _closeAc(); return; }
+            _acTimer = setTimeout(() => {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Prospect",
+                        or_filters: [
+                            ["custom_email",      "like", "%" + seg + "%"],
+                            ["custom_first_name", "like", "%" + seg + "%"],
+                            ["custom_last_name",  "like", "%" + seg + "%"],
+                            ["company_name",      "like", "%" + seg + "%"],
+                        ],
+                        fields: ["name","custom_first_name","custom_last_name","company_name","custom_email"],
+                        limit: 8,
+                    },
+                    callback(r) { _showAc(r.message || []); },
+                });
+            }, 200);
+        });
+
+        $tags.addEventListener("focusout", () => setTimeout(_closeAc, 150));
+
+        // ── Broadcast / bulk select ────────────────────────────
+        panel.querySelector(".pg-compose-bulk-btn").addEventListener("click", () => {
+            _openBroadcast(cfg, selected => selected.forEach(_addTag));
+        });
+
+        // ── Open in mail app ───────────────────────────────────
+        const openMailto = () => {
+            const to  = _recipients.join(",");
+            const sub = encodeURIComponent($subject.value.trim());
+            const bod = encodeURIComponent($body.value.trim());
+            window.open(`mailto:${to}?subject=${sub}&body=${bod}`);
+        };
+        panel.querySelector(".pg-compose-mailto-head").addEventListener("click", openMailto);
+        panel.querySelector(".pg-compose-mailto").addEventListener("click", openMailto);
+
+        // ── Send ───────────────────────────────────────────────
+        panel.querySelector(".pg-compose-send").addEventListener("click", () => {
+            // Confirm any pending typed address
+            const pending = _getInp().value.trim();
+            if (pending) _addTag(pending);
+
+            const to      = _recipients.join(", ");
+            const subject = $subject.value.trim();
+            const content = $body.value.trim();
+            if (!to || !subject || !content) {
+                frappe.show_alert({ message: "Please fill To, Subject and message.", indicator: "orange" }, 4);
+                return;
+            }
+            frappe.call({
+                method: "frappe.core.doctype.communication.email.make",
+                args: {
+                    doctype:              cfg.doctype || "Prospect",
+                    name:                 rowName,
+                    subject,
+                    content,
+                    recipients:           to,
+                    sent_or_received:     "Sent",
+                    communication_medium: "Email",
+                    send_email:           1,
+                },
+                callback() { frappe.show_alert({ message: "Email sent", indicator: "green" }, 3); close(); },
+                error(err) {
+                    const msg = (err && err.message) || "";
+                    if (msg.includes("email account") || msg.includes("Email Account")) {
+                        frappe.msgprint({
+                            title: "Email account not configured",
+                            message: 'No default outbound email account found.<br><br><a href="/app/email-account" style="color:#2563eb;font-weight:600">→ Go to Settings › Email Account</a> and set one as default.',
+                            indicator: "orange",
+                        });
+                    } else {
+                        frappe.show_alert({ message: "Send failed: " + (msg || "unknown error"), indicator: "red" }, 5);
+                    }
+                },
+            });
+        });
+
+        requestAnimationFrame(() => $subject.focus());
+    }
+
+    // ── Broadcast / bulk-select modal ─────────────────────────────
+    function _openBroadcast(cfg, onConfirm) {
+        let _allProspects = [];
+        let _selected     = new Set();
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-bcast-overlay";
+        overlay.innerHTML =
+            `<div class="pg-bcast-box">` +
+            `<div class="pg-bcast-head"><span class="pg-bcast-title">Select Recipients</span><button class="pg-bcast-close">${SVG.close}</button></div>` +
+            `<div class="pg-bcast-search"><input class="pg-bcast-search-inp" type="text" placeholder="Search by name, company or email…"></div>` +
+            `<div class="pg-bcast-selall"><input type="checkbox" id="pg-bcast-all"><label for="pg-bcast-all" style="cursor:pointer">Select all visible</label></div>` +
+            `<div class="pg-bcast-list"></div>` +
+            `<div class="pg-bcast-foot"><span class="pg-bcast-count">0 selected</span><button class="pg-bcast-confirm">Add to recipients</button></div>` +
+            `</div>`;
+        document.body.appendChild(overlay);
+
+        const $list    = overlay.querySelector(".pg-bcast-list");
+        const $search  = overlay.querySelector(".pg-bcast-search-inp");
+        const $selAll  = overlay.querySelector("#pg-bcast-all");
+        const $count   = overlay.querySelector(".pg-bcast-count");
+        const close    = () => overlay.remove();
+
+        overlay.querySelector(".pg-bcast-close").addEventListener("click", close);
+        overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+        document.addEventListener("keydown", function onKey(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onKey); } });
+
+        function _updateCount() {
+            $count.textContent = `${_selected.size} selected`;
+        }
+
+        function _renderList(prospects) {
+            $list.innerHTML = "";
+            prospects.forEach(p => {
+                if (!p.custom_email) return;
+                const label = [p.custom_first_name, p.custom_last_name].filter(Boolean).join(" ") || p.company_name || p.name;
+                const item  = document.createElement("div");
+                item.className = "pg-bcast-item";
+                const checked = _selected.has(p.custom_email) ? "checked" : "";
+                item.innerHTML =
+                    `<input type="checkbox" ${checked} data-email="${_e(p.custom_email)}">` +
+                    `<div class="pg-bcast-item-info"><span class="pg-bcast-item-name">${_e(label)}</span><span class="pg-bcast-item-email">${_e(p.custom_email)}</span></div>`;
+                item.querySelector("input").addEventListener("change", function() {
+                    if (this.checked) _selected.add(p.custom_email);
+                    else              _selected.delete(p.custom_email);
+                    _updateCount();
+                    _syncSelAll(prospects);
+                });
+                item.addEventListener("click", e => { if (e.target.tagName !== "INPUT") item.querySelector("input").click(); });
+                $list.appendChild(item);
+            });
+        }
+
+        function _syncSelAll(visible) {
+            const withEmail  = visible.filter(p => p.custom_email);
+            const allChecked = withEmail.length > 0 && withEmail.every(p => _selected.has(p.custom_email));
+            $selAll.checked  = allChecked;
+            $selAll.indeterminate = !allChecked && withEmail.some(p => _selected.has(p.custom_email));
+        }
+
+        function _filtered() {
+            const q = $search.value.trim().toLowerCase();
+            if (!q) return _allProspects;
+            return _allProspects.filter(p =>
+                (p.custom_first_name || "").toLowerCase().includes(q) ||
+                (p.custom_last_name  || "").toLowerCase().includes(q) ||
+                (p.company_name      || "").toLowerCase().includes(q) ||
+                (p.custom_email      || "").toLowerCase().includes(q)
+            );
+        }
+
+        $search.addEventListener("input", () => {
+            const vis = _filtered();
+            _renderList(vis);
+            _syncSelAll(vis);
+        });
+
+        $selAll.addEventListener("change", () => {
+            const vis = _filtered();
+            vis.filter(p => p.custom_email).forEach(p => {
+                if ($selAll.checked) _selected.add(p.custom_email);
+                else                 _selected.delete(p.custom_email);
+            });
+            _renderList(vis);
+            _updateCount();
+        });
+
+        overlay.querySelector(".pg-bcast-confirm").addEventListener("click", () => {
+            onConfirm([..._selected]);
+            close();
+        });
+
+        // Load all prospects with emails
+        $list.innerHTML = `<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px">Loading…</div>`;
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Prospect",
+                filters:  [["custom_email", "!=", ""]],
+                fields:   ["name","custom_first_name","custom_last_name","company_name","custom_email"],
+                limit:    500,
+            },
+            callback(r) {
+                _allProspects = (r.message || []).filter(p => p.custom_email);
+                _renderList(_allProspects);
+                requestAnimationFrame(() => $search.focus());
+            },
+        });
+    }
+
+    // ── Expand modal ───────────────────────────────────────────────
+    function _openExpandModal(btn) {
+        const type = btn.dataset.expand;
+        let title = "", bodyHtml = "";
+
+        if (type === "maps") {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
+            const url = btn.dataset.url || "";
+            const d   = 0.01;
+            const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`;
+            title    = "Map Preview";
+            bodyHtml = `<iframe src="${_e(src)}" loading="lazy" style="width:100%;height:100%;border:none;display:block;"></iframe>`;
+        } else if (type === "files") {
+            const name  = btn.dataset.name || "";
+            const files = _filesCache[name] || [];
+            const imgs  = ["jpg","jpeg","png","gif","webp","svg","bmp"];
+            title = "Attached Files";
+            if (!files.length) {
+                bodyHtml = `<div class="pg-modal-empty">No files attached</div>`;
+            } else {
+                const items = files.map(f => {
+                    const ext  = (f.file_name || "").split(".").pop().toLowerCase();
+                    const href = _e(f.file_url);
+                    if (imgs.includes(ext)) {
+                        return `<a class="pg-modal-file-link" href="${href}" target="_blank" rel="noopener" title="${_e(f.file_name)}"><img class="pg-modal-thumb" src="${href}" loading="lazy"></a>`;
+                    }
+                    return `<a class="pg-modal-file-link" href="${href}" target="_blank" rel="noopener" title="${_e(f.file_name)}"><div class="pg-modal-file-item">${SVG.file}<span class="pg-modal-fname">${_e(f.file_name)}</span></div></a>`;
+                }).join("");
+                bodyHtml = `<div class="pg-modal-files-grid">${items}</div>`;
+            }
+        }
+
+        _hideMapsPopup();
+        _hideFilesPopup();
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-modal-overlay";
+        overlay.innerHTML =
+            `<div class="pg-modal-box">` +
+            `<div class="pg-modal-header"><span class="pg-modal-title">${_e(title)}</span><button class="pg-modal-close">${SVG.close}</button></div>` +
+            `<div class="pg-modal-body">${bodyHtml}</div>` +
+            `</div>`;
+
+        const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+        const onKey = e => { if (e.key === "Escape") close(); };
+
+        overlay.querySelector(".pg-modal-close").addEventListener("click", close);
+        overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+        document.addEventListener("keydown", onKey);
+        document.body.appendChild(overlay);
     }
 
     function _positionPopup(popup, anchor) {
@@ -548,6 +1103,101 @@
                 if (o === val) opt.selected = true;
                 el.appendChild(opt);
             });
+        } else if (ctype === "company") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.placeholder = "Search or create company…";
+            _eFl.style.overflow = "visible";
+
+            // Autocomplete dropdown
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const tdRect = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 200)}px;`;
+            document.body.appendChild(drop);
+
+            let _acTimer = null, _acItems = [], _acIdx = -1;
+
+            const _renderDrop = (items, q) => {
+                _acItems = items;
+                drop.innerHTML = "";
+                items.forEach((name, i) => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item" + (i === _acIdx ? " pg-ac-active" : "");
+                    d.textContent = name;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = name; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                });
+                if (q && !items.find(n => n.toLowerCase() === q.toLowerCase())) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${q}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = q; drop.remove(); _closeEdit(true); _bgCreateCompany(q); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _bgCreateCompany = (name) => {
+                frappe.call({
+                    method: "frappe.client.insert",
+                    args: { doc: { doctype: "Company", company_name: name, abbr: name.substring(0, 3).toUpperCase(), default_currency: "USD" } },
+                    error() { frappe.show_alert({ message: `Failed to create company "${name}"`, indicator: "red" }, 4); },
+                });
+            };
+
+            const _query = (q) => {
+                if (!q) { drop.style.display = "none"; return; }
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Company", filters: [["company_name", "like", "%" + q + "%"]], fields: ["company_name"], limit: 8 },
+                    callback(r) { _renderDrop((r.message || []).map(c => c.company_name), q); },
+                });
+            };
+
+            el.addEventListener("input", () => {
+                clearTimeout(_acTimer);
+                _acIdx = -1;
+                _acTimer = setTimeout(() => _query(el.value.trim()), 200);
+            });
+
+            el.addEventListener("keydown", ev => {
+                const vis = drop.style.display !== "none";
+                if (ev.key === "ArrowDown" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.min(_acIdx + 1, drop.children.length - 1);
+                    Array.from(drop.children).forEach((c, i) => c.classList.toggle("pg-ac-active", i === _acIdx));
+                    return;
+                }
+                if (ev.key === "ArrowUp" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.max(_acIdx - 1, 0);
+                    Array.from(drop.children).forEach((c, i) => c.classList.toggle("pg-ac-active", i === _acIdx));
+                    return;
+                }
+                if (ev.key === "Enter") {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (!q) { drop.remove(); _closeEdit(false); return; }
+                    // Close immediately; verify/create in background
+                    drop.remove();
+                    _closeEdit(true);
+                    frappe.call({
+                        method: "frappe.client.get_list",
+                        args: { doctype: "Company", filters: [["company_name", "=", q]], fields: ["company_name"], limit: 1 },
+                        callback(r) {
+                            if (!r.message || !r.message.length) _bgCreateCompany(q);
+                        },
+                    });
+                    return;
+                }
+            }, true);
+
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 150); });
         } else if (ctype === "date") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -573,6 +1223,7 @@
         _eRoot = root;
         el.focus();
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
+        if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
 
         el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
         el.addEventListener("keydown", e => {
@@ -615,7 +1266,10 @@
 
         td.dataset.val = newVal;
 
-        const cfg = root._pgCfg;
+        const cfg   = root._pgCfg;
+        const outer = root.querySelector(".pg-tbl-outer");
+        const savedScroll = outer ? outer.scrollLeft : 0;
+
         const col = (cfg.cols || []).find(c => c.key === ckey)
                  || (cfg.fixed || []).find(f => f.key === ckey)
                  || {};
@@ -625,6 +1279,8 @@
         } else {
             td.textContent = newVal;
         }
+
+        if (outer) outer.scrollLeft = savedScroll;
 
         const rowObj = (cfg.rows || []).find(r => r.name === name);
         if (rowObj && ckey) rowObj[ckey] = newVal;
@@ -703,6 +1359,9 @@
             if (pill) _activatePill(root, pill, tabCount);
         });
 
+        // ── Close edit on scroll ────────────────────────────────
+        outer.addEventListener("scroll", () => { if (_eIn) _closeEdit(true); }, { passive: true });
+
         // ── Wheel tab switch ────────────────────────────────────
         outer.addEventListener("wheel", e => {
             const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
@@ -772,13 +1431,36 @@
         // ── Inline edit ─────────────────────────────────────────
         if (cfg.editable) {
             root.addEventListener("click", e => {
-                if (e.target.closest(".pg-maps-btn")) return;
-                if (e.target.closest(".pg-wa-btn"))   return;
+                if (e.target.closest(".pg-maps-btn"))  return;
+                if (e.target.closest(".pg-wa-btn"))    return;
+                if (e.target.closest(".pg-email-btn")) return;
+                if (e.target.closest(".pg-social-lnk")) return;
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
                 _openEdit(root, td);
             });
         }
+
+        // ── Expand button (inside popup) — wired once ────────────
+        if (!document._pgExpandWired) {
+            document._pgExpandWired = true;
+            document.addEventListener("click", e => {
+                const btn = e.target.closest(".pg-popup-expand");
+                if (!btn) return;
+                e.stopPropagation();
+                _openExpandModal(btn);
+            });
+        }
+
+        // ── Email compose button ─────────────────────────────────
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-email-btn");
+            if (!btn) return;
+            e.stopPropagation();
+            const td      = btn.closest("td");
+            const rowName = td && td.dataset.rowName;
+            _openCompose(btn.dataset.email, rowName || "", cfg);
+        });
 
         // ── Maps hover popup ─────────────────────────────────────
         root.addEventListener("mouseenter", e => {
@@ -813,6 +1495,23 @@
             _filesTimer = setTimeout(_hideFilesPopup, 120);
         }, true);
 
+        // ── Owner hover popup ────────────────────────────────────
+        root.addEventListener("mouseenter", e => {
+            const av = e.target.closest(".pg-owner-av");
+            if (!av) return;
+            const owner    = av.dataset.owner    || "";
+            const initials = av.dataset.initials || "?";
+            const color    = av.dataset.color    || "#6b7280";
+            clearTimeout(_ownerTimer);
+            _ownerTimer = setTimeout(() => _showOwnerPopup(av, owner, initials, color), 180);
+        }, true);
+
+        root.addEventListener("mouseleave", e => {
+            if (!e.target.closest(".pg-owner-av")) return;
+            clearTimeout(_ownerTimer);
+            _ownerTimer = setTimeout(_hideOwnerPopup, 120);
+        }, true);
+
         // ── File upload / camera ────────────────────────────────
         root.addEventListener("click", e => {
             const uploadBtn = e.target.closest(".pg-file-btn:not(.pg-cam-btn)");
@@ -832,16 +1531,27 @@
             inp.onchange = () => {
                 const file = inp.files && inp.files[0];
                 if (!file) return;
-                delete _filesCache[name]; // invalidate cache
-                const uploader = new frappe.ui.FileUploader({
-                    doctype: cfg.doctype || "Prospect",
-                    docname: name,
-                    file_obj: file,
-                    on_success(f) {
-                        frappe.show_alert({ message: `Uploaded: ${f.file_name}`, indicator: "green" }, 3);
-                    },
+                delete _filesCache[name];
+                frappe.show_alert({ message: `Uploading ${file.name}…`, indicator: "blue" }, 4);
+                const fd = new FormData();
+                fd.append("file", file, file.name);
+                fd.append("doctype",  cfg.doctype || "Prospect");
+                fd.append("docname",  name);
+                fd.append("is_private", "0");
+                fd.append("folder",   "Home/Attachments");
+                fetch("/api/method/upload_file", {
+                    method: "POST",
+                    headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+                    body: fd,
+                }).then(r => r.json()).then(data => {
+                    if (data.message && data.message.file_name) {
+                        frappe.show_alert({ message: `Uploaded: ${data.message.file_name}`, indicator: "green" }, 3);
+                    } else {
+                        frappe.show_alert({ message: "Upload failed", indicator: "red" }, 4);
+                    }
+                }).catch(() => {
+                    frappe.show_alert({ message: "Upload failed", indicator: "red" }, 4);
                 });
-                uploader.upload_file();
             };
             document.body.appendChild(inp);
             inp.click();
@@ -923,7 +1633,7 @@
         root.querySelectorAll(".pg-pill").forEach(p => p.classList.remove("active"));
         pill.classList.add("active");
         _positionInd(pill);
-        tbl.style.setProperty("--pg-dir", (newN > oldN ? -160 : 160) + "px");
+        tbl.style.setProperty("--pg-dir", (newN > oldN ? 160 : -160) + "px");
         tbl.setAttribute("data-tab", newN);
     }
 

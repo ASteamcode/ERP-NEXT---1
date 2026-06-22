@@ -202,6 +202,7 @@ def get_prospects():
             "city":     r.custom_site_location or "",
             "maps":        r.custom_maps_url or "",
             "has_drawing": r.custom_has_drawing or 0,
+            "owner":          owner_email,
             "owner_initials": _initials(owner_email),
             "owner_name":     owner_names.get(owner_email, owner_email),
             "pstatus":  r.custom_project_status or "",
