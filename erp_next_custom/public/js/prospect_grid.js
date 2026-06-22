@@ -97,27 +97,38 @@
 /* email compose panel */
 .pg-compose{position:fixed;bottom:0;right:28px;z-index:999995;width:480px;border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.16);overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1.5px solid #e8e8f0;border-bottom:none;animation:pg-compose-in .18s cubic-bezier(.2,0,.2,1) both;}
 @keyframes pg-compose-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.pg-compose-head{background:#1e3a8a;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;user-select:none;}
+.pg-compose-head{background:linear-gradient(135deg,#1e3a8a 0%,#2d52a8 100%);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;user-select:none;}
 .pg-compose-title{color:#fff;font-size:13px;font-weight:600;letter-spacing:.01em;display:flex;align-items:center;gap:7px;}
-.pg-compose-head-btns{display:flex;gap:4px;align-items:center;}
-.pg-compose-hbtn{background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s;padding:0;flex-shrink:0;}
-.pg-compose-hbtn:hover{background:rgba(255,255,255,.28);}
-.pg-compose-row{display:flex;align-items:center;border-bottom:1px solid #f0f0f5;padding:0 20px;position:relative;}
-.pg-compose-lbl{font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;width:56px;flex-shrink:0;}
-.pg-compose-inp{flex:1;border:none;outline:none;font-size:13px;color:#111827;padding:11px 0;font-family:inherit;background:transparent;}
-.pg-compose-inp::placeholder{color:#d1d5db;}
-.pg-compose-bulk-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid #e0e0ea;background:#f8fafc;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;padding:0;margin-left:6px;}
+.pg-compose-head-btns{display:flex;gap:6px;align-items:center;}
+.pg-compose-hbtn{background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,transform .1s;padding:0;flex-shrink:0;}
+.pg-compose-hbtn:hover{background:rgba(255,255,255,.32);transform:scale(1.08);}
+/* all rows: centered by default; TO row overrides to flex-start for tag wrapping */
+.pg-compose-row{display:flex;align-items:center;border-bottom:1px solid #f0f0f5;padding:0 20px;position:relative;min-height:44px;}
+.pg-compose-row.pg-compose-row--tags{align-items:flex-start;padding:8px 20px;}
+.pg-compose-lbl{font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;width:64px;flex-shrink:0;}
+.pg-compose-row--tags .pg-compose-lbl{padding-top:6px;}
+/* tag-input container */
+.pg-compose-tags{flex:1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:28px;}
+.pg-compose-tag{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;color:#1e40af;font-weight:500;line-height:1;}
+.pg-compose-tag-x{background:none;border:none;color:#93c5fd;cursor:pointer;padding:0;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:color .1s,background .1s;}
+.pg-compose-tag-x svg{display:block;}
+.pg-compose-tag-x:hover{color:#dc2626;background:#fee2e2;}
+.pg-compose-tag-inp{border:none;outline:none;font-size:13px;color:#111827;font-family:inherit;background:transparent;min-width:140px;padding:3px 0;line-height:1.4;}
+.pg-compose-tag-inp::placeholder{color:#d1d5db;}
+.pg-compose-bulk-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid #e0e0ea;background:#f8fafc;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;padding:0;margin-left:6px;align-self:flex-start;margin-top:7px;}
 .pg-compose-bulk-btn:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
 .pg-compose-ac{position:absolute;top:100%;left:0;right:0;z-index:10;background:#fff;border:1.5px solid #e8e8f0;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;}
 .pg-compose-ac-item{display:flex;flex-direction:column;padding:9px 20px;cursor:pointer;gap:1px;transition:background .1s;}
 .pg-compose-ac-item:hover{background:#f0f5ff;}
 .pg-compose-ac-name{font-size:12.5px;font-weight:600;color:#111827;}
 .pg-compose-ac-email{font-size:11px;color:#6b7280;}
+.pg-compose-inp{flex:1;border:none;outline:none;font-size:13px;color:#111827;padding:0;font-family:inherit;background:transparent;}
+.pg-compose-inp::placeholder{color:#d1d5db;}
 .pg-compose-body{flex:1;border:none;outline:none;font-size:13px;color:#374151;padding:16px 20px;font-family:inherit;resize:none;min-height:210px;line-height:1.7;}
 .pg-compose-body::placeholder{color:#d1d5db;}
 .pg-compose-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1.5px solid #e8e8f0;background:#fafafa;}
-.pg-compose-send{display:inline-flex;align-items:center;gap:6px;padding:8px 22px;background:#1e3a8a;color:#fff;border:none;border-radius:99px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .14s;}
-.pg-compose-send:hover{background:#1e40af;}
+.pg-compose-send{display:inline-flex;align-items:center;gap:6px;padding:8px 22px;background:linear-gradient(135deg,#1e3a8a 0%,#2d52a8 100%);color:#fff;border:none;border-radius:99px;font-size:12.5px;font-weight:600;cursor:pointer;transition:opacity .14s;box-shadow:0 2px 8px rgba(30,58,138,.3);}
+.pg-compose-send:hover{opacity:.88;}
 .pg-compose-mailto{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#fff;color:#6b7280;border:1.5px solid #e0e0ea;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;transition:all .14s;}
 .pg-compose-mailto:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
 /* broadcast / bulk-select modal */
@@ -610,9 +621,9 @@
             `<button class="pg-compose-hbtn pg-compose-mailto-head" title="Open in mail app">${SVG.extlnk}</button>` +
             `<button class="pg-compose-hbtn pg-compose-close-btn">${SVG.close}</button>` +
             `</div></div>` +
-            `<div class="pg-compose-row" id="pg-compose-to-row">` +
+            `<div class="pg-compose-row pg-compose-row--tags" id="pg-to-row">` +
             `<span class="pg-compose-lbl">To</span>` +
-            `<input class="pg-compose-inp pg-compose-to" type="text" value="${_e(email)}" placeholder="recipient@email.com" autocomplete="off">` +
+            `<div class="pg-compose-tags"><input class="pg-compose-tag-inp" type="text" placeholder="Add recipient…" autocomplete="off"></div>` +
             `<button class="pg-compose-bulk-btn" title="Broadcast / select multiple">${SVG.plus}</button>` +
             `</div>` +
             `<div class="pg-compose-row"><span class="pg-compose-lbl">Subject</span><input class="pg-compose-inp pg-compose-subject" type="text" placeholder="Subject…"></div>` +
@@ -624,17 +635,56 @@
 
         document.body.appendChild(panel);
 
-        const $to      = panel.querySelector(".pg-compose-to");
+        const $toRow   = panel.querySelector("#pg-to-row");
+        const $tags    = panel.querySelector(".pg-compose-tags");
         const $subject = panel.querySelector(".pg-compose-subject");
         const $body    = panel.querySelector(".pg-compose-body");
-        const $toRow   = panel.querySelector("#pg-compose-to-row");
         const close    = () => panel.remove();
+        let   _recipients = [];
 
         panel.querySelector(".pg-compose-close-btn").addEventListener("click", close);
 
+        // ── Tag input helpers ──────────────────────────────────
+        function _getInp() { return $tags.querySelector(".pg-compose-tag-inp"); }
+
+        function _addTag(addr) {
+            addr = addr.trim();
+            if (!addr || _recipients.includes(addr)) return;
+            _recipients.push(addr);
+            const tag = document.createElement("span");
+            tag.className = "pg-compose-tag";
+            tag.innerHTML = `${_e(addr)}<button class="pg-compose-tag-x" title="Remove"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:8px;height:8px"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`;
+            tag.querySelector(".pg-compose-tag-x").addEventListener("click", () => {
+                _recipients = _recipients.filter(r => r !== addr);
+                tag.remove();
+            });
+            $tags.insertBefore(tag, _getInp());
+            _getInp().value = "";
+        }
+
+        // Seed initial email as a tag
+        if (email) _addTag(email);
+
+        // Confirm on comma / Enter
+        $tags.addEventListener("keydown", e => {
+            const inp = _getInp();
+            if ((e.key === "," || e.key === "Enter") && inp.value.trim()) {
+                e.preventDefault();
+                _addTag(inp.value.replace(",",""));
+                _closeAc();
+            }
+            if (e.key === "Backspace" && !inp.value && _recipients.length) {
+                const last = _recipients[_recipients.length - 1];
+                _recipients.pop();
+                [...$tags.querySelectorAll(".pg-compose-tag")].at(-1)?.remove();
+            }
+        });
+
+        // Click anywhere in tags area focuses the input
+        $tags.addEventListener("click", () => _getInp().focus());
+
         // ── Autocomplete ──────────────────────────────────────
-        let _acTimer = null;
-        let _acDropdown = null;
+        let _acTimer = null, _acDropdown = null;
 
         function _closeAc() {
             if (_acDropdown) { _acDropdown.remove(); _acDropdown = null; }
@@ -642,35 +692,29 @@
 
         function _showAc(results) {
             _closeAc();
-            if (!results.length) return;
+            const visible = results.filter(r => r.custom_email && !_recipients.includes(r.custom_email));
+            if (!visible.length) return;
             _acDropdown = document.createElement("div");
             _acDropdown.className = "pg-compose-ac";
-            results.forEach(r => {
-                const name  = [r.custom_first_name, r.custom_last_name].filter(Boolean).join(" ") || r.company_name || r.name;
-                const email = r.custom_email || "";
-                if (!email) return;
+            visible.forEach(r => {
+                const name = [r.custom_first_name, r.custom_last_name].filter(Boolean).join(" ") || r.company_name || r.name;
                 const item = document.createElement("div");
                 item.className = "pg-compose-ac-item";
-                item.innerHTML = `<span class="pg-compose-ac-name">${_e(name)}</span><span class="pg-compose-ac-email">${_e(email)}</span>`;
+                item.innerHTML = `<span class="pg-compose-ac-name">${_e(name)}</span><span class="pg-compose-ac-email">${_e(r.custom_email)}</span>`;
                 item.addEventListener("mousedown", e => {
                     e.preventDefault();
-                    // Append to existing TO value
-                    const cur = $to.value.trim();
-                    const parts = cur ? cur.split(",").map(s => s.trim()).filter(Boolean) : [];
-                    if (!parts.includes(email)) parts.push(email);
-                    $to.value = parts.join(", ");
+                    _addTag(r.custom_email);
                     _closeAc();
                 });
                 _acDropdown.appendChild(item);
             });
-            if (!_acDropdown.children.length) return;
-            $toRow.appendChild(_acDropdown);
+            if (_acDropdown.children.length) $toRow.appendChild(_acDropdown);
         }
 
-        $to.addEventListener("input", () => {
+        $tags.addEventListener("input", e => {
+            if (e.target !== _getInp()) return;
             clearTimeout(_acTimer);
-            // Get last typed segment after comma
-            const seg = $to.value.split(",").pop().trim();
+            const seg = _getInp().value.trim();
             if (seg.length < 2) { _closeAc(); return; }
             _acTimer = setTimeout(() => {
                 frappe.call({
@@ -691,21 +735,16 @@
             }, 200);
         });
 
-        $to.addEventListener("blur", () => setTimeout(_closeAc, 150));
+        $tags.addEventListener("focusout", () => setTimeout(_closeAc, 150));
 
         // ── Broadcast / bulk select ────────────────────────────
         panel.querySelector(".pg-compose-bulk-btn").addEventListener("click", () => {
-            _openBroadcast(cfg, selected => {
-                const cur   = $to.value.trim();
-                const parts = cur ? cur.split(",").map(s => s.trim()).filter(Boolean) : [];
-                selected.forEach(e => { if (!parts.includes(e)) parts.push(e); });
-                $to.value = parts.join(", ");
-            });
+            _openBroadcast(cfg, selected => selected.forEach(_addTag));
         });
 
         // ── Open in mail app ───────────────────────────────────
         const openMailto = () => {
-            const to  = $to.value.trim();
+            const to  = _recipients.join(",");
             const sub = encodeURIComponent($subject.value.trim());
             const bod = encodeURIComponent($body.value.trim());
             window.open(`mailto:${to}?subject=${sub}&body=${bod}`);
@@ -715,7 +754,11 @@
 
         // ── Send ───────────────────────────────────────────────
         panel.querySelector(".pg-compose-send").addEventListener("click", () => {
-            const to      = $to.value.trim();
+            // Confirm any pending typed address
+            const pending = _getInp().value.trim();
+            if (pending) _addTag(pending);
+
+            const to      = _recipients.join(", ");
             const subject = $subject.value.trim();
             const content = $body.value.trim();
             if (!to || !subject || !content) {
@@ -723,22 +766,30 @@
                 return;
             }
             frappe.call({
-                method: "frappe.client.insert",
+                method: "frappe.core.doctype.communication.email.make",
                 args: {
-                    doc: {
-                        doctype:              "Communication",
-                        communication_type:   "Communication",
-                        communication_medium: "Email",
-                        sent_or_received:     "Sent",
-                        subject, content,
-                        recipients:           to,
-                        reference_doctype:    cfg.doctype || "Prospect",
-                        reference_name:       rowName,
-                        send_email:           1,
-                    },
+                    doctype:              cfg.doctype || "Prospect",
+                    name:                 rowName,
+                    subject,
+                    content,
+                    recipients:           to,
+                    sent_or_received:     "Sent",
+                    communication_medium: "Email",
+                    send_email:           1,
                 },
                 callback() { frappe.show_alert({ message: "Email sent", indicator: "green" }, 3); close(); },
-                error(err) { frappe.show_alert({ message: "Send failed: " + (err.message || ""), indicator: "red" }, 5); },
+                error(err) {
+                    const msg = (err && err.message) || "";
+                    if (msg.includes("email account") || msg.includes("Email Account")) {
+                        frappe.msgprint({
+                            title: "Email account not configured",
+                            message: 'No default outbound email account found.<br><br><a href="/app/email-account" style="color:#2563eb;font-weight:600">→ Go to Settings › Email Account</a> and set one as default.',
+                            indicator: "orange",
+                        });
+                    } else {
+                        frappe.show_alert({ message: "Send failed: " + (msg || "unknown error"), indicator: "red" }, 5);
+                    }
+                },
             });
         });
 
