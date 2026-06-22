@@ -76,6 +76,10 @@
 @keyframes pg-float-in{from{opacity:0;transform:scaleY(.6) scaleX(.97);box-shadow:none}to{opacity:1;transform:none;box-shadow:0 4px 20px rgba(37,99,235,.18);}}
 .pg-float-input,.pg-float-select{position:absolute;inset:0;width:100%;height:100%;border:2px solid #2563eb;border-radius:3px;background:#fff;padding:0 12px;font-size:12.5px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;pointer-events:all;transform-origin:top center;animation:pg-float-in .14s cubic-bezier(.2,0,.2,1) both;}
 .pg-float-select{padding:0 8px;cursor:pointer;}
+.pg-ac-drop{position:fixed;z-index:100001;background:#fff;border:1.5px solid #e8e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.1);max-height:220px;overflow-y:auto;display:none;}
+.pg-ac-item{padding:7px 13px;cursor:pointer;font-size:12.5px;color:#374151;white-space:nowrap;}
+.pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
+.pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
 
 /* status badges */
 .pg-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:650;white-space:nowrap;}
@@ -1099,6 +1103,101 @@
                 if (o === val) opt.selected = true;
                 el.appendChild(opt);
             });
+        } else if (ctype === "company") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.placeholder = "Search or create company…";
+            _eFl.style.overflow = "visible";
+
+            // Autocomplete dropdown
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const tdRect = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 200)}px;`;
+            document.body.appendChild(drop);
+
+            let _acTimer = null, _acItems = [], _acIdx = -1;
+
+            const _renderDrop = (items, q) => {
+                _acItems = items;
+                drop.innerHTML = "";
+                items.forEach((name, i) => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item" + (i === _acIdx ? " pg-ac-active" : "");
+                    d.textContent = name;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = name; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                });
+                if (q && !items.find(n => n.toLowerCase() === q.toLowerCase())) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${q}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = q; drop.remove(); _closeEdit(true); _bgCreateCompany(q); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _bgCreateCompany = (name) => {
+                frappe.call({
+                    method: "frappe.client.insert",
+                    args: { doc: { doctype: "Company", company_name: name, abbr: name.substring(0, 3).toUpperCase(), default_currency: "USD" } },
+                    error() { frappe.show_alert({ message: `Failed to create company "${name}"`, indicator: "red" }, 4); },
+                });
+            };
+
+            const _query = (q) => {
+                if (!q) { drop.style.display = "none"; return; }
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Company", filters: [["company_name", "like", "%" + q + "%"]], fields: ["company_name"], limit: 8 },
+                    callback(r) { _renderDrop((r.message || []).map(c => c.company_name), q); },
+                });
+            };
+
+            el.addEventListener("input", () => {
+                clearTimeout(_acTimer);
+                _acIdx = -1;
+                _acTimer = setTimeout(() => _query(el.value.trim()), 200);
+            });
+
+            el.addEventListener("keydown", ev => {
+                const vis = drop.style.display !== "none";
+                if (ev.key === "ArrowDown" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.min(_acIdx + 1, drop.children.length - 1);
+                    Array.from(drop.children).forEach((c, i) => c.classList.toggle("pg-ac-active", i === _acIdx));
+                    return;
+                }
+                if (ev.key === "ArrowUp" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.max(_acIdx - 1, 0);
+                    Array.from(drop.children).forEach((c, i) => c.classList.toggle("pg-ac-active", i === _acIdx));
+                    return;
+                }
+                if (ev.key === "Enter") {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (!q) { drop.remove(); _closeEdit(false); return; }
+                    // Close immediately; verify/create in background
+                    drop.remove();
+                    _closeEdit(true);
+                    frappe.call({
+                        method: "frappe.client.get_list",
+                        args: { doctype: "Company", filters: [["company_name", "=", q]], fields: ["company_name"], limit: 1 },
+                        callback(r) {
+                            if (!r.message || !r.message.length) _bgCreateCompany(q);
+                        },
+                    });
+                    return;
+                }
+            }, true);
+
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 150); });
         } else if (ctype === "date") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -1124,6 +1223,7 @@
         _eRoot = root;
         el.focus();
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
+        if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
 
         el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
         el.addEventListener("keydown", e => {
