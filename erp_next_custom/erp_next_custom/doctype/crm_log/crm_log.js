@@ -1,3 +1,4 @@
+(() => {
 // erp_next_custom/erp_next_custom/public/js/crm_log.js
 // ─────────────────────────────────────────────────────────────────────────────
 // CRM Log — Form (Detail) Script
@@ -122,3 +123,4 @@ function crm_update_linked_section(frm) {
 	frm.set_df_property("workflow_section", "hidden", show ? 0 : 1);
 	frm.refresh_field("workflow_section");
 }
+})();

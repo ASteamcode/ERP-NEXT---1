@@ -1,3 +1,4 @@
+(() => {
 // Site Survey — Form Script
 
 const SS_TAB_ORDER = [
@@ -49,3 +50,5 @@ function ss_focus_next(frm, currentField) {
 		}
 	}
 }
+
+})();
