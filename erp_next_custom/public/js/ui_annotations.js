@@ -5,17 +5,19 @@
     // ── Bootstrap ──────────────────────────────────────────────────────────────
     let _inited = false;
 
-    $(document).on("page-change.ann-boot", function () {
+    function _tryBoot() {
         if (_inited) return;
         if (!frappe.session?.user || frappe.session.user === "Guest") return;
-        if (!frappe.user?.has_role("System Manager")) {
-            $(document).off("page-change.ann-boot");
-            return;
-        }
         $(document).off("page-change.ann-boot");
         _inited = true;
         _init();
-    });
+    }
+
+    $(document).on("page-change.ann-boot", _tryBoot);
+    // Fallback: on Safari/Mac, page-change can fire before frappe.session is populated.
+    // Retry at 1 s and 3 s to catch any timing gap at first load.
+    setTimeout(_tryBoot, 1000);
+    setTimeout(_tryBoot, 3000);
 
     function _init() {
         let open          = false;
@@ -49,7 +51,7 @@
 
         // ── 💬 Toggle button ───────────────────────────────────────────────────
         // Hidden — the quick_launch FAB hosts the visible trigger instead.
-        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Ctrl+Right Click)")}">💬</button>`)
+        const $btn = $(`<button class="adm-ann-btn" title="${__("Annotations (Shift+C)")}">💬</button>`)
             .css("display", "none")
             .appendTo("body");
         $btn.on("click", () => open ? _closeSidebar() : _openSidebar());
@@ -259,7 +261,7 @@
                             <span class="ann-sb-title">${__("Annotations")}</span>
                             <button class="ann-sb-close" title="${__("Close")}">×</button>
                         </div>
-                        <div class="ann-sb-hint">${__("Right-click to add · click a pin to edit")}</div>
+                        <div class="ann-sb-hint">${__("Shift+C to drop a pin · click pin to edit")}</div>
                         <div class="ann-sb-body"></div>
                     </div>
                 `).appendTo("body");
@@ -323,15 +325,20 @@
                     const color  = TAG_COLOR[ann.tag] || "#378ADD";
                     const onPage = ann.page_route === currentRoute;
 
+                    const authorInitial = (ann.author || "?").split("@")[0].charAt(0).toUpperCase();
                     const $item = $(`
-                        <div class="ann-item${ann.resolved ? " ann-item--done" : ""}" data-name="${ann.name}">
-                            <div class="ann-item-num" style="background:${color}">${i + 1}</div>
+                        <div class="ann-item${ann.resolved ? " ann-item--done" : ""}" data-name="${ann.name}" style="--ic:${color}">
+                            <div class="ann-item-strip" style="background:${color}"></div>
                             <div class="ann-item-body">
+                                <div class="ann-item-top">
+                                    <span class="ann-item-tag" style="background:${color}22;color:${color}">${frappe.utils.escape_html(ann.tag || "Note")}</span>
+                                    <span class="ann-item-author" title="${frappe.utils.escape_html(ann.author || "")}">${authorInitial}</span>
+                                </div>
                                 <div class="ann-item-preview">${frappe.utils.escape_html(ann.comment)}</div>
                             </div>
                             <div class="ann-item-acts">
                                 <button class="ann-item-edit-btn" title="${__("Edit")}">✎</button>
-                                <button class="ann-item-del-btn"  title="${__("Delete")}">🗑</button>
+                                <button class="ann-item-del-btn"  title="${__("Delete")}">✕</button>
                             </div>
                         </div>
                     `).appendTo($secBody);
@@ -486,127 +493,148 @@
 .adm-btn--active   { background: #378ADD !important; box-shadow: 0 4px 18px rgba(55,138,221,.4) !important; }
 
 /* ── Overlay + pins ─────────────────────────────────────────────────────────── */
-.ann-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+.ann-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 1035; }
 
 .ann-pin {
-    position: absolute; width: 22px; height: 22px; border-radius: 50%;
-    background: var(--pc, #378ADD); border: 2px solid rgba(255,255,255,.9);
-    box-shadow: 0 2px 8px rgba(0,0,0,.22);
+    position: absolute; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--pc, #378ADD); border: 2.5px solid rgba(255,255,255,.95);
+    box-shadow: 0 2px 10px rgba(0,0,0,.28), 0 0 0 3px rgba(var(--pc,55,138,221),.18);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; pointer-events: auto;
     transform: translate(-50%,-50%);
-    transition: transform .12s, box-shadow .12s; z-index: 101; user-select: none;
+    transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+    z-index: 1036; user-select: none;
 }
 .ann-pin:hover,
-.ann-pin--highlight { transform: translate(-50%,-50%) scale(1.35); box-shadow: 0 4px 16px rgba(0,0,0,.3); }
-.ann-pin--done     { opacity: .35; }
-.ann-pin--dragging { cursor: grabbing; transform: translate(-50%,-50%) scale(1.15); transition: none; }
-.ann-n { font-size: 9px; font-weight: 700; color: #fff; user-select: none; line-height: 1; pointer-events: none; }
+.ann-pin--highlight {
+    transform: translate(-50%,-50%) scale(1.4);
+    box-shadow: 0 4px 18px rgba(0,0,0,.32), 0 0 0 5px rgba(55,138,221,.22);
+}
+.ann-pin--done     { opacity: .32; filter: grayscale(.5); }
+.ann-pin--dragging { cursor: grabbing; transform: translate(-50%,-50%) scale(1.18); transition: none; }
+.ann-n { font-size: 10px; font-weight: 800; color: #fff; user-select: none; line-height: 1; pointer-events: none; letter-spacing: -.3px; }
 
 .ann-del {
-    display: none; position: absolute; top: -6px; right: -6px;
-    width: 14px; height: 14px; border-radius: 50%;
-    background: #e74c3c; border: 1.5px solid #fff;
-    color: #fff; font-size: 10px; line-height: 1; cursor: pointer;
-    align-items: center; justify-content: center; padding: 0; z-index: 102;
+    display: none; position: absolute; top: -7px; right: -7px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #e74c3c; border: 2px solid #fff;
+    color: #fff; font-size: 9px; line-height: 1; cursor: pointer;
+    align-items: center; justify-content: center; padding: 0; z-index: 1037;
 }
 .ann-pin:hover .ann-del { display: flex; }
 .ann-del:hover { background: #c0392b; }
 
-.ann-meta { font-size: 11px; color: var(--text-muted, #8d96a0); margin-top: 4px; }
-
 /* ── Sidebar shell ──────────────────────────────────────────────────────────── */
 .ann-sidebar {
-    position: fixed; top: 0; right: -300px; width: 280px; height: 100vh;
-    background: var(--card-bg, #fff);
-    border-left: 1px solid var(--border-color, #e2e8f0);
-    box-shadow: -6px 0 28px rgba(0,0,0,.12);
+    position: fixed; top: 0; right: -320px; width: 300px; height: 100vh;
+    background: #ffffff;
+    border-left: 1px solid #e8edf2;
+    box-shadow: -8px 0 32px rgba(0,0,0,.1);
     z-index: 1060; display: flex; flex-direction: column;
-    transition: right .22s cubic-bezier(.4,0,.2,1); overflow: hidden;
+    transition: right .24s cubic-bezier(.4,0,.2,1); overflow: hidden;
 }
 .ann-sidebar--open { right: 0; }
 
 .ann-sb-hdr {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0;
+    padding: 14px 16px 13px;
+    border-bottom: 1px solid #eef0f3; flex-shrink: 0;
+    background: linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
 }
-.ann-sb-title { font-size: 13px; font-weight: 600; color: var(--text-color, #1f272e); }
+.ann-sb-title { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .02em; }
 .ann-sb-close {
-    border: none; background: none; font-size: 18px; line-height: 1;
-    color: var(--text-muted, #8d96a0); cursor: pointer; padding: 0 2px;
+    border: none; background: rgba(255,255,255,.18); width: 22px; height: 22px;
+    border-radius: 50%; font-size: 14px; line-height: 1;
+    color: rgba(255,255,255,.9); cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s;
 }
-.ann-sb-close:hover { color: var(--text-color, #1f272e); }
+.ann-sb-close:hover { background: rgba(255,255,255,.32); color: #fff; }
 .ann-sb-hint {
-    padding: 6px 14px; font-size: 11px; color: var(--text-muted, #8d96a0);
-    background: var(--bg-light-gray, #f7f8fa);
-    border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0;
+    padding: 6px 14px; font-size: 10.5px; color: #94a3b8;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef0f3; flex-shrink: 0; letter-spacing: .01em;
 }
 .ann-sb-body  { flex: 1; overflow-y: auto; }
-.ann-sb-empty { padding: 28px 16px; font-size: 13px; color: var(--text-muted, #8d96a0); text-align: center; }
+.ann-sb-empty {
+    padding: 40px 20px; font-size: 13px; color: #94a3b8; text-align: center; line-height: 1.6;
+}
 
 /* ── Section header ─────────────────────────────────────────────────────────── */
 .ann-sec-hdr {
     display: flex; align-items: center; gap: 8px;
-    padding: 9px 14px; cursor: pointer; user-select: none;
-    border-bottom: 1px solid var(--border-color, #e8eaed);
+    padding: 8px 14px; cursor: pointer; user-select: none;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef0f3;
     transition: background .1s;
 }
-.ann-sec-hdr:hover { background: var(--bg-light-gray, #f7f8fa); }
-.ann-sec-hdr--open { border-bottom-color: transparent; }
+.ann-sec-hdr:hover { background: #f0f4f8; }
+.ann-sec-hdr--open { border-bottom-color: #e8edf2; }
 
-.ann-sec-arrow { font-size: 10px; color: var(--text-muted, #adb5bd); width: 10px; flex-shrink: 0; }
+.ann-sec-arrow { font-size: 9px; color: #94a3b8; width: 10px; flex-shrink: 0; }
 .ann-sec-name  {
-    flex: 1; font-size: 11px; font-weight: 600; letter-spacing: .05em;
-    text-transform: uppercase; color: var(--text-color, #1f272e);
+    flex: 1; font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: #475569;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ann-sec-sub { font-weight: 400; letter-spacing: 0; color: var(--text-muted, #8d96a0); }
+.ann-sec-sub { font-weight: 400; letter-spacing: 0; color: #94a3b8; text-transform: none; }
 .ann-sec-count {
-    font-size: 11px; font-weight: 500; color: var(--text-muted, #8d96a0);
-    background: var(--bg-light-gray, #f0f2f5);
-    border-radius: 10px; padding: 1px 7px;
+    font-size: 10px; font-weight: 600; color: #2563eb;
+    background: #eff6ff; border-radius: 10px; padding: 1px 7px;
 }
 
 /* ── Section body ───────────────────────────────────────────────────────────── */
-.ann-sec-body { border-bottom: 1px solid var(--border-color, #e8eaed); }
+.ann-sec-body { border-bottom: 1px solid #eef0f3; }
 
 /* ── Item row ───────────────────────────────────────────────────────────────── */
 .ann-item {
-    display: flex; align-items: center; gap: 9px;
-    padding: 7px 12px 7px 22px;
-    border-bottom: 1px solid var(--border-color, #f3f4f5);
-    transition: background .1s;
+    display: flex; align-items: stretch; gap: 0;
+    border-bottom: 1px solid #f1f3f6;
+    transition: background .1s; position: relative;
+    overflow: hidden;
 }
 .ann-item:last-child { border-bottom: none; }
-.ann-item:hover      { background: var(--bg-light-gray, #f7f8fa); }
-.ann-item--done      { opacity: .45; }
-.ann-item--done .ann-item-preview { text-decoration: line-through; }
+.ann-item:hover      { background: #f8fafc; }
+.ann-item--done      { opacity: .48; }
+.ann-item--done .ann-item-preview { text-decoration: line-through; color: #94a3b8; }
 
-.ann-item-num {
-    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 700; color: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,.18);
+.ann-item-strip {
+    width: 3px; flex-shrink: 0;
 }
 .ann-item-body {
-    flex: 1; min-width: 0; cursor: pointer;
+    flex: 1; min-width: 0; cursor: pointer; padding: 8px 8px 8px 10px;
+}
+.ann-item-top {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+}
+.ann-item-tag {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 99px; line-height: 1.6;
+}
+.ann-item-author {
+    margin-left: auto; flex-shrink: 0;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #e0e7ef; color: #475569;
+    font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
 }
 .ann-item-preview {
-    font-size: 12px; color: var(--text-color, #1f272e);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
+    font-size: 12px; color: #1f272e;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5;
 }
 .ann-item-acts {
-    display: flex; gap: 1px; flex-shrink: 0; opacity: 0; transition: opacity .1s;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 2px; flex-shrink: 0; padding: 6px 8px 6px 4px;
+    opacity: 0; transition: opacity .1s;
 }
 .ann-item:hover .ann-item-acts { opacity: 1; }
 .ann-item-edit-btn,
 .ann-item-del-btn {
     border: none; background: none; cursor: pointer;
-    font-size: 13px; padding: 3px 4px; border-radius: 4px;
-    color: var(--text-muted, #8d96a0); transition: background .1s, color .1s; line-height: 1;
+    font-size: 12px; padding: 3px 5px; border-radius: 4px;
+    color: #94a3b8; transition: background .1s, color .1s; line-height: 1;
 }
-.ann-item-edit-btn:hover { background: #eef4ff; color: #378ADD; }
+.ann-item-edit-btn:hover { background: #eef4ff; color: #2563eb; }
 .ann-item-del-btn:hover  { background: #fdecea; color: #e74c3c; }
 
 /* Crosshair when sidebar open */

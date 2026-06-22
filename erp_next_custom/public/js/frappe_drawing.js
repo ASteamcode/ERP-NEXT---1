@@ -12,6 +12,8 @@
 
 window.frappe_drawing = (() => {
 
+    let _isOpen = false; // prevent multiple dialogs from stacking
+
     const GRID = 20; // px between snap points
     const DRAW_UNITS = { "m": 1, "cm": 100, "mm": 1000, "ft": 3.28084, "in": 39.3701 };
 
@@ -41,6 +43,9 @@ window.frappe_drawing = (() => {
 
     // ── Main entry point ──────────────────────────────────────────────────────
     function open(opts) {
+        if (_isOpen) return;
+        _isOpen = true;
+
         const {
             doctype,
             docname,
@@ -884,6 +889,7 @@ window.frappe_drawing = (() => {
 
         const prevOnHide = dialog.onhide;
         dialog.onhide = () => {
+            _isOpen = false;
             document.removeEventListener("keydown", keydownHandler, true);
             if (scaleAnimFrame) cancelAnimationFrame(scaleAnimFrame);
             if (typeof prevOnHide === "function") prevOnHide();
