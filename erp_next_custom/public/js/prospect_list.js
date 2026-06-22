@@ -75,14 +75,29 @@ function _pl_render(listview) {
     if (!host) return;
     GL.hideNative(listview);
 
+    const isMobile = window.innerWidth < 768;
+
     host.innerHTML = `<div class="pl-loading">Loading prospects…</div>`;
 
     frappe.call({
         method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
         callback(r) {
             if (!host || !document.contains(host)) return;
+            const rows = r.message || [];
+
+            if (isMobile) {
+                PM.mount(host, rows, {
+                    onReload() { _pl_render(listview); },
+                    onEdit(name, frappe_field, value) {
+                        frappe.db.set_value("Prospect", name, frappe_field, value)
+                            .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
+                    },
+                });
+                return;
+            }
+
             const cfg = Object.assign({}, _PROSPECT_CFG, {
-                rows: r.message || [],
+                rows,
 
                 onReload() { _pl_render(listview); },
 
