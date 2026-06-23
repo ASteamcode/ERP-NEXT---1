@@ -112,6 +112,30 @@
 
 /* ── drop-icon (submenu chevron) ── */
 .body-sidebar .drop-icon svg { stroke: rgba(255,255,255,.55) !important; }
+
+/* ── Bigger nav icons ── */
+.body-sidebar .sidebar-item-icon { padding: 5px !important; }
+.body-sidebar .standard-sidebar-item .sidebar-item-icon svg,
+.body-sidebar .standard-sidebar-item .sidebar-item-icon img:not(.cst-logo) {
+  width: 22px !important; height: 22px !important;
+}
+
+/* ── Remove Frappe CRM promo banner ── */
+.body-sidebar .promotional-banners { display: none !important; }
+
+/* ── Company logo in sidebar header ── */
+.body-sidebar .sidebar-header .sidebar-item-icon {
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex; align-items: center; justify-content: center;
+  width: 36px !important; height: 36px !important;
+}
+.body-sidebar .sidebar-header .header-logo { display: flex; align-items: center; justify-content: center; }
+.body-sidebar .sidebar-header .header-logo img.cst-logo {
+  width: 34px !important; height: 34px !important;
+  object-fit: contain; border-radius: 8px;
+  filter: none !important; opacity: 1 !important;
+}
     `;
     document.head.appendChild(s);
   })();
@@ -193,6 +217,25 @@
     container.addEventListener("mouseleave", scheduleCollapse);
   }
 
+  // ─── Company logo injection ───────────────────────────────────────────────
+
+  const LOGO_URL = "/assets/erp_next_custom/images/logo.jpg";
+
+  function injectLogo() {
+    const logoWrap = document.querySelector(".body-sidebar .sidebar-header .header-logo");
+    if (!logoWrap) return;
+    if (logoWrap.querySelector("img.cst-logo")) return; // already injected
+    logoWrap.innerHTML = `<img class="cst-logo" src="${LOGO_URL}" alt="Logo">`;
+  }
+
+  // Re-inject whenever Frappe rebuilds the sidebar header (route changes, workspace switch)
+  const _logoObserver = new MutationObserver(injectLogo);
+  function watchLogo() {
+    const sidebar = document.querySelector(".body-sidebar");
+    if (sidebar) _logoObserver.observe(sidebar, { childList: true, subtree: true });
+    injectLogo();
+  }
+
   // ─── Simplify "Add {DocType}" → "+ Add" ──────────────────────────────────
 
   function simplifyAddButton() {
@@ -235,6 +278,7 @@
     if (container) wireSidebar(container);
     wireHomeButton();
     _watchAddBtn();
+    watchLogo();
   }
 
   document.addEventListener("DOMContentLoaded", init);
