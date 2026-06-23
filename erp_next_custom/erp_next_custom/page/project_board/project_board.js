@@ -355,48 +355,6 @@ function _pb_wire(wrapper) {
         wrapper._pb_tpl_type = $(this).data("tpl");
         _pb_render_templates(wrapper);
     });
-    $sh.on("input", "#pb-tpl-code", function () {
-        const type = wrapper._pb_tpl_type || "prospect";
-        if (!wrapper._pb_tpl_codes) wrapper._pb_tpl_codes = {};
-        wrapper._pb_tpl_codes[type] = $(this).val();
-        _pb_tpl_refresh_preview(wrapper);
-    });
-    $sh.on("click", ".pb-tpl-tb", function () {
-        const snip = $(this).data("snip");
-        if (snip === "reset") {
-            const type = wrapper._pb_tpl_type || "prospect";
-            if (!wrapper._pb_tpl_codes) wrapper._pb_tpl_codes = {};
-            wrapper._pb_tpl_codes[type] = _TPL_DEFAULT[type];
-            _pb_render_templates(wrapper);
-            return;
-        }
-        const $ta = $("#pb-tpl-code");
-        const el = $ta[0];
-        if (!el) return;
-        const snippet = _TPL_SNIPPETS[snip] || "";
-        const pos = el.selectionStart;
-        const val = $ta.val();
-        const newVal = val.slice(0, pos) + snippet + val.slice(pos);
-        $ta.val(newVal);
-        el.setSelectionRange(pos + snippet.length, pos + snippet.length);
-        $ta.trigger("input");
-        el.focus();
-    });
-    $sh.on("change", "#pb-tpl-upload-input", function () {
-        const type = wrapper._pb_tpl_type || "prospect";
-        if (!wrapper._pb_tpl_files) wrapper._pb_tpl_files = { prospect:[], log:[], lead:[] };
-        const files = Array.from(this.files || []);
-        wrapper._pb_tpl_files[type] = [...wrapper._pb_tpl_files[type], ...files];
-        _pb_tpl_render_files(wrapper);
-        this.value = "";
-    });
-    $sh.on("click", ".pb-tpl-file-del", function () {
-        const idx = parseInt($(this).data("idx"));
-        const type = wrapper._pb_tpl_type || "prospect";
-        if (!wrapper._pb_tpl_files) return;
-        wrapper._pb_tpl_files[type].splice(idx, 1);
-        _pb_tpl_render_files(wrapper);
-    });
 
     // ── BOARD card click → panel ──────────────────────────────────
     $sh.on("click", ".pb-card", function () { _pb_open_board_panel(wrapper, $(this).data("name")); });
@@ -612,8 +570,7 @@ function _pb_sync_card_assigns(wrapper, taskName) {
     });
 }
 
-// ── template constants ─────────────────────────────────────────────
-const _TPL_STYLES = `<!doctype html><html><head><meta charset="utf-8"><style>
+const _TPL_STYLES_UNUSED = `<!doctype html><html><head><meta charset="utf-8"><style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;background:#f5f5f8;color:#1f2937;}
 body{padding:16px;overflow-y:auto;}
@@ -790,109 +747,677 @@ const _TPL_SNIPPETS = {
 
 // ── templates view ─────────────────────────────────────────────────
 function _pb_render_templates(wrapper) {
-    if (!wrapper._pb_tpl_codes) {
-        wrapper._pb_tpl_codes = {
-            prospect: _TPL_DEFAULT.prospect,
-            log:      _TPL_DEFAULT.log,
-            lead:     _TPL_DEFAULT.lead,
-        };
-    }
-    if (!wrapper._pb_tpl_files) {
-        wrapper._pb_tpl_files = { prospect: [], log: [], lead: [] };
-    }
-    const type  = wrapper._pb_tpl_type || "prospect";
-    const code  = wrapper._pb_tpl_codes[type];
-    const files = wrapper._pb_tpl_files[type];
+    const type = wrapper._pb_tpl_type || "prospect";
 
     const tabsHtml = ["prospect","log","lead"].map(t =>
         `<button class="pb-tpl-tab${t===type?" active":""}" data-tpl="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`
     ).join("");
 
-    const filesHtml = files.length
-        ? files.map((f,i) => `<div class="pb-tpl-file-chip">${_tpl_file_icon(f.name)}<span>${_e(f.name)}</span><button class="pb-tpl-file-del" data-idx="${i}">×</button></div>`).join("")
-        : `<span class="pb-tpl-no-files">No files uploaded yet</span>`;
-
     $("#pb-view-area").html(`<div class="pb-tpl-shell">
   <div class="pb-tpl-tabs">${tabsHtml}</div>
-  <div class="pb-tpl-section">
-    <div class="pb-tpl-sec-hd">
-      <span>Uploaded Files</span>
-      <label class="pb-tpl-upload-btn">
-        <input type="file" multiple hidden id="pb-tpl-upload-input" accept=".pdf,.html,.css,.js,.png,.jpg,.jpeg,.svg,.fig,.sketch">
-        + Upload
-      </label>
-    </div>
-    <div class="pb-tpl-files-row" id="pb-tpl-files-row">${filesHtml}</div>
-  </div>
-  <div class="pb-tpl-section pb-tpl-design-section">
-    <div class="pb-tpl-sec-hd">
-      <span>Custom Design <span class="pb-tpl-badge">Visual Only</span></span>
-      <div class="pb-tpl-toolbar">
-        <button class="pb-tpl-tb" data-snip="row">+ Row</button>
-        <button class="pb-tpl-tb" data-snip="col">+ Column</button>
-        <button class="pb-tpl-tb" data-snip="card">+ Card</button>
-        <button class="pb-tpl-tb" data-snip="badge">+ Badge</button>
-        <button class="pb-tpl-tb" data-snip="table">+ Table</button>
-        <button class="pb-tpl-tb" data-snip="prog">+ Progress</button>
-        <button class="pb-tpl-tb" data-snip="avatar">+ Avatar</button>
-        <button class="pb-tpl-tb" data-snip="text">+ Text</button>
-        <button class="pb-tpl-tb pb-tpl-tb-reset" data-snip="reset">↺ Reset</button>
-      </div>
-    </div>
-    <div class="pb-tpl-playground">
-      <iframe id="pb-tpl-iframe" class="pb-tpl-iframe" frameborder="0"></iframe>
-      <div class="pb-tpl-editor-pane">
-        <div class="pb-tpl-editor-hd">HTML <span class="pb-tpl-editor-hint">— edits update preview instantly</span></div>
-        <textarea id="pb-tpl-code" class="pb-tpl-code" spellcheck="false"></textarea>
-      </div>
-    </div>
-  </div>
   ${type === "prospect" ? `<div class="pb-tpl-section pb-proto-section">
-    <div class="pb-tpl-sec-hd"><span>Prospects <span class="pb-tpl-badge pb-proto-badge">Live</span></span></div>
-    <div id="pb-proto-mount"><div class="pb-proto-loading">Loading prospects…</div></div>
+    <div class="pb-proto-preview-row">
+      <button class="pb-preview-btn" id="pb-prospect-preview-btn">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/></svg>
+        Show Preview
+      </button>
+    </div>
   </div>` : ""}
 </div>`);
 
-    document.getElementById("pb-tpl-code").value = code;
-    _pb_tpl_refresh_preview(wrapper);
     if (type === "prospect") {
-        _pb_load_prospects();
+        document.getElementById("pb-prospect-preview-btn").addEventListener("click", _pb_open_prospect_preview);
     }
 }
 
-function _pb_load_prospects() {
-    frappe.call({
-        method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
-        callback: function (r) {
-            const mount = document.getElementById("pb-proto-mount");
-            if (!mount) return;
-            const cfg = Object.assign({}, _PG_CFG, { rows: r.message && r.message.length ? r.message : _PG_CFG.rows });
-            PG.mount(mount, cfg);
-        },
+function _pb_open_prospect_preview() {
+    if (document.getElementById("pb-preview-overlay")) return;
+    const overlay = document.createElement("div");
+    overlay.id = "pb-preview-overlay";
+    overlay.className = "pb-preview-overlay";
+    overlay.innerHTML = `
+<div class="pb-preview-shell">
+  <div class="pb-preview-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg viewBox="0 0 36 28" width="30" fill="none">
+        <path d="M3 26 L18 4 L33 26" stroke="#284f9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 26 L8 16" stroke="#284f9e" stroke-width="2" stroke-linecap="round"/>
+        <path d="M28 26 L28 16" stroke="#284f9e" stroke-width="2" stroke-linecap="round"/>
+        <line x1="7" y1="19" x2="29" y2="19" stroke="rgba(40,79,158,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="10" y1="23" x2="26" y2="23" stroke="rgba(40,79,158,0.25)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="pb-preview-title">Desktop View — Prospect Components</span>
+    </div>
+    <button class="pb-preview-close" id="pb-preview-close">
+      <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="pb-preview-body" id="pb-preview-body">${_pvHTML()}</div>
+</div>`;
+    document.body.appendChild(overlay);
+    document.getElementById("pb-preview-close").addEventListener("click", () => overlay.remove());
+    overlay.addEventListener("mousedown", e => { if (e.target === overlay) overlay.remove(); });
+    document.addEventListener("keydown", function _esc(e) {
+        if (e.key === "Escape") { overlay.remove(); document.removeEventListener("keydown", _esc); }
+    });
+    _pvWire();
+}
+
+function _pvWire() {
+    // Table tab switching
+    const pills = document.querySelectorAll("#pv-tbl-pills .pv-pill");
+    pills.forEach(btn => btn.addEventListener("click", () => {
+        pills.forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        const t = btn.dataset.pvtab;
+        document.querySelectorAll("#pv-main-tbl .pv-vc").forEach(el => {
+            const on = el.dataset.pvtab === t;
+            el.classList.toggle("pv-vc-on", on);
+        });
+        // re-trigger row entrance
+        const tbody = document.querySelector("#pv-main-tbl tbody");
+        if (tbody) { tbody.classList.remove("pv-rows-in"); void tbody.offsetWidth; tbody.classList.add("pv-rows-in"); }
+    }));
+    // Showcase pills (top-bar demo) — visual only
+    document.querySelectorAll("#pv-demo-pills .pv-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#pv-demo-pills .pv-pill").forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
+        });
     });
 }
 
-function _pb_tpl_refresh_preview(wrapper) {
-    const type  = wrapper._pb_tpl_type || "prospect";
-    const code  = (wrapper._pb_tpl_codes || {})[type] || "";
-    const frame = document.getElementById("pb-tpl-iframe");
-    if (frame) frame.srcdoc = _TPL_STYLES + code + `</body></html>`;
+function _pvHTML() { return `
+<style>
+:root {
+  --pv-brand:#284f9e; --pv-brand-2:#3a6fd8; --pv-brand-3:#1a3570;
+  --pv-grad:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
+  --pv-grad-hd:linear-gradient(90deg,#1e3a80 0%,#3260c8 100%);
+  --pv-t1:#0f172a; --pv-t2:#1e293b; --pv-t3:#64748b; --pv-t4:#94a3b8;
+  --pv-bd:#e2e8f0; --pv-bg:#f1f5fb;
+  --pv-shsm:0 1px 4px rgba(15,23,42,.08);
+  --pv-shmd:0 4px 20px rgba(15,23,42,.12);
+  --pv-shlg:0 8px 32px rgba(40,79,158,.18);
+  --pv-rpill:99px; --pv-rlg:18px; --pv-rmd:12px;
 }
+#pb-preview-body {
+  background:var(--pv-bg);
+  background-image:
+    linear-gradient(rgba(40,79,158,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(40,79,158,.025) 1px,transparent 1px);
+  background-size:32px 32px;
+  padding:32px 28px 80px; overflow-y:auto; display:block;
+}
+/* section chrome */
+.pv-sec { margin-bottom:52px; }
+.pv-sec-hd { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.pv-sec-num {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:3px 11px; border-radius:var(--pv-rpill);
+  background:var(--pv-grad); color:#fff;
+  font-size:10px; font-weight:900; letter-spacing:.08em;
+}
+.pv-sec-title {
+  font-size:11px; font-weight:900; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--pv-brand);
+}
+.pv-sec-desc { font-size:11.5px; color:var(--pv-t4); }
+.pv-sec-line { flex:1; height:1px; background:linear-gradient(90deg,#284f9e40,transparent); }
+.pv-card {
+  background:#fff; border-radius:var(--pv-rlg);
+  border:1px solid var(--pv-bd); box-shadow:var(--pv-shmd); overflow:hidden;
+}
+/* quick stats */
+.pv-qs-row { display:flex; gap:14px; }
+.pv-qs-card {
+  flex:1; padding:20px 20px 18px;
+  border-radius:var(--pv-rlg); border:1px solid rgba(255,255,255,.6);
+  position:relative; overflow:hidden; cursor:default;
+  transition:transform .18s,box-shadow .18s; box-shadow:var(--pv-shsm);
+}
+.pv-qs-card:hover { transform:translateY(-3px); box-shadow:var(--pv-shlg); }
+.pv-qs-card::after {
+  content:''; position:absolute; top:-30%; right:-15%;
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(255,255,255,.12);
+}
+.pv-qs-num { font-size:36px; font-weight:900; color:#fff; line-height:1; margin-bottom:5px; }
+.pv-qs-lbl { font-size:11px; font-weight:700; color:rgba(255,255,255,.8); letter-spacing:.04em; text-transform:uppercase; }
+.pv-qs-sub { font-size:11px; color:rgba(255,255,255,.55); margin-top:3px; }
+.pv-qs-icon {
+  position:absolute; bottom:14px; right:16px;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(255,255,255,.15);
+  display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7);
+}
+.pv-qs-1 { background:linear-gradient(135deg,#284f9e 0%,#3a6fd8 100%); }
+.pv-qs-2 { background:linear-gradient(135deg,#1e3570 0%,#284f9e 100%); }
+.pv-qs-3 { background:linear-gradient(135deg,#0c5fa5 0%,#1d8cf8 100%); }
+.pv-qs-4 { background:linear-gradient(135deg,#0891b2 0%,#22d3ee 100%); }
+/* top bar */
+.pv-topbar {
+  background:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
+  padding:14px 20px;
+  display:flex; align-items:center; gap:12px; flex-wrap:nowrap;
+}
+.pv-tb-l { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.pv-tb-c { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
+.pv-tb-r { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+/* Add Row – primary action */
+.pv-btn-add {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 20px; border-radius:var(--pv-rpill);
+  background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);
+  color:var(--pv-brand); border:none;
+  font-size:13px; font-weight:800; cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.8);
+  transition:transform .15s,box-shadow .15s; white-space:nowrap;
+}
+.pv-btn-add:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.8); }
+/* Delete */
+.pv-btn-del {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 14px; border-radius:var(--pv-rpill);
+  background:rgba(255,255,255,.1); color:#fca5a5;
+  border:1.5px solid rgba(252,165,165,.4);
+  font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.pv-btn-del:hover { background:rgba(239,68,68,.2); border-color:#fca5a5; color:#fff; }
+.pv-del-cnt { background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:1px 5px; border-radius:99px; }
+/* pill track on gradient bg */
+.pv-pill-track { display:flex; gap:3px; background:rgba(0,0,0,.18); border-radius:var(--pv-rpill); padding:4px; }
+.pv-pill {
+  padding:6px 13px; border-radius:var(--pv-rpill); border:none;
+  background:transparent; color:rgba(255,255,255,.6);
+  font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.pv-pill:hover { color:rgba(255,255,255,.9); background:rgba(255,255,255,.1); }
+.pv-pill.active {
+  background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(240,246,255,.95));
+  color:var(--pv-brand); font-weight:800;
+  box-shadow:0 2px 10px rgba(0,0,0,.25);
+}
+/* search on gradient */
+.pv-srch-w { position:relative; display:flex; align-items:center; }
+.pv-srch-ic { position:absolute; left:11px; color:rgba(255,255,255,.5); pointer-events:none; }
+.pv-srch {
+  padding:7px 13px 7px 34px; border:1.5px solid rgba(255,255,255,.2);
+  border-radius:var(--pv-rpill); font-size:12.5px; font-family:inherit;
+  color:#fff; background:rgba(255,255,255,.12); width:190px; outline:none;
+  transition:border-color .15s,background .15s,box-shadow .15s;
+}
+.pv-srch::placeholder { color:rgba(255,255,255,.4); }
+.pv-srch:focus { border-color:rgba(255,255,255,.6); background:rgba(255,255,255,.2); box-shadow:0 0 0 3px rgba(255,255,255,.12); }
+/* Export */
+.pv-btn-exp {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:7px 16px; border-radius:var(--pv-rpill);
+  background:transparent; color:rgba(255,255,255,.9);
+  border:2px solid rgba(255,255,255,.4);
+  font-size:12px; font-weight:700; cursor:pointer; transition:all .18s; white-space:nowrap;
+}
+.pv-btn-exp:hover { background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.8); color:#fff; transform:translateY(-1px); }
+/* table shell */
+.pv-tbl-shell { border-radius:var(--pv-rlg); border:1px solid var(--pv-bd); box-shadow:var(--pv-shmd); overflow:hidden; }
+.pv-tbl-outer { overflow-x:auto; background:#fff; }
+.pv-tbl { border-collapse:collapse; min-width:900px; font-size:13px; width:100%; }
+/* gradient header */
+.pv-tbl thead tr { background:linear-gradient(90deg,#1e3a80 0%,#3260c8 100%); }
+.pv-tbl th {
+  padding:12px 14px; text-align:left;
+  font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:rgba(255,255,255,.72); border-right:1px solid rgba(255,255,255,.08); white-space:nowrap;
+}
+.pv-tbl th:last-child { border-right:none; }
+/* sticky fixed cols */
+.pv-tf-num { width:44px; min-width:44px; position:sticky; left:0; z-index:3; }
+.pv-tf-ti  { width:58px; min-width:58px; position:sticky; left:44px; z-index:3; }
+.pv-tf-fi  { width:105px; min-width:105px; position:sticky; left:102px; z-index:3; }
+.pv-tf-la  { width:112px; min-width:112px; position:sticky; left:207px; z-index:3; }
+.pv-tf-co  { width:172px; min-width:172px; position:sticky; left:319px; z-index:3; }
+.pv-tbl thead .pv-tf-num,
+.pv-tbl thead .pv-tf-ti,
+.pv-tbl thead .pv-tf-fi,
+.pv-tbl thead .pv-tf-la,
+.pv-tbl thead .pv-tf-co { background:#1e3a80; }
+.pv-tbl tbody .pv-tf-num { background:inherit; position:sticky; left:0; z-index:2; }
+.pv-tbl tbody .pv-tf-ti  { background:inherit; position:sticky; left:44px; z-index:2; }
+.pv-tbl tbody .pv-tf-fi  { background:inherit; position:sticky; left:102px; z-index:2; }
+.pv-tbl tbody .pv-tf-la  { background:inherit; position:sticky; left:207px; z-index:2; }
+.pv-tbl tbody .pv-tf-co  { background:inherit; position:sticky; left:319px; z-index:2; box-shadow:4px 0 12px rgba(0,0,0,.07); }
+/* rows */
+.pv-tbl tbody tr {
+  border-bottom:1px solid #f1f5f9; transition:background .14s; cursor:pointer;
+  animation:pv-rin .32s cubic-bezier(.2,0,.2,1) both;
+}
+.pv-tbl tbody tr:nth-child(1){animation-delay:0ms}
+.pv-tbl tbody tr:nth-child(2){animation-delay:55ms}
+.pv-tbl tbody tr:nth-child(3){animation-delay:110ms}
+.pv-tbl tbody tr:nth-child(4){animation-delay:165ms}
+.pv-tbl tbody tr:nth-child(5){animation-delay:220ms}
+@keyframes pv-rin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pv-tbl tbody tr:last-child { border-bottom:none; }
+.pv-tbl tbody tr:nth-child(even) { background:#f8faff; }
+/* OBVIOUS hover */
+.pv-tbl tbody tr:hover { background:linear-gradient(90deg,#dbeafe 0%,#eff6ff 100%) !important; }
+.pv-tbl tbody tr:hover .pv-tf-num { box-shadow:inset 4px 0 0 #284f9e; }
+.pv-tbl tbody tr:hover .pv-rn { background:#284f9e; color:#fff; transform:scale(1.12); }
+.pv-tbl td { padding:11px 14px; color:var(--pv-t2); border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+.pv-tbl td:last-child { border-right:none; }
+/* row number chip */
+.pv-rn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:8px;
+  background:#eff6ff; color:var(--pv-brand); font-size:11px; font-weight:800; transition:all .15s;
+}
+/* company cell */
+.pv-co-c { display:flex; align-items:center; gap:9px; }
+.pv-co-m { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:800; flex-shrink:0; }
+.pv-co-n { font-weight:600; color:var(--pv-t1); }
+/* inline avatar */
+.pv-av-i { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; font-size:10px; font-weight:800; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+/* variable cols */
+.pv-vc { display:none; }
+.pv-vc.pv-vc-on { display:table-cell; animation:pv-cin .2s ease both; }
+@keyframes pv-cin{from{opacity:0}to{opacity:1}}
+.pv-rows-in tr { animation:pv-rin .32s cubic-bezier(.2,0,.2,1) both; }
+/* badges */
+.pv-b {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 14px; border-radius:var(--pv-rpill);
+  font-size:12px; font-weight:800; letter-spacing:.01em;
+  cursor:default; transition:transform .15s,box-shadow .15s; white-space:nowrap;
+}
+.pv-b:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.14); }
+.pv-b::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
+/* prospect status — blue family */
+.pv-b-lead { background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1d4ed8; border:1px solid #93c5fd; }
+.pv-b-dis  { background:linear-gradient(135deg,#e0e7ff,#c7d2fe); color:#3730a3; border:1px solid #a5b4fc; }
+.pv-b-con  { background:linear-gradient(135deg,#cffafe,#a5f3fc); color:#0e7490; border:1px solid #67e8f9; }
+.pv-b-cvt  { background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#065f46; border:1px solid #6ee7b7; }
+.pv-b-lost { background:linear-gradient(135deg,#f1f5f9,#e2e8f0); color:#475569; border:1px solid #cbd5e1; }
+/* project status — warm amber family */
+.pv-b-ns   { background:linear-gradient(135deg,#fef9c3,#fef08a); color:#854d0e; border:1px solid #fde047; }
+.pv-b-exc  { background:linear-gradient(135deg,#ffedd5,#fed7aa); color:#9a3412; border:1px solid #fb923c; }
+.pv-b-top  { background:linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; border:1px solid #fbbf24; }
+.pv-b-fin  { background:linear-gradient(135deg,#fef9c3,#d9f99d); color:#3f6212; border:1px solid #a3e635; }
+.pv-b-hold { background:linear-gradient(135deg,#fde8d8,#fcd3b3); color:#7c2d12; border:1px solid #fdba74; }
+/* badges section layout */
+.pv-bdg-wrap { padding:28px; }
+.pv-bdg-group-lbl { font-size:10px; font-weight:800; letter-spacing:.1em; color:var(--pv-t4); text-transform:uppercase; margin-bottom:14px; }
+.pv-bdg-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:28px; }
+.pv-bdg-row:last-child { margin-bottom:0; }
+.pv-bdg-divider { height:1px; background:var(--pv-bd); margin:4px 0 24px; }
+.pv-bdg-item { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.pv-bdg-lbl { font-size:10px; color:var(--pv-t4); font-weight:600; }
+/* owner avatars */
+.pv-avs-wrap { padding:28px; display:flex; flex-wrap:wrap; gap:28px; }
+.pv-av-item { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.pv-av {
+  width:52px; height:52px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:900; color:#fff; cursor:default;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
+.pv-av:hover { transform:scale(1.18); box-shadow:0 8px 28px rgba(0,0,0,.28); }
+.pv-av-name { font-size:12px; font-weight:700; color:var(--pv-t2); text-align:center; max-width:80px; }
+.pv-av-role { font-size:10.5px; color:var(--pv-t4); text-align:center; }
+</style>
 
-function _pb_tpl_render_files(wrapper) {
-    const type  = wrapper._pb_tpl_type || "prospect";
-    const files = (wrapper._pb_tpl_files || {})[type] || [];
-    const html  = files.length
-        ? files.map((f,i) => `<div class="pb-tpl-file-chip">${_tpl_file_icon(f.name)}<span>${_e(f.name)}</span><button class="pb-tpl-file-del" data-idx="${i}">×</button></div>`).join("")
-        : `<span class="pb-tpl-no-files">No files uploaded yet</span>`;
-    $("#pb-tpl-files-row").html(html);
-}
+<div style="max-width:1440px;margin:0 auto;">
 
-function _tpl_file_icon(name) {
-    const ext = (name.split(".").pop()||"").toLowerCase();
-    const m = {pdf:"📄",html:"🌐",css:"🎨",js:"⚙️",png:"🖼️",jpg:"🖼️",jpeg:"🖼️",svg:"✏️",fig:"🎭",sketch:"🎭"};
-    return `<span class="pb-tpl-file-icon">${m[ext]||"📎"}</span>`;
-}
+<!-- 01 PROSPECT TABLE -->
+<div class="pv-sec">
+<div class="pv-sec-hd">
+  <span class="pv-sec-num">01</span>
+  <span class="pv-sec-title">Prospect Table</span>
+  <span class="pv-sec-desc">Gradient header · sticky cols · obvious hover · live tab switching · quick stats strip</span>
+  <div class="pv-sec-line"></div>
+</div>
+<div class="pv-qs-row" style="margin-bottom:16px">
+  <div class="pv-qs-card pv-qs-1" style="padding:14px 16px">
+    <div class="pv-qs-num" style="font-size:26px">32</div>
+    <div class="pv-qs-lbl" style="font-size:10px">Total Prospects</div>
+  </div>
+  <div class="pv-qs-card pv-qs-2" style="padding:14px 16px">
+    <div class="pv-qs-num" style="font-size:26px">12</div>
+    <div class="pv-qs-lbl" style="font-size:10px">Active Leads</div>
+  </div>
+  <div class="pv-qs-card pv-qs-3" style="padding:14px 16px">
+    <div class="pv-qs-num" style="font-size:26px">8</div>
+    <div class="pv-qs-lbl" style="font-size:10px">This Month</div>
+  </div>
+  <div class="pv-qs-card pv-qs-4" style="padding:14px 16px">
+    <div class="pv-qs-num" style="font-size:26px">9%</div>
+    <div class="pv-qs-lbl" style="font-size:10px">Conversion Rate</div>
+  </div>
+</div>
+<div class="pv-tbl-shell">
+  <div class="pv-topbar">
+    <div class="pv-tb-l">
+      <button class="pv-btn-add">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+        Add Row
+      </button>
+      <button class="pv-btn-del">
+        <svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,3 13,3"/><path d="M4,3V2a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v1"/><rect x="2" y="3" width="10" height="9" rx="1"/></svg>
+        Delete <span class="pv-del-cnt">2</span>
+      </button>
+    </div>
+    <div class="pv-tb-c">
+      <div class="pv-pill-track" id="pv-tbl-pills">
+        <button class="pv-pill active" data-pvtab="0">Profile &amp; Context</button>
+        <button class="pv-pill" data-pvtab="1">Site Info</button>
+        <button class="pv-pill" data-pvtab="2">Scope &amp; Specs</button>
+        <button class="pv-pill" data-pvtab="3">Site Team</button>
+        <button class="pv-pill" data-pvtab="4">Social &amp; Web</button>
+      </div>
+    </div>
+    <div class="pv-tb-r">
+      <div class="pv-srch-w">
+        <svg class="pv-srch-ic" viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="9" y1="9" x2="13" y2="13"/></svg>
+        <input class="pv-srch" type="text" placeholder="Search prospects…">
+      </div>
+      <button class="pv-btn-exp">
+        <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 1v8"/><polyline points="4,6 7,9 10,6"/><path d="M2 11h10"/></svg>
+        Export
+      </button>
+    </div>
+  </div>
+  <div class="pv-tbl-outer">
+  <table class="pv-tbl" id="pv-main-tbl">
+  <thead><tr>
+    <th class="pv-tf-num">#</th>
+    <th class="pv-tf-ti">Title</th>
+    <th class="pv-tf-fi">First Name</th>
+    <th class="pv-tf-la">Last Name</th>
+    <th class="pv-tf-co">Company</th>
+    <th class="pv-vc pv-vc-on" data-pvtab="0">Owner</th>
+    <th class="pv-vc pv-vc-on" data-pvtab="0">Role</th>
+    <th class="pv-vc pv-vc-on" data-pvtab="0">Status</th>
+    <th class="pv-vc pv-vc-on" data-pvtab="0">Mobile</th>
+    <th class="pv-vc pv-vc-on" data-pvtab="0">Email</th>
+    <th class="pv-vc" data-pvtab="1">Site Location</th>
+    <th class="pv-vc" data-pvtab="1">Maps</th>
+    <th class="pv-vc" data-pvtab="1">Files</th>
+    <th class="pv-vc" data-pvtab="2">Project Status</th>
+    <th class="pv-vc" data-pvtab="2">Start Date</th>
+    <th class="pv-vc" data-pvtab="2">Floors</th>
+    <th class="pv-vc" data-pvtab="2">Area (sqm)</th>
+    <th class="pv-vc" data-pvtab="2">Scaffold Type</th>
+    <th class="pv-vc" data-pvtab="2">Project Type</th>
+    <th class="pv-vc" data-pvtab="3">Architect</th>
+    <th class="pv-vc" data-pvtab="3">Project Owner</th>
+    <th class="pv-vc" data-pvtab="3">Site Engineer</th>
+    <th class="pv-vc" data-pvtab="3">Workers</th>
+    <th class="pv-vc" data-pvtab="3">Contract Value</th>
+    <th class="pv-vc" data-pvtab="4">Instagram</th>
+    <th class="pv-vc" data-pvtab="4">LinkedIn</th>
+    <th class="pv-vc" data-pvtab="4">Website</th>
+  </tr></thead>
+  <tbody class="pv-rows-in">
+  <tr>
+    <td class="pv-tf-num"><span class="pv-rn">1</span></td>
+    <td class="pv-tf-ti">Arch.</td><td class="pv-tf-fi">Nabil</td><td class="pv-tf-la">Habr</td>
+    <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">HA</div><span class="pv-co-n">Habr &amp; Associates</span></div></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#284f9e,#3a6fd8)">NK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">Principal Architect</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-lead">Lead</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">+961 3 111 222</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">nabil@habr.com</td>
+    <td class="pv-vc" data-pvtab="1">Beirut, Achrafieh</td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:700;font-size:12px">↗ Maps</span></td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:600">📎 3 files</span></td>
+    <td class="pv-vc" data-pvtab="2"><span class="pv-b pv-b-exc">Excavation</span></td>
+    <td class="pv-vc" data-pvtab="2">Jul 15, 2025</td><td class="pv-vc" data-pvtab="2">18</td><td class="pv-vc" data-pvtab="2">8,500</td>
+    <td class="pv-vc" data-pvtab="2">Ringlock</td><td class="pv-vc" data-pvtab="2">Commercial</td>
+    <td class="pv-vc" data-pvtab="3">Nabil Habr</td><td class="pv-vc" data-pvtab="3">Habr &amp; Assoc.</td>
+    <td class="pv-vc" data-pvtab="3">Eng. Rami Abi</td><td class="pv-vc" data-pvtab="3">32</td><td class="pv-vc" data-pvtab="3">$185,000</td>
+    <td class="pv-vc" data-pvtab="4">@nabilhabr</td><td class="pv-vc" data-pvtab="4">nabilhabr</td><td class="pv-vc" data-pvtab="4">habrassociates.com</td>
+  </tr>
+  <tr>
+    <td class="pv-tf-num"><span class="pv-rn">2</span></td>
+    <td class="pv-tf-ti">Mr</td><td class="pv-tf-fi">Karim</td><td class="pv-tf-la">Abi Nader</td>
+    <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">AN</div><span class="pv-co-n">Abi Nader Const.</span></div></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#7c3aed,#9d5ced)">GK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">Project Manager</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-dis">In Discussion</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">+961 70 999 888</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">karim@abinader.com</td>
+    <td class="pv-vc" data-pvtab="1">Tripoli, Al-Mina</td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#94a3b8">—</span></td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:600">📎 1 file</span></td>
+    <td class="pv-vc" data-pvtab="2"><span class="pv-b pv-b-ns">Not Started</span></td>
+    <td class="pv-vc" data-pvtab="2">Aug 1, 2025</td><td class="pv-vc" data-pvtab="2">6</td><td class="pv-vc" data-pvtab="2">2,200</td>
+    <td class="pv-vc" data-pvtab="2">Tube &amp; Coupler</td><td class="pv-vc" data-pvtab="2">Residential</td>
+    <td class="pv-vc" data-pvtab="3">Lara Saab</td><td class="pv-vc" data-pvtab="3">Abi Nader Group</td>
+    <td class="pv-vc" data-pvtab="3">—</td><td class="pv-vc" data-pvtab="3">—</td><td class="pv-vc" data-pvtab="3">TBD</td>
+    <td class="pv-vc" data-pvtab="4">—</td><td class="pv-vc" data-pvtab="4">karimabinader</td><td class="pv-vc" data-pvtab="4">—</td>
+  </tr>
+  <tr>
+    <td class="pv-tf-num"><span class="pv-rn">3</span></td>
+    <td class="pv-tf-ti">Ms</td><td class="pv-tf-fi">Lara</td><td class="pv-tf-la">Saab</td>
+    <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">SD</div><span class="pv-co-n">Saab Development</span></div></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">AK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">Director</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-con">Contacted</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">+961 1 234 567</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">lara@saabdev.com</td>
+    <td class="pv-vc" data-pvtab="1">Sidon, Riad Al-Solh</td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:700;font-size:12px">↗ Maps</span></td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:600">📎 2 files</span></td>
+    <td class="pv-vc" data-pvtab="2"><span class="pv-b pv-b-top">Topped Out</span></td>
+    <td class="pv-vc" data-pvtab="2">Mar 10, 2025</td><td class="pv-vc" data-pvtab="2">12</td><td class="pv-vc" data-pvtab="2">4,100</td>
+    <td class="pv-vc" data-pvtab="2">Kwikstage</td><td class="pv-vc" data-pvtab="2">Mixed-Use</td>
+    <td class="pv-vc" data-pvtab="3">Tony Khoury</td><td class="pv-vc" data-pvtab="3">Saab Dev</td>
+    <td class="pv-vc" data-pvtab="3">Fadi Moussa</td><td class="pv-vc" data-pvtab="3">18</td><td class="pv-vc" data-pvtab="3">$62,000</td>
+    <td class="pv-vc" data-pvtab="4">@larasaab</td><td class="pv-vc" data-pvtab="4">larasaab</td><td class="pv-vc" data-pvtab="4">saabdev.com</td>
+  </tr>
+  <tr>
+    <td class="pv-tf-num"><span class="pv-rn">4</span></td>
+    <td class="pv-tf-ti">Eng.</td><td class="pv-tf-fi">Fadi</td><td class="pv-tf-la">Moussa</td>
+    <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">ME</div><span class="pv-co-n">Moussa Engineering</span></div></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#059669,#10b981)">NK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">Site Engineer</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-cvt">Converted</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">+961 3 456 789</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">fadi@moussa.com</td>
+    <td class="pv-vc" data-pvtab="1">Zahle, Main Street</td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:700;font-size:12px">↗ Maps</span></td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#284f9e;font-weight:600">📎 5 files</span></td>
+    <td class="pv-vc" data-pvtab="2"><span class="pv-b pv-b-fin">Finishing</span></td>
+    <td class="pv-vc" data-pvtab="2">Jan 5, 2025</td><td class="pv-vc" data-pvtab="2">24</td><td class="pv-vc" data-pvtab="2">11,200</td>
+    <td class="pv-vc" data-pvtab="2">Ringlock</td><td class="pv-vc" data-pvtab="2">High-Rise</td>
+    <td class="pv-vc" data-pvtab="3">Rami Khodr</td><td class="pv-vc" data-pvtab="3">Moussa Eng.</td>
+    <td class="pv-vc" data-pvtab="3">Omar Khalil</td><td class="pv-vc" data-pvtab="3">45</td><td class="pv-vc" data-pvtab="3">$210,000</td>
+    <td class="pv-vc" data-pvtab="4">@fadimoussa</td><td class="pv-vc" data-pvtab="4">fadimoussa</td><td class="pv-vc" data-pvtab="4">moussaeng.com</td>
+  </tr>
+  <tr>
+    <td class="pv-tf-num"><span class="pv-rn">5</span></td>
+    <td class="pv-tf-ti">Mr</td><td class="pv-tf-fi">Tony</td><td class="pv-tf-la">Khoury</td>
+    <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">AW</div><span class="pv-co-n">Al-Wadi Group</span></div></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#d97706,#f59e0b)">GK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">CEO</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-lost">Lost</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">+961 70 111 333</td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0">tony@alwadi.com</td>
+    <td class="pv-vc" data-pvtab="1">Jounieh, Kaslik</td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#94a3b8">—</span></td>
+    <td class="pv-vc" data-pvtab="1"><span style="color:#94a3b8">—</span></td>
+    <td class="pv-vc" data-pvtab="2"><span class="pv-b pv-b-hold">On Hold</span></td>
+    <td class="pv-vc" data-pvtab="2">—</td><td class="pv-vc" data-pvtab="2">5</td><td class="pv-vc" data-pvtab="2">1,800</td>
+    <td class="pv-vc" data-pvtab="2">Suspended</td><td class="pv-vc" data-pvtab="2">Industrial</td>
+    <td class="pv-vc" data-pvtab="3">—</td><td class="pv-vc" data-pvtab="3">Al-Wadi Group</td>
+    <td class="pv-vc" data-pvtab="3">—</td><td class="pv-vc" data-pvtab="3">—</td><td class="pv-vc" data-pvtab="3">$14,200</td>
+    <td class="pv-vc" data-pvtab="4">—</td><td class="pv-vc" data-pvtab="4">—</td><td class="pv-vc" data-pvtab="4">alwadigroup.com</td>
+  </tr>
+  </tbody></table>
+  </div>
+</div>
+</div>
+
+<!-- 02 TOP BAR -->
+<div class="pv-sec">
+<div class="pv-sec-hd">
+  <span class="pv-sec-num">02</span>
+  <span class="pv-sec-title">Top Bar</span>
+  <span class="pv-sec-desc">Gradient bg · prominent pill Add Row · ghost Delete · pill tab track · ghost search · outlined Export</span>
+  <div class="pv-sec-line"></div>
+</div>
+<div class="pv-card">
+  <div class="pv-topbar">
+    <div class="pv-tb-l">
+      <button class="pv-btn-add">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+        Add Row
+      </button>
+      <button class="pv-btn-del">
+        <svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,3 13,3"/><path d="M4,3V2a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v1"/><rect x="2" y="3" width="10" height="9" rx="1"/></svg>
+        Delete <span class="pv-del-cnt">2</span>
+      </button>
+    </div>
+    <div class="pv-tb-c">
+      <div class="pv-pill-track" id="pv-demo-pills">
+        <button class="pv-pill active">Profile &amp; Context</button>
+        <button class="pv-pill">Site Info</button>
+        <button class="pv-pill">Scope &amp; Specs</button>
+        <button class="pv-pill">Site Team</button>
+        <button class="pv-pill">Social &amp; Web</button>
+      </div>
+    </div>
+    <div class="pv-tb-r">
+      <div class="pv-srch-w">
+        <svg class="pv-srch-ic" viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="9" y1="9" x2="13" y2="13"/></svg>
+        <input class="pv-srch" type="text" placeholder="Search prospects…">
+      </div>
+      <button class="pv-btn-exp">
+        <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 1v8"/><polyline points="4,6 7,9 10,6"/><path d="M2 11h10"/></svg>
+        Export
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 03 STATUS BADGES -->
+<div class="pv-sec">
+<div class="pv-sec-hd">
+  <span class="pv-sec-num">03</span>
+  <span class="pv-sec-title">Status Badges</span>
+  <span class="pv-sec-desc">Blue family for prospect status · Warm amber family for project status · gradient fills · pill shape</span>
+  <div class="pv-sec-line"></div>
+</div>
+<div class="pv-card">
+<div class="pv-bdg-wrap">
+  <div class="pv-bdg-group-lbl">Prospect Status — Blue Family</div>
+  <div class="pv-bdg-row">
+    <div class="pv-bdg-item"><span class="pv-b pv-b-lead">Lead</span><span class="pv-bdg-lbl">Lead</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-dis">In Discussion</span><span class="pv-bdg-lbl">In Discussion</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-con">Contacted</span><span class="pv-bdg-lbl">Contacted</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-cvt">Converted</span><span class="pv-bdg-lbl">Converted</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-lost">Lost</span><span class="pv-bdg-lbl">Lost</span></div>
+  </div>
+  <div class="pv-bdg-divider"></div>
+  <div class="pv-bdg-group-lbl">Project Status — Warm Family</div>
+  <div class="pv-bdg-row">
+    <div class="pv-bdg-item"><span class="pv-b pv-b-ns">Not Started</span><span class="pv-bdg-lbl">Not Started</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-exc">Excavation</span><span class="pv-bdg-lbl">Excavation</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-top">Topped Out</span><span class="pv-bdg-lbl">Topped Out</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-fin">Finishing</span><span class="pv-bdg-lbl">Finishing</span></div>
+    <div class="pv-bdg-item"><span class="pv-b pv-b-hold">On Hold</span><span class="pv-bdg-lbl">On Hold</span></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 04 OWNER IDENTITY SYSTEM -->
+<div class="pv-sec">
+<div class="pv-sec-hd">
+  <span class="pv-sec-num">04</span>
+  <span class="pv-sec-title">Owner Identity System</span>
+  <span class="pv-sec-desc">Perfect circles · gradient per person · white initials · spring hover scale</span>
+  <div class="pv-sec-line"></div>
+</div>
+<div class="pv-card">
+<div class="pv-avs-wrap">
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#284f9e,#4080e8)">NK</div>
+    <div class="pv-av-name">Nabil Khoury</div><div class="pv-av-role">Sales Lead</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#6d28d9,#9d5ced)">GK</div>
+    <div class="pv-av-name">Grece Khoury</div><div class="pv-av-role">Account Mgr</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#0369a1,#06b6d4)">AK</div>
+    <div class="pv-av-name">Anthony Karam</div><div class="pv-av-role">Director</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#047857,#10b981)">FM</div>
+    <div class="pv-av-name">Fadi Moussa</div><div class="pv-av-role">Field Rep</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#b91c1c,#ef4444)">TK</div>
+    <div class="pv-av-name">Tony Khoury</div><div class="pv-av-role">Consultant</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#b45309,#f59e0b)">RK</div>
+    <div class="pv-av-name">Rami Khodr</div><div class="pv-av-role">Technical</div>
+  </div>
+  <div class="pv-av-item">
+    <div class="pv-av" style="background:linear-gradient(135deg,#be185d,#f472b6)">LS</div>
+    <div class="pv-av-name">Lara Saab</div><div class="pv-av-role">Project Mgr</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 05 QUICK STATS -->
+<div class="pv-sec">
+<div class="pv-sec-hd">
+  <span class="pv-sec-num">05</span>
+  <span class="pv-sec-title">Quick Stats</span>
+  <span class="pv-sec-desc">4 KPI cards · gradient blue family · lift-on-hover · icon accent</span>
+  <div class="pv-sec-line"></div>
+</div>
+<div class="pv-qs-row">
+  <div class="pv-qs-card pv-qs-1">
+    <div class="pv-qs-num">32</div>
+    <div class="pv-qs-lbl">Total Prospects</div>
+    <div class="pv-qs-sub">↑ 4 added this week</div>
+    <div class="pv-qs-icon">
+      <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+    </div>
+  </div>
+  <div class="pv-qs-card pv-qs-2">
+    <div class="pv-qs-num">12</div>
+    <div class="pv-qs-lbl">Active Leads</div>
+    <div class="pv-qs-sub">↑ 2 from last month</div>
+    <div class="pv-qs-icon">
+      <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3,12 7,8 11,10 15,5"/><polyline points="12,5 15,5 15,8"/></svg>
+    </div>
+  </div>
+  <div class="pv-qs-card pv-qs-3">
+    <div class="pv-qs-num">8</div>
+    <div class="pv-qs-lbl">This Month</div>
+    <div class="pv-qs-sub">New contacts added</div>
+    <div class="pv-qs-icon">
+      <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="14" height="13" rx="2"/><line x1="2" y1="7" x2="16" y2="7"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+    </div>
+  </div>
+  <div class="pv-qs-card pv-qs-4">
+    <div class="pv-qs-num">9%</div>
+    <div class="pv-qs-lbl">Conversion Rate</div>
+    <div class="pv-qs-sub">3 of 32 converted</div>
+    <div class="pv-qs-icon">
+      <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="9" r="7"/><path d="M6 9l2 2 4-4"/></svg>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>`; }
 
 // ── prospect grid config (consumed by PG.mount) ────────────────────
 const _PG_CFG = {
@@ -1420,40 +1945,26 @@ body.pb-fs .container.page-container
 .pb-tpl-sec-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; }
 .pb-tpl-sec-hd > span:first-child { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#9ca3af; display:flex; align-items:center; gap:7px; }
 
-.pb-tpl-badge { background:#fef3c7; color:#d97706; font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; letter-spacing:.03em; text-transform:uppercase; }
 
-.pb-tpl-upload-btn { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:7px; border:1.5px dashed #d1d5db; background:transparent; color:#6b7280; font-size:11.5px; font-weight:600; cursor:pointer; transition:all .12s; white-space:nowrap; }
-.pb-tpl-upload-btn:hover { border-color:#8b5cf6; color:#7c3aed; background:rgba(139,92,246,.04); }
-
-.pb-tpl-files-row { display:flex; flex-wrap:wrap; gap:7px; align-items:center; min-height:28px; }
-.pb-tpl-no-files { font-size:12px; color:#d1d5db; }
-.pb-tpl-file-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 8px 4px 7px; background:#f5f5fa; border:1px solid #e5e7eb; border-radius:7px; font-size:11.5px; color:#374151; }
-.pb-tpl-file-icon { font-size:13px; line-height:1; }
-.pb-tpl-file-del { border:none; background:transparent; color:#d1d5db; cursor:pointer; font-size:14px; line-height:1; padding:0 0 0 3px; transition:color .1s; }
-.pb-tpl-file-del:hover { color:#dc2626; }
-
-.pb-tpl-toolbar { display:flex; gap:5px; flex-wrap:wrap; }
-.pb-tpl-tb { padding:4px 10px; border-radius:6px; border:1px solid #e5e7eb; background:#fff; color:#374151; font-size:11.5px; font-weight:550; cursor:pointer; transition:all .1s; white-space:nowrap; }
-.pb-tpl-tb:hover { border-color:#8b5cf6; color:#7c3aed; background:rgba(139,92,246,.05); }
-.pb-tpl-tb-reset { color:#9ca3af; }
-.pb-tpl-tb-reset:hover { border-color:#d1d5db; color:#6b7280; background:#f9fafb; }
-
-.pb-tpl-playground { flex:1; display:flex; overflow:hidden; }
-.pb-tpl-iframe { flex:1; border:none; background:#f5f5f8; min-width:0; border-right:1px solid #e8e8f0; }
-.pb-tpl-editor-pane { width:360px; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden; background:#fafafa; }
-.pb-tpl-editor-hd { padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#9ca3af; background:#f5f5f8; border-bottom:1px solid #eeeef4; display:flex; align-items:center; gap:6px; flex-shrink:0; }
-.pb-tpl-editor-hint { font-size:10px; font-weight:400; color:#c4c4d0; letter-spacing:0; text-transform:none; }
-.pb-tpl-code { flex:1; resize:none; border:none; outline:none; padding:14px; font-family:"SF Mono","Fira Code","Cascadia Code","Consolas",monospace; font-size:11.5px; line-height:1.65; color:#374151; background:#fafafa; width:100%; box-sizing:border-box; tab-size:2; }
-
-/* ── tpl shell scroll (so prototype section is reachable) ─────── */
 .pb-tpl-shell { overflow-y:auto; }
-.pb-tpl-design-section { flex:none; }
-.pb-tpl-playground { height:420px; }
 
-/* ── proposed prototype section wrapper ───────────────────────── */
+/* ── prospect preview section ─────────────────────────────────── */
 .pb-proto-section { background:#f8f8fc; border-top:2px solid #e8e8f0; }
 .pb-proto-badge   { background:#e8eaf6; color:#3949ab; }
-.pb-proto-loading { padding:32px; text-align:center; color:#9ca3af; font-size:13px; }
+.pb-proto-preview-row { display:flex; align-items:center; padding:4px 0 2px; }
+.pb-preview-btn { display:inline-flex; align-items:center; gap:7px; padding:7px 16px; border-radius:8px; border:1.5px solid #d1d5db; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .14s; }
+.pb-preview-btn:hover { border-color:#7c3aed; color:#7c3aed; background:rgba(139,92,246,.05); }
+
+/* ── full-page preview overlay ────────────────────────────────── */
+.pb-preview-overlay { position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,.45); display:flex; align-items:stretch; justify-content:center; animation:pb-ov-in .16s ease both; }
+@keyframes pb-ov-in { from{opacity:0} to{opacity:1} }
+.pb-preview-shell { display:flex; flex-direction:column; width:100%; max-width:100%; background:#f5f5f8; animation:pb-sh-in .18s cubic-bezier(.2,0,.2,1) both; }
+@keyframes pb-sh-in { from{transform:translateY(18px);opacity:0} to{transform:none;opacity:1} }
+.pb-preview-header { display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:52px; background:#fff; border-bottom:1.5px solid #e8e8f0; flex-shrink:0; }
+.pb-preview-title { font-size:14px; font-weight:700; color:#111827; letter-spacing:-.01em; }
+.pb-preview-close { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:7px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; cursor:pointer; transition:all .12s; padding:0; }
+.pb-preview-close:hover { border-color:#dc2626; color:#dc2626; background:#fef2f2; }
+.pb-preview-body { flex:1; overflow:auto; display:flex; flex-direction:column; }
 `;
 
     document.head.appendChild(s);

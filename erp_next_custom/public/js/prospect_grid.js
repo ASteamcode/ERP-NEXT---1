@@ -1241,8 +1241,8 @@
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
             if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
-            if (e.key === "Enter" && el.tagName === "TEXTAREA" && e.shiftKey) return; // allow newline
-            if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); return; }
+            if (e.key === "Enter" && el.tagName === "TEXTAREA" && e.shiftKey) return;
+            if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); _navCell(root, td, "right"); return; }
 
             const isText = el.tagName === "INPUT" && (el.type === "text" || el.type === "url" || el.type === "");
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
@@ -1331,11 +1331,32 @@
         if (next) { _openEdit(root, next); return; }
 
         const nextTab = tabN + hDir;
-        if (nextTab < 0 || nextTab >= tabCount) return;
-        root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
+        if (nextTab >= 0 && nextTab < tabCount) {
+            root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
+            requestAnimationFrame(() => {
+                const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+                    td.dataset.rowName === rowName && td.classList.contains(`pg-v-${nextTab}`)
+                );
+                const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
+                if (target) _openEdit(root, target);
+            });
+            return;
+        }
+
+        // Past end of last tab going right → jump to first cell of next row
+        // Past start of first tab going left → jump to last cell of prev row
+        const rows = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
+        const curRow  = fromTd.closest("tr");
+        const rowIdx  = rows.indexOf(curRow);
+        const nextIdx = rowIdx + hDir;
+        if (nextIdx < 0 || nextIdx >= rows.length) return;
+        const targetTab = hDir > 0 ? 0 : tabCount - 1;
+        root.querySelector(`.pg-pill[data-tab="${targetTab}"]`).click();
         requestAnimationFrame(() => {
+            const nextRowName = rows[nextIdx].dataset.rowName;
             const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-                td.dataset.rowName === rowName && td.classList.contains(`pg-v-${nextTab}`)
+                td.dataset.rowName === nextRowName &&
+                (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${targetTab}`))
             );
             const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
             if (target) _openEdit(root, target);
