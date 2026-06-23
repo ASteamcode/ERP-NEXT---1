@@ -1,0 +1,13 @@
+{
+ "doctype": "Page",
+ "module": "Erp Next Custom",
+ "name": "overview",
+ "page_name": "overview",
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "Overview",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Project Board"}
+ ]
+}
