@@ -1,6 +1,26 @@
 // prospect_list.js — Prospect list view powered by PG (prospect_grid.js)
 "use strict";
 
+// Draft row state — survives re-renders until committed to server
+let _draftRow   = null; // { name:"__draft__", ...keyedFields }
+let _draftExtra = {};   // frappe_field → value buffered before company_name is known
+
+function _ffToKey(frappe_field) {
+    const all = [..._PROSPECT_CFG.fixed, ..._PROSPECT_CFG.cols];
+    const col = all.find(c => c.frappe_field === frappe_field);
+    return col ? col.key : null;
+}
+
+function _focusDraftCompany(host) {
+    // After re-render, click-open the company cell in the draft row
+    requestAnimationFrame(() => {
+        const tr = host && host.querySelector('tr[data-row-name="__draft__"]');
+        if (!tr) return;
+        const companyTd = tr.querySelector('.pg-f-co.pg-ed');
+        if (companyTd) companyTd.click();
+    });
+}
+
 const _PROSPECT_CFG = {
     tabs: ["Profile & Context", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
@@ -96,42 +116,61 @@ function _pl_render(listview) {
                 return;
             }
 
+            // Prepend unsaved draft row if one exists
+            const displayRows = _draftRow ? [_draftRow, ...rows] : rows;
+
             const cfg = Object.assign({}, _PROSPECT_CFG, {
-                rows,
+                rows: displayRows,
 
                 onReload() { _pl_render(listview); },
 
                 onEdit(name, frappe_field, value) {
+                    // ── Draft row handling ──────────────────────────────
+                    if (name === "__draft__") {
+                        // Buffer into display row + extra fields map
+                        const key = _ffToKey(frappe_field);
+                        if (key) _draftRow[key] = value;
+                        if (value && value.trim()) {
+                            _draftExtra[frappe_field] = value;
+                        } else {
+                            delete _draftExtra[frappe_field];
+                        }
+
+                        // Save only when BOTH company_name AND custom_first_name are filled
+                        const hasCompany = !!(_draftExtra["company_name"]  || "").trim();
+                        const hasFirst   = !!(_draftExtra["custom_first_name"] || "").trim();
+                        if (!hasCompany || !hasFirst) return;
+
+                        // Pack everything into one insert — no separate set_value calls
+                        const doc = Object.assign(
+                            { doctype: "Prospect", custom_prospect_status: "Lead" },
+                            _draftExtra
+                        );
+                        _draftRow   = null;
+                        _draftExtra = {};
+
+                        frappe.call({
+                            method: "frappe.client.insert",
+                            args: { doc },
+                            callback() { _pl_render(listview); },
+                            error()    {
+                                frappe.show_alert({ message: "Failed to save new row", indicator: "red" }, 4);
+                                _pl_render(listview);
+                            },
+                        });
+                        return;
+                    }
+                    // ── Normal saved row ────────────────────────────────
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
                 },
 
                 onAddRow(reload) {
-                    const d = new frappe.ui.Dialog({
-                        title: "Add Prospect",
-                        fields: [
-                            { label: "First Name", fieldname: "custom_first_name", fieldtype: "Data", reqd: 0 },
-                            { label: "Last Name",  fieldname: "custom_last_name",  fieldtype: "Data", reqd: 0 },
-                            { label: "Company",    fieldname: "company_name",       fieldtype: "Data", reqd: 1 },
-                            { label: "Status",     fieldname: "custom_prospect_status", fieldtype: "Select",
-                              options: "Lead\nIn Discussion\nContacted\nConverted\nLost", default: "Lead" },
-                        ],
-                        primary_action_label: "Create",
-                        primary_action(vals) {
-                            d.hide();
-                            frappe.call({
-                                method: "frappe.client.insert",
-                                args: {
-                                    doc: Object.assign({ doctype: "Prospect" }, vals),
-                                },
-                                callback() {
-                                    frappe.show_alert({ message: "Prospect created", indicator: "green" }, 3);
-                                    reload();
-                                },
-                            });
-                        },
-                    });
-                    d.show();
+                    if (_draftRow) { _focusDraftCompany(host); return; }
+                    _draftRow   = { name: "__draft__", custom_prospect_status: "Lead" };
+                    _draftExtra = {};
+                    reload();
+                    _focusDraftCompany(host);
                 },
 
                 onDeleteRows(names, reload) {
@@ -283,6 +322,11 @@ function _pl_render(listview) {
     s.textContent = `
 .gl-host { padding: 12px 16px 32px; box-sizing: border-box; }
 .pl-loading { padding: 48px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+/* Draft (unsaved) row highlight */
+tr[data-row-name="__draft__"] td { background: #f0f7ff !important; }
+tr[data-row-name="__draft__"] td.pg-f-num-cell { color: #2563eb !important; }
+tr[data-row-name="__draft__"] td.pg-f-num-cell::after { content: " ✦"; font-size: 8px; }
 
 /* Strip all native Frappe chrome from the Prospect list page */
 .page-container[data-page-route="List/Prospect/List"] .page-head,
