@@ -117,7 +117,7 @@ function _pl_render(listview) {
             }
 
             // Prepend unsaved draft row if one exists
-            const displayRows = _draftRow ? [_draftRow, ...rows] : rows;
+            const displayRows = _draftRow ? [...rows, _draftRow] : rows;
 
             const cfg = Object.assign({}, _PROSPECT_CFG, {
                 rows: displayRows,
