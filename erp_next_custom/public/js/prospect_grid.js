@@ -238,6 +238,20 @@
 /* WhatsApp button */
 .pg-wa-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f0fdf4;color:#16a34a;text-decoration:none;transition:background .15s,color .15s;flex-shrink:0;margin-left:4px;}
 .pg-wa-btn:hover{background:#dcfce7;color:#15803d;}
+/* WhatsApp API button */
+.pg-wa-api-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;cursor:pointer;transition:background .15s,color .15s,border-color .15s;flex-shrink:0;margin-left:3px;padding:0;}
+.pg-wa-api-btn:hover{background:#dcfce7;color:#15803d;border-color:#4ade80;}
+/* WhatsApp API compose panel */
+.pg-wa-compose{position:fixed;bottom:0;right:28px;z-index:999995;width:480px;border-radius:12px 12px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.16);overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1.5px solid #bbf7d0;border-bottom:none;animation:pg-compose-in .18s cubic-bezier(.2,0,.2,1) both;}
+.pg-wa-compose .pg-compose-head{background:linear-gradient(135deg,#15803d 0%,#16a34a 100%);}
+.pg-wa-compose .pg-compose-tag{background:#f0fdf4;border-color:#86efac;color:#15803d;}
+.pg-wa-compose .pg-compose-tag-x{color:#86efac;}
+.pg-wa-compose .pg-compose-tag-x:hover{color:#dc2626;background:#fee2e2;}
+.pg-wa-compose .pg-compose-ac-item:hover{background:#f0fdf4;}
+.pg-wa-compose .pg-compose-bulk-btn:hover{border-color:#15803d;color:#15803d;background:#f0fdf4;}
+.pg-wa-compose .pg-compose-send{background:linear-gradient(135deg,#15803d 0%,#16a34a 100%);box-shadow:0 2px 8px rgba(21,128,61,.3);}
+.pg-wa-compose .pg-wa-compose-open{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#fff;color:#6b7280;border:1.5px solid #e0e0ea;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;transition:all .14s;}
+.pg-wa-compose .pg-wa-compose-open:hover{border-color:#15803d;color:#15803d;background:#f0fdf4;}
 
 /* owner avatar */
 .pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
@@ -277,6 +291,8 @@
 .pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}
 .pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:300px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity .12s;}
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
+.pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
+.pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
 `;
 
     const SVG = {
@@ -293,7 +309,11 @@
         mail:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><rect x="1" y="3" width="14" height="10" rx="1.5"/><polyline points="1,3 8,9 15,3"/></svg>`,
         extlnk: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;opacity:.5"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7"/><path d="M8 1h3v3"/><line x1="11" y1="1" x2="5" y2="7"/></svg>`,
         wa:     `<svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+        waapi:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0"><path d="M2 11L8 2l6 9H2z"/><line x1="5" y1="8" x2="11" y2="8"/></svg>`,
         file:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:22px;height:22px;color:#94a3b8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+        person:  `<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>`,
+        building:`<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M6 14V9h4v5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>`,
+        lead_ic: `<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 4H14l-3.5 2.5 1.5 4L8 10.5 4 12.5l1.5-4L2 6h4.5z"/></svg>`,
     };
 
     // ── Owner avatar color (deterministic from initials) ───────────
@@ -320,7 +340,9 @@
         switch (col.type) {
             case "text":
             case "select":
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+                if (empty) return `<span class="pg-mt">—</span>`;
+                if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
+                return `<span>${_e(v)}</span>`;
             case "link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const val = String(v);
@@ -347,7 +369,8 @@
                 const waUrl  = `https://wa.me/${digits}`;
                 return (
                     `<span class="pg-ph">${_e(v)}</span>` +
-                    `<a class="pg-wa-btn" href="${_e(waUrl)}" target="_blank" title="WhatsApp" onclick="event.stopPropagation()">${SVG.wa}</a>`
+                    `<a class="pg-wa-btn" href="${_e(waUrl)}" target="_blank" title="WhatsApp" onclick="event.stopPropagation()">${SVG.wa}</a>` +
+                    `<button class="pg-wa-api-btn" data-phone="${_e(digits)}" title="Send via WhatsApp API">${SVG.waapi}</button>`
                 );
             }
             case "num":
@@ -820,6 +843,275 @@
         });
 
         requestAnimationFrame(() => $subject.focus());
+    }
+
+    // ── WhatsApp API compose panel ────────────────────────────────
+    function _openWaCompose(phone, rowName, cfg) {
+        const existing = document.querySelector(".pg-wa-compose");
+        if (existing) existing.remove();
+
+        const panel = document.createElement("div");
+        panel.className = "pg-wa-compose pg-compose";
+        panel.innerHTML =
+            `<div class="pg-compose-head">` +
+            `<span class="pg-compose-title">${SVG.wa} WhatsApp API</span>` +
+            `<div class="pg-compose-head-btns">` +
+            `<button class="pg-compose-hbtn pg-wac-settings-btn" title="API Settings">${SVG.pen}</button>` +
+            `<button class="pg-compose-hbtn pg-compose-close-btn">${SVG.close}</button>` +
+            `</div></div>` +
+            `<div class="pg-compose-row pg-compose-row--tags" id="pg-wac-to-row">` +
+            `<span class="pg-compose-lbl">To</span>` +
+            `<div class="pg-compose-tags"><input class="pg-compose-tag-inp" type="text" placeholder="Phone number (with country code)…" autocomplete="off"></div>` +
+            `<button class="pg-compose-bulk-btn" title="Select multiple">${SVG.plus}</button>` +
+            `</div>` +
+            `<textarea class="pg-compose-body" placeholder="Write your WhatsApp message…"></textarea>` +
+            `<div class="pg-compose-foot">` +
+            `<button class="pg-compose-send">${SVG.waapi} Send via API</button>` +
+            `<button class="pg-wa-compose-open">${SVG.wa} Open in WhatsApp</button>` +
+            `</div>`;
+
+        document.body.appendChild(panel);
+
+        const $toRow = panel.querySelector("#pg-wac-to-row");
+        const $tags  = panel.querySelector(".pg-compose-tags");
+        const $body  = panel.querySelector(".pg-compose-body");
+        const close  = () => panel.remove();
+        let _recipients = [];
+
+        panel.querySelector(".pg-compose-close-btn").addEventListener("click", close);
+
+        function _getInp() { return $tags.querySelector(".pg-compose-tag-inp"); }
+
+        function _addTag(num) {
+            num = num.trim().replace(/\D/g, "");
+            if (!num || _recipients.includes(num)) return;
+            _recipients.push(num);
+            const tag = document.createElement("span");
+            tag.className = "pg-compose-tag";
+            tag.innerHTML = `+${_e(num)}<button class="pg-compose-tag-x" title="Remove"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:8px;height:8px"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`;
+            tag.querySelector(".pg-compose-tag-x").addEventListener("click", () => {
+                _recipients = _recipients.filter(r => r !== num);
+                tag.remove();
+            });
+            $tags.insertBefore(tag, _getInp());
+            _getInp().value = "";
+        }
+
+        if (phone) _addTag(phone);
+
+        $tags.addEventListener("keydown", e => {
+            const inp = _getInp();
+            if ((e.key === "," || e.key === "Enter") && inp.value.trim()) {
+                e.preventDefault();
+                _addTag(inp.value.replace(",", ""));
+            }
+            if (e.key === "Backspace" && !inp.value && _recipients.length) {
+                _recipients.pop();
+                [...$tags.querySelectorAll(".pg-compose-tag")].at(-1)?.remove();
+            }
+        });
+        $tags.addEventListener("click", () => _getInp().focus());
+
+        // Autocomplete from prospect mobiles
+        let _acTimer = null, _acDropdown = null;
+        function _closeAc() { if (_acDropdown) { _acDropdown.remove(); _acDropdown = null; } }
+        function _showAc(results) {
+            _closeAc();
+            const visible = results.filter(r => r.custom_mobile && !_recipients.includes(String(r.custom_mobile).replace(/\D/g, "")));
+            if (!visible.length) return;
+            _acDropdown = document.createElement("div");
+            _acDropdown.className = "pg-compose-ac";
+            visible.forEach(r => {
+                const name = [r.custom_first_name, r.custom_last_name].filter(Boolean).join(" ") || r.company_name || r.name;
+                const item = document.createElement("div");
+                item.className = "pg-compose-ac-item";
+                item.innerHTML = `<span class="pg-compose-ac-name">${_e(name)}</span><span class="pg-compose-ac-email">${_e(r.custom_mobile)}</span>`;
+                item.addEventListener("mousedown", e => {
+                    e.preventDefault();
+                    _addTag(String(r.custom_mobile).replace(/\D/g, ""));
+                    _closeAc();
+                });
+                _acDropdown.appendChild(item);
+            });
+            if (_acDropdown.children.length) $toRow.appendChild(_acDropdown);
+        }
+
+        $tags.addEventListener("input", e => {
+            if (e.target !== _getInp()) return;
+            clearTimeout(_acTimer);
+            const seg = _getInp().value.trim();
+            if (seg.length < 2) { _closeAc(); return; }
+            _acTimer = setTimeout(() => {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Prospect",
+                        or_filters: [
+                            ["custom_mobile",     "like", "%" + seg + "%"],
+                            ["custom_first_name", "like", "%" + seg + "%"],
+                            ["custom_last_name",  "like", "%" + seg + "%"],
+                            ["company_name",      "like", "%" + seg + "%"],
+                        ],
+                        fields: ["name","custom_first_name","custom_last_name","company_name","custom_mobile"],
+                        limit: 8,
+                    },
+                    callback(r) { _showAc(r.message || []); },
+                });
+            }, 200);
+        });
+        $tags.addEventListener("focusout", () => setTimeout(_closeAc, 150));
+
+        // Bulk select
+        panel.querySelector(".pg-compose-bulk-btn").addEventListener("click", () => {
+            _openWaBroadcast(cfg, selected => selected.forEach(_addTag));
+        });
+
+        // Open in WhatsApp app (first recipient)
+        panel.querySelector(".pg-wa-compose-open").addEventListener("click", () => {
+            const num = _recipients[0];
+            if (!num) { frappe.show_alert({ message: "Add at least one recipient.", indicator: "orange" }, 3); return; }
+            const msg = encodeURIComponent($body.value.trim());
+            window.open(`https://wa.me/${num}${msg ? "?text=" + msg : ""}`, "_blank");
+        });
+
+        // Settings shortcut
+        panel.querySelector(".pg-wac-settings-btn").addEventListener("click", () => {
+            frappe.msgprint({
+                title: "WhatsApp API Settings",
+                message: 'Configure your WhatsApp Business API credentials in <b>Site Config</b>:<br><br>' +
+                    '<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px">wa_api_token</code> — your Meta access token<br>' +
+                    '<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px">wa_phone_number_id</code> — your WhatsApp Phone Number ID<br><br>' +
+                    'Set these in <b>bench set-config</b> or via <a href="/app/system-settings" style="color:#15803d;font-weight:600">System Settings</a>.',
+                indicator: "green",
+            });
+        });
+
+        // Send
+        panel.querySelector(".pg-compose-send").addEventListener("click", () => {
+            const pending = _getInp().value.trim();
+            if (pending) _addTag(pending);
+
+            const message = $body.value.trim();
+            if (!_recipients.length || !message) {
+                frappe.show_alert({ message: "Add at least one recipient and a message.", indicator: "orange" }, 4);
+                return;
+            }
+            const btn = panel.querySelector(".pg-compose-send");
+            btn.disabled = true;
+            btn.style.opacity = ".6";
+
+            const sends = _recipients.map(num =>
+                new Promise(resolve => {
+                    frappe.call({
+                        method: "erp_next_custom.erp_next_custom.api.send_whatsapp_message",
+                        args: { to: num, message, prospect_name: rowName },
+                        callback(r) { resolve({ num, ok: true, r }); },
+                        error(err) { resolve({ num, ok: false, err }); },
+                    });
+                })
+            );
+
+            Promise.all(sends).then(results => {
+                btn.disabled = false;
+                btn.style.opacity = "";
+                const failed = results.filter(r => !r.ok);
+                if (!failed.length) {
+                    frappe.show_alert({ message: `WhatsApp message sent to ${results.length} recipient${results.length > 1 ? "s" : ""}.`, indicator: "green" }, 4);
+                    close();
+                } else {
+                    frappe.show_alert({ message: `Sent ${results.length - failed.length}/${results.length}. ${failed.length} failed.`, indicator: "orange" }, 5);
+                }
+            });
+        });
+
+        requestAnimationFrame(() => $body.focus());
+    }
+
+    // ── WhatsApp API broadcast modal ──────────────────────────────
+    function _openWaBroadcast(cfg, onConfirm) {
+        let _allProspects = [];
+        let _selected     = new Set();
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-bcast-overlay";
+        overlay.innerHTML =
+            `<div class="pg-bcast-box">` +
+            `<div class="pg-bcast-head"><span class="pg-bcast-title">Select Recipients</span><button class="pg-bcast-close">${SVG.close}</button></div>` +
+            `<div class="pg-bcast-search"><input class="pg-bcast-search-inp" type="text" placeholder="Search by name, company or mobile…"></div>` +
+            `<div class="pg-bcast-selall"><input type="checkbox" id="pg-wabcast-all"><label for="pg-wabcast-all" style="cursor:pointer">Select all visible</label></div>` +
+            `<div class="pg-bcast-list"></div>` +
+            `<div class="pg-bcast-foot"><span class="pg-bcast-count">0 selected</span><button class="pg-bcast-confirm">Add to recipients</button></div>` +
+            `</div>`;
+        document.body.appendChild(overlay);
+
+        const $list   = overlay.querySelector(".pg-bcast-list");
+        const $search = overlay.querySelector(".pg-bcast-search-inp");
+        const $selAll = overlay.querySelector("#pg-wabcast-all");
+        const $count  = overlay.querySelector(".pg-bcast-count");
+        const closeOv = () => overlay.remove();
+
+        overlay.querySelector(".pg-bcast-close").addEventListener("click", closeOv);
+        overlay.addEventListener("click", e => { if (e.target === overlay) closeOv(); });
+
+        function _updateCount() { $count.textContent = `${_selected.size} selected`; }
+
+        function _renderList(prospects) {
+            $list.innerHTML = "";
+            if (!prospects.length) { $list.innerHTML = `<div class="pg-bcast-empty">No prospects with mobile numbers found.</div>`; return; }
+            prospects.forEach(p => {
+                const name = [p.custom_first_name, p.custom_last_name].filter(Boolean).join(" ") || p.company_name || p.name;
+                const num  = String(p.custom_mobile || "").replace(/\D/g, "");
+                if (!num) return;
+                const checked = _selected.has(num);
+                const row = document.createElement("label");
+                row.className = "pg-bcast-item";
+                row.innerHTML = `<input type="checkbox" value="${_e(num)}"${checked ? " checked" : ""}><span class="pg-bcast-item-name">${_e(name)}</span><span class="pg-bcast-item-email">+${_e(num)}</span>`;
+                row.querySelector("input").addEventListener("change", ev => {
+                    ev.target.checked ? _selected.add(num) : _selected.delete(num);
+                    _updateCount();
+                    $selAll.checked = [...$list.querySelectorAll("input[type=checkbox]")].every(c => c.checked);
+                });
+                $list.appendChild(row);
+            });
+        }
+
+        $search.addEventListener("input", () => {
+            const q = $search.value.toLowerCase();
+            const filtered = _allProspects.filter(p => {
+                const name = [p.custom_first_name, p.custom_last_name, p.company_name].filter(Boolean).join(" ").toLowerCase();
+                return name.includes(q) || String(p.custom_mobile || "").includes(q);
+            });
+            _renderList(filtered);
+        });
+
+        $selAll.addEventListener("change", () => {
+            $list.querySelectorAll("input[type=checkbox]").forEach(c => {
+                c.checked = $selAll.checked;
+                const num = c.value;
+                $selAll.checked ? _selected.add(num) : _selected.delete(num);
+            });
+            _updateCount();
+        });
+
+        overlay.querySelector(".pg-bcast-confirm").addEventListener("click", () => {
+            onConfirm([..._selected]);
+            closeOv();
+        });
+
+        $list.innerHTML = `<div class="pg-bcast-empty">Loading…</div>`;
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Prospect",
+                filters: [["custom_mobile", "!=", ""]],
+                fields: ["name","custom_first_name","custom_last_name","company_name","custom_mobile"],
+                limit: 500,
+            },
+            callback(r) {
+                _allProspects = (r.message || []).filter(p => p.custom_mobile);
+                _renderList(_allProspects);
+            },
+        });
     }
 
     // ── Broadcast / bulk-select modal ─────────────────────────────
@@ -1482,10 +1774,11 @@
         // ── Inline edit ─────────────────────────────────────────
         if (cfg.editable) {
             root.addEventListener("click", e => {
-                if (e.target.closest(".pg-maps-btn"))  return;
-                if (e.target.closest(".pg-wa-btn"))    return;
-                if (e.target.closest(".pg-email-btn")) return;
-                if (e.target.closest(".pg-social-lnk")) return;
+                if (e.target.closest(".pg-maps-btn"))    return;
+                if (e.target.closest(".pg-wa-btn"))      return;
+                if (e.target.closest(".pg-wa-api-btn"))  return;
+                if (e.target.closest(".pg-email-btn"))   return;
+                if (e.target.closest(".pg-social-lnk"))  return;
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
                 _openEdit(root, td);
@@ -1511,6 +1804,16 @@
             const td      = btn.closest("td");
             const rowName = td && td.dataset.rowName;
             _openCompose(btn.dataset.email, rowName || "", cfg);
+        });
+
+        // ── WhatsApp API compose button ──────────────────────────
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-wa-api-btn");
+            if (!btn) return;
+            e.stopPropagation();
+            const td      = btn.closest("td");
+            const rowName = td && td.dataset.rowName;
+            _openWaCompose(btn.dataset.phone, rowName || "", cfg);
         });
 
         // ── Maps hover popup ─────────────────────────────────────
