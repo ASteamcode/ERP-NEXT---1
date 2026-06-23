@@ -1,180 +1,115 @@
-// leads_list.js — built on GL (grid_core.js)
+// leads_list.js — Lead list view powered by PG (prospect_grid.js)
 "use strict";
 
 const LEAD_DOCTYPE = "Lead";
 
-const LEAD_STATUS_OPTIONS = ["","Open","Replied","Opportunity","Interest","Do Not Contact","Converted"];
-const LEAD_TYPE_OPTIONS   = ["","Client","Channel Partner","Consultant"];
-
-const LEAD_COLS = [
-    { field: "status",       label: "Status",    type: "select",  width: 130, options: LEAD_STATUS_OPTIONS, sticky: true },
-    { field: "lead_name",    label: "Full Name", type: "text",    width: 160, sticky: true },
-    { field: "company_name", label: "Company",   type: "text",    width: 160 },
-    { field: "email_id",     label: "Email",     type: "email",   width: 190 },
-    { field: "mobile_no",    label: "Mobile",    type: "tel",     width: 130 },
-    { field: "phone",        label: "Phone",     type: "tel",     width: 120 },
-    { field: "website",      label: "Website",   type: "url",     width: 170 },
-    { field: "type",         label: "Type",      type: "select",  width: 130, options: LEAD_TYPE_OPTIONS },
-    { field: "lead_owner",   label: "Owner",     type: "link",    width: 150, link_doctype: "User" },
-    { field: "territory",    label: "Territory", type: "link",    width: 130, link_doctype: "Territory" },
-    { field: "name",         label: "→ SS",      type: "nav-ss",  width: 52 },
-];
-
-const _L_COL_WIDTHS = {};
-
-// --- Entry point -------------------------------------------------------------
-frappe.provide("frappe.listview_settings.Lead");
-
-frappe.listview_settings.Lead = {
-    add_fields: ["status","lead_name","company_name","email_id","mobile_no","phone","website","type","lead_owner","territory"],
-
-    onload(listview) {
-        GL.suppressRefresh(listview);
-        GL.bootstrap(listview, { doctype: LEAD_DOCTYPE });
-    },
-
-    refresh(listview) {
-        _l_render(listview);
-    },
+const _LL_CFG = {
+    tabs: ["Contact", "Details", "Qualification"],
+    fixed: [
+        { key:"num",     label:"#",        cls:"pg-f-num",   width:42,  type:"rownum" },
+        { key:"status",  label:"Status",   cls:"pg-f-stat",  width:110, frappe_field:"status", type:"status",
+          map:{ Open:"pg-badge-blue", Replied:"pg-badge-teal", Opportunity:"pg-badge-indigo", Interest:"pg-badge-green", "Do Not Contact":"pg-badge-red", Converted:"pg-badge-lime" } },
+        { key:"first",   label:"First",    cls:"pg-f-first", width:105, frappe_field:"first_name" },
+        { key:"last",    label:"Last",     cls:"pg-f-last",  width:105, frappe_field:"last_name"  },
+        { key:"company", label:"Company",  cls:"pg-f-co",    width:168, frappe_field:"company_name", type:"company", shadow:true },
+    ],
+    cols: [
+        { tab:0, key:"email",   label:"Email",     type:"link",   frappe_field:"email_id"    },
+        { tab:0, key:"mobile",  label:"Mobile",    type:"phone",  frappe_field:"mobile_no"   },
+        { tab:0, key:"phone",   label:"Phone",     type:"phone",  frappe_field:"phone"       },
+        { tab:0, key:"whatsapp",label:"WhatsApp",  type:"phone",  frappe_field:"whatsapp_no" },
+        { tab:1, key:"type",    label:"Type",      type:"select", frappe_field:"type",        options:["","Client","Channel Partner","Consultant"] },
+        { tab:1, key:"territory",label:"Territory",type:"text",   frappe_field:"territory"   },
+        { tab:1, key:"owner",   label:"Owner",     type:"text",   frappe_field:"lead_owner"  },
+        { tab:1, key:"website", label:"Website",   type:"link",   frappe_field:"website"     },
+        { tab:2, key:"qual_status",label:"Qual. Status", type:"status", frappe_field:"qualification_status",
+          map:{ Qualified:"pg-badge-green", Unqualified:"pg-badge-red", "In Process":"pg-badge-amber" } },
+        { tab:2, key:"job_title",  label:"Job Title",    type:"text", frappe_field:"job_title"     },
+        { tab:2, key:"revenue",    label:"Revenue",       type:"num",  frappe_field:"annual_revenue" },
+    ],
+    rows: [],
+    editable: true,
+    doctype: LEAD_DOCTYPE,
 };
 
-// --- Render ------------------------------------------------------------------
-function _l_render(listview) {
-    const host = GL.bootstrap(listview, { doctype: LEAD_DOCTYPE });
+const _LL_FIELDS = [
+    "name","status","first_name","last_name","company_name",
+    "email_id","mobile_no","phone","whatsapp_no",
+    "type","territory","lead_owner","website",
+    "qualification_status","job_title","annual_revenue",
+];
+
+frappe.provide("frappe.listview_settings.Lead");
+frappe.listview_settings.Lead = {
+    onload(lv) { GL.suppressRefresh(lv); _ll_hide(lv); },
+    refresh(lv) { _ll_hide(lv); _ll_render(lv); },
+};
+
+function _ll_hide(lv) {
+    lv.$page.find(".page-head,.page-form,.standard-filter-section,.filter-section,.sort-selector,.filter-selector,.list-filters-area,.list-filter-area,.sort-filter-area,.tag-filters-area,.list-header-meta,.list-toolbar-wrapper,.list-toolbar,.list-row-head,.list-headers,.list-subjects").hide();
+}
+
+function _ll_render(lv) {
+    const host = GL.bootstrap(lv, { doctype: LEAD_DOCTYPE });
     if (!host) return;
-    GL.hideNative(listview);
-    _l_paint(listview, host, listview.data || []);
-}
-
-function _l_paint(listview, host, rows) {
-    const cols   = LEAD_COLS;
-    const getTpl = () => GL.gridTpl(cols, _L_COL_WIDTHS);
-
-    const toolbar = document.createElement("div");
-    toolbar.className = "gl-toolbar";
-    toolbar.innerHTML = `<button class="btn btn-default btn-sm gl-add-btn"><span class="gl-add-icon">+</span> ${__("Add Lead")}</button>`;
-
-    const so = GL.computeStickyOffsets(cols, _L_COL_WIDTHS);
-    const stickyLast = Object.keys(so).pop() || null;
-
-    const html = [GL.rnHeader()];
-    cols.forEach((col, ci) => {
-        const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
-        const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
-        html.push(`<div class="gl-cell gl-hdr${scls}" data-col="${ci}" data-field="${col.field}"${ssty}><span>${__(col.label)}</span><div class="gl-rh" data-col="${ci}"></div></div>`);
-    });
-
-    if (!rows.length) {
-        html.push(`<div class="gl-empty" style="grid-column:1/${cols.length + 2}">${__("No leads found")}</div>`);
-    }
-
-    rows.forEach((doc, ri) => {
-        html.push(GL.rnCell(doc, ri));
-        cols.forEach((col, ci) => {
-            const scls = so[col.field] != null ? ` gl-col--sticky${stickyLast === col.field ? ' gl-col--sticky-last' : ''}` : '';
-            const ssty = so[col.field] != null ? ` style="left:${so[col.field]}px"` : '';
-            html.push(`<div class="gl-cell${scls}" data-row="${ri}" data-col="${ci}" data-field="${col.field}" data-name="${doc.name}"${ssty}>${_l_cell(col, doc)}</div>`);
-        });
-    });
-
-    const grid = document.createElement("div");
-    grid.className = "gl-grid gl-grid--scroll";
-    grid.style.gridTemplateColumns = getTpl();
-    grid.innerHTML = html.join("");
-
-    const scrollWrap = document.createElement("div");
-    scrollWrap.className = "gl-host--scroll";
-    scrollWrap.appendChild(grid);
-    host.innerHTML = "";
-    host.className = "gl-host";
-    host.appendChild(toolbar);
-    host.appendChild(scrollWrap);
-
-    _l_bind(listview, host, rows, cols, getTpl);
-}
-
-function _l_cell(col, doc) {
-    const raw = doc[col.field];
-    if (col.type === "select") return GL.renderSelect(col, doc.name, raw);
-    if (col.type === "url")    return GL.renderUrl(col, doc.name, raw);
-    if (col.type === "link")   return GL.renderLink(col, doc.name, raw);
-    if (col.type === "nav-ss") return `<button class="gl-icon-btn l-nav-ss-btn" data-lead="${frappe.utils.escape_html(doc.name)}" title="${__("View Site Surveys")}">→</button>`;
-    return GL.renderText(col, doc.name, raw, col.type);
-}
-
-// --- Events ------------------------------------------------------------------
-function _l_bind(listview, host, rows, cols, getTpl) {
-    const $host  = $(host);
-    const $grid  = $host.find(".gl-grid");
-    const esm    = GL.editState($grid);
-    const saveFn = (name, field, val) => GL.fastSave(LEAD_DOCTYPE, name, field, val);
-
-    const getTplFull = () => {
-        const t = getTpl();
-        const _so = GL.computeStickyOffsets(cols, _L_COL_WIDTHS);
-        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
-        host._glRefreshHScroll?.();
-        return t;
-    };
-    GL.bindHover($grid);
-    GL.bindColResize($grid, cols, _L_COL_WIDTHS, getTplFull);
-    GL.bindHScroll(host, $grid);
-
-    // Custom delete: warn if linked Site Surveys exist
-    $grid.on("click.l-del", ".gl-rn-del", function (e) {
-        e.stopPropagation();
-        const docname = $(this).attr("data-name");
-        frappe.db.count("Site Survey", { lead: docname }).then(count => {
-            const msg = count > 0
-                ? __("This Lead has {0} linked Site Survey(s). They will remain but lose their lead link. Delete this Lead anyway?", [count])
-                : __("Delete this Lead? This cannot be undone.");
-            frappe.confirm(msg, () => {
-                frappe.call({
-                    method: "frappe.client.delete",
-                    args: { doctype: LEAD_DOCTYPE, name: docname },
-                    callback: ({ exc }) => {
-                        if (exc) return;
-                        frappe.show_alert({ message: __("Deleted"), indicator: "red" }, 1.2);
-                        listview.data = (listview.data || []).filter(d => d.name !== docname);
-                        _l_render(listview);
-                    },
-                });
-            });
-        });
-    });
-    GL.bindTextEdit($grid, rows, saveFn, esm);
-    GL.bindUrlEdit($grid, rows, saveFn, esm);
-    GL.bindLinkEdit($grid, rows, saveFn, esm);
-    GL.bindSelectChange($grid, rows, saveFn);
-    GL.bindOutsideClick($grid, esm, "leads");
-
-    $grid.on("click.l", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function (e) {
-        e.stopPropagation();
-        const name = $(this).attr("data-name"); if (name) esm.set(name);
-    });
-    $grid.on("dblclick.l", ".gl-cell:not(.gl-hdr):not(.gl-rn)", function (e) {
-        e.preventDefault();
-        const name = $(this).attr("data-name"); if (name) frappe.set_route("Form", LEAD_DOCTYPE, name);
-    });
-
-    GL.bindAddRow($host, () => {
-        frappe.call({
-            method: "frappe.client.insert",
-            args: { doc: { doctype: LEAD_DOCTYPE, lead_name: "New Lead", status: "Open" } },
-            callback({ exc, message }) {
-                if (exc || !message) return;
-                frappe.show_alert({ message: __("Lead added"), indicator: "green" }, 1.2);
-                if (!Array.isArray(listview.data)) listview.data = [];
-                listview.data.unshift(message);
-                _l_render(listview);
-            },
-        });
-    });
-
-    // Navigate to Site Survey list filtered by this lead
-    $grid.on("click.l-ss", ".l-nav-ss-btn", function (e) {
-        e.stopPropagation();
-        frappe.route_options = { lead: $(this).attr("data-lead") };
-        frappe.set_route("List", "Site Survey");
+    GL.hideNative(lv);
+    host.innerHTML = `<div class="pl-loading">Loading leads…</div>`;
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: { doctype: LEAD_DOCTYPE, fields: _LL_FIELDS, limit_page_length: 500, order_by: "creation asc" },
+        callback(r) {
+            if (!document.contains(host)) return;
+            const rows = (r.message || []).map((d, i) => ({
+                name: d.name, num: i + 1,
+                status:  d.status || "",
+                first:   d.first_name || "", last: d.last_name || "", company: d.company_name || "",
+                email:   d.email_id || "", mobile: d.mobile_no || "",
+                phone:   d.phone || "", whatsapp: d.whatsapp_no || "",
+                type:    d.type || "", territory: d.territory || "",
+                owner:   d.lead_owner || "", website: d.website || "",
+                qual_status: d.qualification_status || "",
+                job_title: d.job_title || "",
+                revenue: d.annual_revenue ? String(d.annual_revenue) : "",
+            }));
+            PG.mount(host, Object.assign({}, _LL_CFG, {
+                rows,
+                onReload() { _ll_render(lv); },
+                onEdit(name, ff, val) {
+                    frappe.db.set_value(LEAD_DOCTYPE, name, ff, val)
+                        .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
+                },
+                onAddRow(reload) {
+                    frappe.call({
+                        method: "frappe.client.insert",
+                        args: { doc: { doctype: LEAD_DOCTYPE, first_name: "New", lead_name: "New Lead", status: "Open" } },
+                        callback(r) { if (!r.exc) { frappe.show_alert({ message: "Lead added", indicator: "green" }, 1.5); reload(); } },
+                    });
+                },
+                onDeleteRows(names, reload) {
+                    const lbl = names.length === 1 ? "1 lead" : `${names.length} leads`;
+                    frappe.confirm(`Delete ${lbl}? This cannot be undone.`, () => {
+                        let done = 0;
+                        names.forEach(n => frappe.call({
+                            method: "frappe.client.delete", args: { doctype: LEAD_DOCTYPE, name: n },
+                            callback() { if (++done === names.length) { frappe.show_alert({ message: "Deleted", indicator: "orange" }, 2); reload(); } },
+                        }));
+                    });
+                },
+            }));
+        },
     });
 }
+
+(function () {
+    if (document.getElementById("ll-pg-styles")) return;
+    const s = document.createElement("style"); s.id = "ll-pg-styles";
+    s.textContent = `
+.gl-host{padding:12px 16px 32px;box-sizing:border-box;}
+.pl-loading{padding:48px;text-align:center;color:#9ca3af;font-size:13px;}
+.page-container[data-page-route="List/Lead/List"] .list-row-head,
+.page-container[data-page-route="List/Lead/List"] .list-headers,
+.page-container[data-page-route="List/Lead/List"] .list-subjects,
+.page-container[data-page-route="List/Lead/List"] header.frappe-list-head { display:none !important; }
+    `;
+    document.head.appendChild(s);
+})();
