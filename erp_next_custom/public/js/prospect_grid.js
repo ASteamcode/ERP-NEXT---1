@@ -257,6 +257,9 @@
 .pg-tb-del.pg-tb-del-on{opacity:1;pointer-events:all;max-width:180px;padding:6px 14px;border-width:1.5px;}
 .pg-tb-del:hover{background:#fef2f2;}
 .pg-tb-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:0 4px;}
+.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}
+.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:300px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity .12s;}
+.pg-notes-tip.pg-notes-tip-on{opacity:1;}
 `;
 
     const SVG = {
@@ -352,6 +355,8 @@
                 return typeof frappe_drawing !== "undefined"
                     ? frappe_drawing.render_btn(_e(row.name || ""), row.has_drawing)
                     : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(row.name||'')}" title="Drawing">${SVG.pen}</button>`;
+            case "notes":
+                return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-notes-cell" data-notes="${_e(String(v))}">${_e(String(v))}</span>`;
             case "owner": {
                 const initials = v || "?";
                 const color    = _ownerColor(initials);
@@ -1209,6 +1214,13 @@
             el.type = "text";
             el.value = val;
             el.placeholder = "Paste Google Maps URL…";
+        } else if (ctype === "notes") {
+            el = document.createElement("textarea");
+            el.className = "pg-float-input";
+            el.style.padding = "4px 8px";
+            el.style.resize = "none";
+            el.style.overflow = "hidden";
+            el.value = val;
         } else {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -1229,7 +1241,8 @@
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
             if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
-            if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); _navCell(root, td, e.shiftKey ? "left" : "right"); return; }
+            if (e.key === "Enter" && el.tagName === "TEXTAREA" && e.shiftKey) return; // allow newline
+            if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); return; }
 
             const isText = el.tagName === "INPUT" && (el.type === "text" || el.type === "url" || el.type === "");
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
@@ -1346,7 +1359,7 @@
         if (cnt) cnt.textContent = sel;
     }
 
-    // ── Full wiring ────────────────────────────────────────────────
+// ── Full wiring ────────────────────────────────────────────────
     function _wire(root, cfg) {
         const tabCount = cfg.tabs.length;
         let _wt = 0, _ts = null;
@@ -1604,6 +1617,32 @@
         root.querySelector(".pg-tb-exp").addEventListener("click", () => {
             if (cfg.onExportLeads) cfg.onExportLeads(cfg.rows, () => _reload(root));
         });
+
+        // ── Notes hover tooltip ──────────────────────────────────
+        let _notesTooltip = null;
+        root.addEventListener("mouseenter", ev => {
+            const span = ev.target.closest(".pg-notes-cell");
+            if (!span) return;
+            const text = span.dataset.notes;
+            if (!text) return;
+            if (!_notesTooltip) {
+                _notesTooltip = document.createElement("div");
+                _notesTooltip.className = "pg-notes-tip";
+                document.body.appendChild(_notesTooltip);
+            }
+            _notesTooltip.textContent = text;
+            const r = span.getBoundingClientRect();
+            let top = r.bottom + 6;
+            let left = r.left;
+            if (top + 150 > window.innerHeight) top = r.top - 10;
+            _notesTooltip.style.left = left + "px";
+            _notesTooltip.style.top  = top + "px";
+            _notesTooltip.classList.add("pg-notes-tip-on");
+        }, true);
+        root.addEventListener("mouseleave", ev => {
+            if (!ev.target.closest(".pg-notes-cell") || !_notesTooltip) return;
+            _notesTooltip.classList.remove("pg-notes-tip-on");
+        }, true);
     }
 
     function _reload(root) {

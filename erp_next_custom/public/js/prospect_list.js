@@ -48,6 +48,7 @@ const _PROSPECT_CFG = {
         { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
         { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "text",   frappe_field: "custom_scaffold_type" },
         { tab: 2, key: "ptype",    label: "Project Type",   type: "text",   frappe_field: "custom_project_type"  },
+        { tab: 2, key: "scope_notes", label: "Notes",       type: "notes",  frappe_field: "custom_scope_notes", width: 200 },
         { tab: 3, key: "architect",  label: "Architect",       type: "text",   frappe_field: "custom_architect"     },
         { tab: 3, key: "proj_owner", label: "Project Owner",   type: "text",   frappe_field: "custom_project_owner" },
         { tab: 3, key: "site_eng",   label: "Site Engineer",   type: "text",   frappe_field: "custom_site_engineer" },
