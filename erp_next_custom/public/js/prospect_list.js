@@ -22,7 +22,7 @@ function _focusDraftCompany(host) {
 }
 
 const _PROSPECT_CFG = {
-    tabs: ["Profile & Context", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
+    tabs: ["Profile & Contact", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
         { key: "num",     label: "#",          cls: "pg-f-num",   width: 42,  type: "rownum" },
         { key: "title",   label: "Title",      cls: "pg-f-title", width: 54,  frappe_field: "custom_salutation", type: "select", options: ["", "Mr", "Ms", "Mrs", "Dr", "Arch", "Eng"] },
@@ -64,6 +64,8 @@ const _PROSPECT_CFG = {
     rows: [],
     editable: true,
     doctype: "Prospect",
+    searchPlaceholder: "Search prospects…",
+    exportLabel: "Export Prospects",
 };
 
 // ── Listview hook ──────────────────────────────────────────────────

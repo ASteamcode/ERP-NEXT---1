@@ -60,12 +60,14 @@ frappe.listview_settings[CAL_DOCTYPE] = {
 
 	onload(lv) {
 		GL.suppressRefresh(lv);
+		GL.hideChrome(lv);
 		cal_inject_styles();
 		if (!_CAL_WEEK_START) _CAL_WEEK_START = cal_week_start(new Date());
 	},
 
 	refresh(lv) {
 		GL.suppressRefresh(lv);
+		GL.hideChrome(lv);
 		cal_inject_styles();
 
 		// Use GL.bootstrap so injectDoctypeHide + gl-host creation is consistent.
@@ -369,6 +371,8 @@ function cal_start_timer(wrap, today) {
 
 // ── Event binding ─────────────────────────────────────────────────────────────
 
+let _CAL_DRAG = null; // { col, startSlot, endSlot, date }
+
 function cal_bind(hostEl) {
 	const $host = $(hostEl);
 
@@ -377,12 +381,38 @@ function cal_bind(hostEl) {
 	$host.on("click.calnav", ".js-cal-next",  () => cal_nav(+7));
 	$host.on("click.calnav", ".js-cal-today", () => { _CAL_WEEK_START = cal_week_start(new Date()); cal_loading(); cal_fetch(); });
 
-	// Slot click → quick-create
-	$host.on("click.calslot", ".cal-slot", function (e) {
-		e.stopPropagation();
-		const date = $(this).closest(".cal-day-col").data("date");
-		const time = this.dataset.time;
-		if (date && time) cal_quick_create(date, time);
+	// Drag-select across slots (mousedown → mousemove → mouseup)
+	hostEl.addEventListener("mousedown", function (e) {
+		const slot = e.target.closest(".cal-slot");
+		if (!slot || e.target.closest(".cal-event")) return;
+		e.preventDefault();
+		const col = slot.closest(".cal-day-col");
+		_CAL_DRAG = { col, date: col.dataset.date, startTime: slot.dataset.time, endTime: slot.dataset.time };
+		cal_drag_highlight(_CAL_DRAG);
+	}, { passive: false });
+
+	hostEl.addEventListener("mousemove", function (e) {
+		if (!_CAL_DRAG) return;
+		const slot = e.target.closest(".cal-slot");
+		if (!slot) return;
+		const sameCol = slot.closest(".cal-day-col") === _CAL_DRAG.col;
+		if (!sameCol) return;
+		const t = slot.dataset.time;
+		if (t > _CAL_DRAG.startTime) _CAL_DRAG.endTime = t;
+		else { _CAL_DRAG.startTime = t; }
+		cal_drag_highlight(_CAL_DRAG);
+	});
+
+	document.addEventListener("mouseup", function () {
+		if (!_CAL_DRAG) return;
+		const { date, startTime, endTime } = _CAL_DRAG;
+		_CAL_DRAG = null;
+		cal_drag_clear(hostEl);
+		if (date && startTime) {
+			// endTime is the START of the last highlighted slot — add 30min for end
+			const endMin = cal_t2m(endTime) + 30;
+			cal_quick_create(date, startTime, cal_m2t(endMin));
+		}
 	});
 
 	// Event click → full form
@@ -391,6 +421,20 @@ function cal_bind(hostEl) {
 		const name = this.dataset.name;
 		if (name) frappe.set_route("Form", CAL_DOCTYPE, name);
 	});
+}
+
+function cal_drag_highlight(drag) {
+	if (!drag.col) return;
+	const slots = drag.col.querySelectorAll(".cal-slot");
+	slots.forEach(s => {
+		const t = s.dataset.time;
+		const on = t >= drag.startTime && t <= drag.endTime;
+		s.classList.toggle("cal-slot--drag", on);
+	});
+}
+
+function cal_drag_clear(hostEl) {
+	hostEl.querySelectorAll(".cal-slot--drag").forEach(s => s.classList.remove("cal-slot--drag"));
 }
 
 function cal_nav(days) {
@@ -405,8 +449,8 @@ function cal_loading() {
 
 // ── Quick-create dialog ───────────────────────────────────────────────────────
 
-function cal_quick_create(dateStr, startTime) {
-	const endTime  = cal_m2t(cal_t2m(startTime) + 30);
+function cal_quick_create(dateStr, startTime, presetEndTime) {
+	const endTime  = presetEndTime || cal_m2t(cal_t2m(startTime) + 30);
 	const [y,m,d]  = dateStr.split("-");
 	const dt       = new Date(+y, +m - 1, +d);
 	const dateDisp = `${CAL_DAY_SHORT[dt.getDay()]} ${d} ${CAL_MON_SHORT[+m - 1]} ${y}`;
@@ -504,11 +548,11 @@ function cal_t2m(t) {
 	return h * 60 + (m || 0);
 }
 
-/** total minutes → "HH:MM" */
+/** total minutes → "HH:MM:00" (Frappe Time field requires seconds) */
 function cal_m2t(min) {
 	const h = Math.floor((min % 1440) / 60);
 	const m = min % 60;
-	return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+	return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`;
 }
 
 /** "HH:MM:SS" → "HH:MM" for display */
@@ -652,6 +696,17 @@ function cal_inject_styles() {
 
 		/* ── Loading placeholder ── */
 		.cal-loading { padding: 48px 20px; text-align: center; color: var(--cm); font-size: 13px; }
+
+		/* ── Drag selection highlight ── */
+		.cal-slot--drag { background: rgba(55,138,221,0.22) !important; }
+
+		/* ── Hide Frappe native chrome for this list ── */
+		[data-page-route="List/Custom Calendar Event/List"] .page-head,
+		[data-page-route="List/Custom Calendar Event/List"] .page-form,
+		[data-page-route="List/Custom Calendar Event/List"] .list-row-head,
+		[data-page-route="List/Custom Calendar Event/List"] .list-headers,
+		[data-page-route="List/Custom Calendar Event/List"] .list-subjects,
+		[data-page-route="List/Custom Calendar Event/List"] .frappe-list-head { display: none !important; }
 
 		/* ── Responsive ── */
 		@media (max-width: 860px) {

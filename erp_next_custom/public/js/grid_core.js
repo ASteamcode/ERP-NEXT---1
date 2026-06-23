@@ -1885,7 +1885,71 @@
         // Dialogs
         openAttachDialog,
         openMeasureDialog,
+        // PG helpers
+        hideChrome,
+        pgRender,
     };
+
+    // ── Shared PG list helpers ────────────────────────────────────────────────
+
+    // Hides all Frappe native chrome for any list view
+    function hideChrome(lv) {
+        lv.$page.find([
+            ".page-head", ".page-form",
+            ".standard-filter-section", ".filter-section",
+            ".sort-selector", ".filter-selector",
+            ".list-filters-area", ".list-filter-area",
+            ".sort-filter-area", ".tag-filters-area",
+            ".list-header-meta", ".list-toolbar-wrapper", ".list-toolbar",
+            ".list-row-head", ".list-headers", ".list-subjects",
+            "header.frappe-list-head",
+        ].join(",")).hide();
+    }
+
+    // Standard PG render loop: fetch → map → mount → stats
+    // opts: { doctype, fields, orderBy, mapFn(raw,i)→row, cfg, statsFn(raw)→cards[], addDoc }
+    function pgRender(lv, opts) {
+        const host = GL.bootstrap(lv, { doctype: opts.doctype });
+        if (!host) return;
+        GL.hideNative(lv);
+        host.innerHTML = `<div class="pl-loading">Loading…</div>`;
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: opts.doctype,
+                fields: opts.fields,
+                limit_page_length: opts.limit || 500,
+                order_by: opts.orderBy || "creation desc",
+            },
+            callback(r) {
+                if (!document.contains(host)) return;
+                const raw  = r.message || [];
+                const rows = raw.map((d, i) => opts.mapFn(d, i));
+                const cfg  = Object.assign({}, opts.cfg, {
+                    rows,
+                    onReload() { pgRender(lv, opts); },
+                    onEdit(name, ff, val) {
+                        frappe.db.set_value(opts.doctype, name, ff, val)
+                            .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
+                    },
+                    onAddRow: opts.onAddRow ? (reload) => opts.onAddRow(reload, lv) : undefined,
+                    onDeleteRows(names, reload) {
+                        const lbl = names.length === 1 ? `1 ${opts.doctype.toLowerCase()}` : `${names.length} records`;
+                        frappe.confirm(`Delete ${lbl}? This cannot be undone.`, () => {
+                            let done = 0;
+                            names.forEach(n => frappe.call({
+                                method: "frappe.client.delete",
+                                args: { doctype: opts.doctype, name: n },
+                                callback() { if (++done === names.length) { frappe.show_alert({ message: "Deleted", indicator: "orange" }, 2); reload(); } },
+                            }));
+                        });
+                    },
+                });
+                PG.mount(host, cfg);
+                if (opts.statsFn) PG.renderStats(host, opts.statsFn(raw));
+            },
+        });
+    }
 
     // Inject base styles as soon as this script loads
     injectBaseStyles();

@@ -1342,9 +1342,9 @@
     <div class="pg-nav-right">
       <div class="pg-search-wrap">
         ${SVG.search}
-        <input type="text" class="pg-search" placeholder="Search prospects…">
+        <input type="text" class="pg-search" placeholder="${cfg.searchPlaceholder || 'Search…'}">
       </div>
-      <button class="pg-tb-exp">${SVG.export} Export Leads</button>
+      <button class="pg-tb-exp">${SVG.export} ${cfg.exportLabel || 'Export'}</button>
     </div>
   </div>
   <div class="pg-tbl-outer">
@@ -1970,7 +1970,8 @@
         });
 
         root.querySelector(".pg-tb-exp").addEventListener("click", () => {
-            if (cfg.onExportLeads) cfg.onExportLeads(cfg.rows, () => _reload(root));
+            if (cfg.onExport) cfg.onExport(cfg.rows, () => _reload(root));
+            else if (cfg.onExportLeads) cfg.onExportLeads(cfg.rows, () => _reload(root));
         });
 
         // ── Notes hover tooltip ──────────────────────────────────
