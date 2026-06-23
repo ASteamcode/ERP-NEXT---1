@@ -174,6 +174,12 @@ FIELDS = [
         "options": "\nResidential\nCommercial\nMixed-Use\nHigh-Rise\nIndustrial\nInfrastructure",
         "insert_after": "custom_scaffold_type",
     },
+    {
+        "fieldname": "custom_scope_notes",
+        "fieldtype": "Small Text",
+        "label": "Notes",
+        "insert_after": "custom_project_type",
+    },
 
     # ── Site team ────────────────────────────────────────────────
     {

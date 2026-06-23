@@ -167,6 +167,7 @@ def get_prospects():
             "custom_architect", "custom_project_owner", "custom_site_engineer",
             "custom_workers_count", "custom_safety_officer", "custom_contract_value",
             "custom_telegram", "custom_linkedin", "custom_facebook", "custom_instagram",
+            "custom_scope_notes",
         ],
         order_by="creation asc",
     )
@@ -217,6 +218,7 @@ def get_prospects():
             "workers":  r.custom_workers_count or "",
             "safety":   r.custom_safety_officer or "",
             "contract": ("${:,.0f}".format(r.custom_contract_value) if r.custom_contract_value else ""),
+            "scope_notes": r.custom_scope_notes or "",
             "instagram":r.custom_instagram or "",
             "linkedin": r.custom_linkedin or "",
             "facebook": r.custom_facebook or "",
