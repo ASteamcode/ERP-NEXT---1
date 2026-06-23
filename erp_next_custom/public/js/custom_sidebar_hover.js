@@ -123,6 +123,99 @@
 /* ── Remove Frappe CRM promo banner ── */
 .body-sidebar .promotional-banners { display: none !important; }
 
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL INDICATOR PILL REDESIGN — matches pg-badge gradient style
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Base reset — remove Frappe's flat dot+text style */
+.indicator-pill, .indicator-pill.no-margin {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 11px !important;
+  border-radius: 99px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  line-height: 1 !important;
+}
+/* The dot */
+.indicator-pill::before {
+  content: '' !important;
+  width: 6px !important; height: 6px !important;
+  border-radius: 50% !important;
+  background: currentColor !important;
+  flex-shrink: 0 !important;
+}
+
+/* Color map — gradient fills matching pg-badge */
+.indicator-pill.blue, .indicator-pill[data-color="blue"] {
+  background: linear-gradient(135deg,#dbeafe,#bfdbfe) !important;
+  color: #1d4ed8 !important; border-color: #93c5fd !important;
+}
+.indicator-pill.purple, .indicator-pill[data-color="purple"],
+.indicator-pill.indigo, .indicator-pill[data-color="indigo"] {
+  background: linear-gradient(135deg,#e0e7ff,#c7d2fe) !important;
+  color: #3730a3 !important; border-color: #a5b4fc !important;
+}
+.indicator-pill.cyan, .indicator-pill[data-color="cyan"],
+.indicator-pill.teal, .indicator-pill[data-color="teal"] {
+  background: linear-gradient(135deg,#cffafe,#a5f3fc) !important;
+  color: #0e7490 !important; border-color: #67e8f9 !important;
+}
+.indicator-pill.green, .indicator-pill[data-color="green"] {
+  background: linear-gradient(135deg,#d1fae5,#a7f3d0) !important;
+  color: #065f46 !important; border-color: #6ee7b7 !important;
+}
+.indicator-pill.gray, .indicator-pill.grey,
+.indicator-pill[data-color="gray"], .indicator-pill[data-color="grey"],
+.indicator-pill.light-blue {
+  background: linear-gradient(135deg,#f1f5f9,#e2e8f0) !important;
+  color: #475569 !important; border-color: #cbd5e1 !important;
+}
+.indicator-pill.yellow, .indicator-pill[data-color="yellow"] {
+  background: linear-gradient(135deg,#fef9c3,#fef08a) !important;
+  color: #854d0e !important; border-color: #fde047 !important;
+}
+.indicator-pill.orange, .indicator-pill[data-color="orange"] {
+  background: linear-gradient(135deg,#ffedd5,#fed7aa) !important;
+  color: #9a3412 !important; border-color: #fb923c !important;
+}
+.indicator-pill.red, .indicator-pill[data-color="red"] {
+  background: linear-gradient(135deg,#fde8d8,#fcd3b3) !important;
+  color: #7c2d12 !important; border-color: #fdba74 !important;
+}
+.indicator-pill.pink, .indicator-pill[data-color="pink"] {
+  background: linear-gradient(135deg,#fce7f3,#fbcfe8) !important;
+  color: #9d174d !important; border-color: #f9a8d4 !important;
+}
+
+/* ── Form select elements — brand border + clean look ── */
+.frappe-control select.input-with-feedback,
+.form-control[data-fieldtype="Select"],
+select.form-control {
+  border-color: #c7d3ec !important;
+  border-radius: 7px !important;
+  font-size: 12.5px !important;
+  color: #1e3a5f !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231e3f85' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  padding-right: 28px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  transition: border-color .15s !important;
+}
+.frappe-control select.input-with-feedback:focus,
+select.form-control:focus {
+  border-color: #3a6fd8 !important;
+  box-shadow: 0 0 0 3px rgba(58,111,216,.12) !important;
+  outline: none !important;
+}
+
 /* ── Company logo in sidebar header ── */
 .body-sidebar .sidebar-header .sidebar-item-icon {
   background: transparent !important;

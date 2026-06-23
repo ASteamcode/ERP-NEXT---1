@@ -310,6 +310,8 @@
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
+.pg-form-link{font-size:12px;font-weight:600;color:#1e3f85;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-decoration:none;}
+.pg-form-link:hover{color:#3a6fd8;text-decoration:underline;}
 `;
 
     const SVG = {
@@ -422,6 +424,11 @@
                 const color    = _ownerColor(initials);
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
+            }
+            case "form-link": {
+                const dt = col.link_doctype || cfg.doctype || "";
+                return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
+                         : `<span class="pg-mt">—</span>`;
             }
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
@@ -1797,6 +1804,7 @@
                 if (e.target.closest(".pg-maps-btn"))    return;
                 if (e.target.closest(".pg-map-copy"))    return;
                 if (e.target.closest(".pg-map-edit"))    return;
+                if (e.target.closest(".pg-form-link"))   return;
                 if (e.target.closest(".pg-wa-btn"))      return;
                 if (e.target.closest(".pg-wa-api-btn"))  return;
                 if (e.target.closest(".pg-email-btn"))   return;
@@ -1817,6 +1825,16 @@
                 _openExpandModal(btn);
             });
         }
+
+        // ── Form-link click → open document ─────────────────────
+        root.addEventListener("click", e => {
+            const a = e.target.closest(".pg-form-link");
+            if (!a) return;
+            e.stopPropagation();
+            const dt   = a.dataset.doctype;
+            const name = a.dataset.docname;
+            if (dt && name) frappe.set_route("Form", dt, name);
+        });
 
         // ── Maps copy button ─────────────────────────────────────
         root.addEventListener("click", e => {
