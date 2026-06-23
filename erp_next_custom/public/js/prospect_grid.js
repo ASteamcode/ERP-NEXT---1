@@ -38,6 +38,20 @@
 .pg-pill:hover{color:rgba(255,255,255,.88);}
 .pg-pill.active{color:#284f9e;font-weight:800;}
 
+/* ── Quick stats strip ── */
+.pg-qs-strip{display:flex;gap:12px;padding:14px 16px 14px;box-sizing:border-box;}
+.pg-qs-card{flex:1;min-width:0;padding:16px 18px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.55);position:relative;overflow:hidden;cursor:default;transition:transform .18s,box-shadow .18s;box-shadow:0 2px 8px rgba(0,0,0,.10);}
+.pg-qs-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.18);}
+.pg-qs-card::after{content:'';position:absolute;top:-30%;right:-12%;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.12);}
+.pg-qs-num{font-size:30px;font-weight:900;color:#fff;line-height:1;margin-bottom:4px;}
+.pg-qs-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.05em;text-transform:uppercase;}
+.pg-qs-sub{font-size:10.5px;color:rgba(255,255,255,.52);margin-top:2px;}
+.pg-qs-icon{position:absolute;bottom:12px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.75);}
+.pg-qs-icon svg{width:15px;height:15px;}
+.pg-qs-c1{background:linear-gradient(135deg,#284f9e 0%,#3a6fd8 100%);}
+.pg-qs-c2{background:linear-gradient(135deg,#1e3570 0%,#284f9e 100%);}
+.pg-qs-c3{background:linear-gradient(135deg,#0c5fa5 0%,#1d8cf8 100%);}
+.pg-qs-c4{background:linear-gradient(135deg,#0891b2 0%,#22d3ee 100%);}
 /* table wrapper — z-index must stay below nav (nav is z-index:20) */
 .pg-tbl-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
 .pg-tbl-outer::-webkit-scrollbar{height:4px;}
@@ -2028,7 +2042,24 @@
         return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
 
+    // ── Quick Stats strip ──────────────────────────────────────────
+    // cards: [{ num, label, sub, icon, colorCls }]
+    function renderStats(host, cards) {
+        const existing = host.querySelector(".pg-qs-strip");
+        if (existing) existing.remove();
+        const strip = document.createElement("div");
+        strip.className = "pg-qs-strip";
+        strip.innerHTML = cards.map(c => `
+<div class="pg-qs-card ${_e(c.colorCls || "pg-qs-c1")}">
+  <div class="pg-qs-num">${_e(String(c.num))}</div>
+  <div class="pg-qs-lbl">${_e(c.label)}</div>
+  ${c.sub ? `<div class="pg-qs-sub">${_e(c.sub)}</div>` : ""}
+  ${c.icon ? `<div class="pg-qs-icon">${c.icon}</div>` : ""}
+</div>`).join("");
+        host.insertBefore(strip, host.firstChild);
+    }
+
     // ── Public API ─────────────────────────────────────────────────
-    window.PG = { mount, setTab, injectStyles, getSelected };
+    window.PG = { mount, setTab, injectStyles, getSelected, renderStats };
     injectStyles();
 })();

@@ -106,6 +106,26 @@ function _pl_render(listview) {
             if (!host || !document.contains(host)) return;
             const rows = r.message || [];
 
+            // ── Quick stats (computed here, rendered after PG.mount) ─────
+            const _qs_total     = rows.length;
+            const _qs_leads     = rows.filter(d => (d.custom_prospect_status || "") === "Lead").length;
+            const _qs_converted = rows.filter(d => (d.custom_prospect_status || "") === "Converted").length;
+            const _qs_rate      = _qs_total ? Math.round((_qs_converted / _qs_total) * 100) : 0;
+            const _qs_month     = (() => {
+                const now = new Date(); const m = now.getMonth(), y = now.getFullYear();
+                return rows.filter(d => { if (!d.creation) return false; const c = new Date(d.creation); return c.getMonth()===m && c.getFullYear()===y; }).length;
+            })();
+            const _qs_cards = [
+                { num: _qs_total,      label: "Total Prospects", sub: "all time",         colorCls: "pg-qs-c1",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5"/><circle cx="12" cy="11" r="3"/><path d="M9 11h6"/></svg>` },
+                { num: _qs_leads,      label: "Active Leads",   sub: "prospect status",   colorCls: "pg-qs-c2",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 4H14l-3.5 2.5 1.5 4L8 10.5 4 12.5l1.5-4L2 6h4.5z"/></svg>` },
+                { num: _qs_month,      label: "This Month",     sub: "new prospects",     colorCls: "pg-qs-c3",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="2" y1="7" x2="14" y2="7"/></svg>` },
+                { num: _qs_rate + "%", label: "Conversion",     sub: "converted / total", colorCls: "pg-qs-c4",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,11 5,7 9,9 15,3"/><polyline points="11,3 15,3 15,7"/></svg>` },
+            ];
+
             if (isMobile) {
                 PM.mount(host, rows, {
                     onReload() { _pl_render(listview); },
@@ -311,6 +331,7 @@ function _pl_render(listview) {
                 },
             });
             PG.mount(host, cfg);
+            PG.renderStats(host, _qs_cards);
         },
     });
 }
