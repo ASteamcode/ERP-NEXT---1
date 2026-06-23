@@ -195,6 +195,9 @@
 .pg-maps-pin{width:14px;height:14px;color:#ef4444;stroke:currentColor;flex-shrink:0;}
 .pg-map-edit{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;cursor:pointer;transition:background .15s,border-color .15s;flex-shrink:0;padding:0;}
 .pg-map-edit:hover{background:#dbeafe;}
+.pg-map-copy{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid #2563eb;background:#eff6ff;color:#2563eb;cursor:pointer;transition:background .15s,border-color .15s,color .15s;flex-shrink:0;padding:0;}
+.pg-map-copy:hover{background:#dbeafe;}
+.pg-map-copy.pg-copied{border-color:#16a34a;background:#dcfce7;color:#16a34a;}
 
 /* maps popup */
 .pg-maps-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;width:240px;opacity:0;transition:opacity .15s;pointer-events:none;}
@@ -307,6 +310,8 @@
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
+.pg-form-link{font-size:12px;font-weight:600;color:#1e3f85;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-decoration:none;}
+.pg-form-link:hover{color:#3a6fd8;text-decoration:underline;}
 `;
 
     const SVG = {
@@ -328,6 +333,8 @@
         person:  `<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>`,
         building:`<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M6 14V9h4v5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>`,
         lead_ic: `<svg class="pg-ic-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 4H14l-3.5 2.5 1.5 4L8 10.5 4 12.5l1.5-4L2 6h4.5z"/></svg>`,
+        copy:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><rect x="5" y="5" width="8" height="9" rx="1.2"/><path d="M3 11H2a1 1 0 01-1-1V2a1 1 0 011-1h7a1 1 0 011 1v2"/></svg>`,
+        check:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><polyline points="2,8 6,12 14,4"/></svg>`,
     };
 
     // ── Owner avatar color (deterministic from initials) ───────────
@@ -399,6 +406,7 @@
                 return (
                     `<span class="pg-maps-cell">` +
                     `<a class="pg-maps-btn" href="${_e(url)}" target="_blank" onclick="event.stopPropagation()">${SVG.pin}<span>Open in Maps</span></a>` +
+                    `<button class="pg-map-copy" data-url="${_e(url)}" title="Copy link">${SVG.copy}</button>` +
                     `<button class="pg-map-edit" title="Edit link">${SVG.pen}</button>` +
                     `</span>`
                 );
@@ -416,6 +424,11 @@
                 const color    = _ownerColor(initials);
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
+            }
+            case "form-link": {
+                const dt = col.link_doctype || cfg.doctype || "";
+                return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
+                         : `<span class="pg-mt">—</span>`;
             }
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
@@ -1789,6 +1802,9 @@
         if (cfg.editable) {
             root.addEventListener("click", e => {
                 if (e.target.closest(".pg-maps-btn"))    return;
+                if (e.target.closest(".pg-map-copy"))    return;
+                if (e.target.closest(".pg-map-edit"))    return;
+                if (e.target.closest(".pg-form-link"))   return;
                 if (e.target.closest(".pg-wa-btn"))      return;
                 if (e.target.closest(".pg-wa-api-btn"))  return;
                 if (e.target.closest(".pg-email-btn"))   return;
@@ -1809,6 +1825,33 @@
                 _openExpandModal(btn);
             });
         }
+
+        // ── Form-link click → open document ─────────────────────
+        root.addEventListener("click", e => {
+            const a = e.target.closest(".pg-form-link");
+            if (!a) return;
+            e.stopPropagation();
+            const dt   = a.dataset.doctype;
+            const name = a.dataset.docname;
+            if (dt && name) frappe.set_route("Form", dt, name);
+        });
+
+        // ── Maps copy button ─────────────────────────────────────
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-map-copy");
+            if (!btn) return;
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            if (!url) return;
+            navigator.clipboard.writeText(url).then(() => {
+                btn.innerHTML = SVG.check;
+                btn.classList.add("pg-copied");
+                setTimeout(() => {
+                    btn.innerHTML = SVG.copy;
+                    btn.classList.remove("pg-copied");
+                }, 1800);
+            }).catch(() => frappe.show_alert({ message: "Copy failed", indicator: "red" }, 2));
+        });
 
         // ── Email compose button ─────────────────────────────────
         root.addEventListener("click", e => {
