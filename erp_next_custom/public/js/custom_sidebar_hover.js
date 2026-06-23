@@ -1,6 +1,121 @@
 (function () {
   "use strict";
 
+  // ─── Sidebar brand redesign ───────────────────────────────────────────────
+  (function injectSidebarStyles() {
+    if (document.getElementById("cst-sidebar-styles")) return;
+    const s = document.createElement("style");
+    s.id = "cst-sidebar-styles";
+    s.textContent = `
+/* ── Core sidebar background ── */
+.body-sidebar {
+  background: linear-gradient(180deg, #1a3576 0%, #1e3f85 40%, #2a52a8 100%) !important;
+  border-right: none !important;
+  box-shadow: 3px 0 18px rgba(20,40,110,.28) !important;
+}
+
+/* ── CSS variable overrides for sidebar states ── */
+.body-sidebar { --sidebar-hover-color: rgba(255,255,255,.10); --sidebar-active-color: rgba(255,255,255,.18); --sidebar-border-color: transparent; }
+
+/* ── All text / icons inside sidebar → white ── */
+.body-sidebar .item-anchor,
+.body-sidebar .sidebar-item-label,
+.body-sidebar .section-break,
+.body-sidebar .collapse-sidebar-link span,
+.body-sidebar .onboarding-sidebar span,
+.body-sidebar .nav-link,
+.body-sidebar .dropdown-navbar-user .avatar-name-email,
+.body-sidebar .avatar-abbreviation { color: rgba(255,255,255,.82) !important; }
+
+/* ── Icons ── */
+.body-sidebar .sidebar-item-icon svg,
+.body-sidebar .menu-icon svg,
+.body-sidebar .sidebar-item-icon img { filter: brightness(0) invert(1) !important; opacity: .7; }
+
+/* ── Section labels (section-break) ── */
+.body-sidebar .section-break {
+  color: rgba(255,255,255,.38) !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  margin-left: 10px !important;
+}
+
+/* ── Hover state ── */
+.body-sidebar .standard-sidebar-item:not(.active-sidebar):has(a:not(.section-break)):hover {
+  background: rgba(255,255,255,.10) !important;
+  border-radius: 10px !important;
+}
+.body-sidebar .standard-sidebar-item:not(.active-sidebar):has(a:not(.section-break)):hover .item-anchor,
+.body-sidebar .standard-sidebar-item:not(.active-sidebar):has(a:not(.section-break)):hover .sidebar-item-label { color: #fff !important; }
+.body-sidebar .standard-sidebar-item:not(.active-sidebar):has(a:not(.section-break)):hover .sidebar-item-icon svg { opacity: 1; }
+
+/* ── Active state — white pill ── */
+.body-sidebar .active-sidebar {
+  background: rgba(255,255,255,.18) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.2) !important;
+  border-radius: 10px !important;
+}
+.body-sidebar .active-sidebar .item-anchor,
+.body-sidebar .active-sidebar .sidebar-item-label { color: #fff !important; font-weight: 700 !important; }
+.body-sidebar .active-sidebar .sidebar-item-icon svg { opacity: 1 !important; }
+
+/* ── Left accent bar on active ── */
+.body-sidebar .active-sidebar::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #fff;
+  opacity: .8;
+}
+
+/* ── Bottom user section ── */
+.body-sidebar .body-sidebar-bottom .dropdown-navbar-user:hover {
+  background: rgba(255,255,255,.10) !important;
+  border-radius: 10px !important;
+}
+.body-sidebar .body-sidebar-bottom .avatar-abbreviation {
+  background: rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  border: 1.5px solid rgba(255,255,255,.3) !important;
+}
+.body-sidebar .body-sidebar-bottom .avatar-name-email * { color: rgba(255,255,255,.8) !important; }
+
+/* ── Divider ── */
+.body-sidebar .divider { border-color: rgba(255,255,255,.12) !important; }
+
+/* ── Resize handle ── */
+.sidebar-resize-handle::after { background: rgba(255,255,255,.18) !important; }
+
+/* ── Scrollbar inside sidebar ── */
+.body-sidebar .body-sidebar-top::-webkit-scrollbar { width: 3px; }
+.body-sidebar .body-sidebar-top::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+.body-sidebar .body-sidebar-top::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Sidebar toggle btn (the little circle) ── */
+.body-sidebar .sidebar-toggle-btn {
+  background: rgba(255,255,255,.15) !important;
+  border-color: rgba(255,255,255,.25) !important;
+}
+.body-sidebar .sidebar-toggle-btn svg { stroke: #fff !important; }
+.body-sidebar .sidebar-toggle-btn:hover { background: rgba(255,255,255,.25) !important; }
+
+/* ── Sidebar placeholder (keeps layout stable) ── */
+.body-sidebar-placeholder { background: transparent !important; }
+
+/* ── Notification bell / dropdown icons in bottom standard items ── */
+.body-sidebar .standard-items-sections svg { stroke: rgba(255,255,255,.7) !important; }
+.body-sidebar .standard-items-sections .badge { background: #ef4444 !important; }
+
+/* ── drop-icon (submenu chevron) ── */
+.body-sidebar .drop-icon svg { stroke: rgba(255,255,255,.55) !important; }
+    `;
+    document.head.appendChild(s);
+  })();
+
   const CONTAINER_SEL     = ".body-sidebar-container";
   const TOGGLE_BTN_SEL    = ".collapse-sidebar-link";
   const HEADER_SEL        = ".sidebar-header";
