@@ -37,13 +37,9 @@ const _CC_FIELDS = [
 frappe.provide("frappe.listview_settings.Contact");
 frappe.listview_settings.Contact = {
     add_fields: _CC_FIELDS,
-    onload(lv) { GL.suppressRefresh(lv); _cc_hide(lv); },
-    refresh(lv) { _cc_hide(lv); _cc_render(lv); },
+    onload(lv) { GL.suppressRefresh(lv); GL.hideChrome(lv); },
+    refresh(lv) { GL.hideChrome(lv); _cc_render(lv); },
 };
-
-function _cc_hide(lv) {
-    lv.$page.find(".page-head,.page-form,.standard-filter-section,.filter-section,.sort-selector,.filter-selector,.list-filters-area,.list-filter-area,.sort-filter-area,.tag-filters-area,.list-header-meta,.list-toolbar-wrapper,.list-toolbar,.list-row-head,.list-headers,.list-subjects").hide();
-}
 
 function _cc_render(lv) {
     const host = GL.bootstrap(lv, { doctype: CONTACT_DOCTYPE });

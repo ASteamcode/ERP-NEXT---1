@@ -62,9 +62,10 @@ doctype_js = {
 doctype_list_js = {
     "Contact":     "public/js/contacts_list.js",
     "Lead":        "public/js/leads_list.js",
-    "CRM Log":     "public/js/crm_log_list.js",
-    "Site Survey": "public/js/site_survey_list.js",
-    "Quotation":   "public/js/quotation_list.js",
+    "CRM Log":              "public/js/crm_log_list.js",
+    "Site Survey":          "public/js/site_survey_list.js",
+    "Measurement Take Off": "public/js/mto_list.js",
+    "Quotation":            "public/js/quotation_list.js",
     "Item":        "public/js/item_list.js",
     "Prospect":    "public/js/prospect_list.js",
 }
