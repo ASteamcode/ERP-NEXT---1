@@ -86,6 +86,26 @@ function _cl_render(lv) {
                 has_drawing: d.has_drawing || 0,
                 crm_lead: d.crm_lead || "", crm_contact: d.crm_contact || "", crm_customer: d.crm_customer || "",
             }));
+            // ── Quick stats (computed here, rendered after PG.mount) ──
+            const raw        = r.message || [];
+            const _qs_total  = raw.length;
+            const _qs_open   = raw.filter(d => d.status === "Open").length;
+            const _qs_done   = raw.filter(d => d.status === "Done").length;
+            const _qs_month  = (() => {
+                const now = new Date(); const m = now.getMonth(), y = now.getFullYear();
+                return raw.filter(d => { if (!d.date) return false; const c = new Date(d.date); return c.getMonth()===m && c.getFullYear()===y; }).length;
+            })();
+            const _qs_cards = [
+                { num: _qs_total, label: "Total Logs",  sub: "all time",     colorCls: "pg-qs-c1",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h10a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>` },
+                { num: _qs_open,  label: "Open",        sub: "needs action", colorCls: "pg-qs-c2",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".5" fill="currentColor"/></svg>` },
+                { num: _qs_month, label: "This Month",  sub: "log entries",  colorCls: "pg-qs-c3",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="5" y1="1" x2="5" y2="4"/><line x1="11" y1="1" x2="11" y2="4"/><line x1="2" y1="7" x2="14" y2="7"/></svg>` },
+                { num: _qs_done,  label: "Done",        sub: "completed",    colorCls: "pg-qs-c4",
+                  icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/></svg>` },
+            ];
+
             PG.mount(host, Object.assign({}, _CL_CFG, {
                 rows,
                 onReload() { _cl_render(lv); },
@@ -111,6 +131,7 @@ function _cl_render(lv) {
                     });
                 },
             }));
+            PG.renderStats(host, _qs_cards);
         },
     });
 }
