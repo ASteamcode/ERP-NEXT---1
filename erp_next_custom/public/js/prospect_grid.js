@@ -1636,7 +1636,7 @@
     const _CHEVRON_SVG = `<svg class="pg-mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
     const _PHONE_SVG   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.8a19.79 19.79 0 01-3-8.57A2 2 0 012.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.16 6.16l1.27-.45a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`;
     const _PIN_SVG     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-    const _EDIT_SVG    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const _EDIT_SVG    = `<i class="fa fa-pencil" style="font-size:14px"></i>`;
 
     function _buildMobileCards(rows) {
         return rows.map(r => {
@@ -2404,6 +2404,16 @@
                     { label: "Scaffold Type", fn: "custom_scaffold_type",  ft: "Data",     def: row.scaffold || "" },
                     { label: "Project Type",  fn: "custom_project_type",   ft: "Data",     def: row.ptype    || "" },
                     { label: "Contract Value",fn: "custom_contract_value", ft: "Currency", def: row.contract || "" },
+                ],
+            },
+            {
+                label: "Social & Web",
+                fields: [
+                    { label: "Instagram", fn: "custom_instagram", ft: "Data", def: row.instagram || "" },
+                    { label: "LinkedIn",  fn: "custom_linkedin",  ft: "Data", def: row.linkedin  || "" },
+                    { label: "Facebook",  fn: "custom_facebook",  ft: "Data", def: row.facebook  || "" },
+                    { label: "Telegram",  fn: "custom_telegram",  ft: "Data", def: row.telegram  || "" },
+                    { label: "Website",   fn: "website",          ft: "Data", def: row.website   || "" },
                 ],
             },
         ];
