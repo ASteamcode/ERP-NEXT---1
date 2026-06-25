@@ -52,13 +52,10 @@ function _pb_build(wrapper) {
   <aside class="pb-sidebar">
     <div class="pb-brand">
       <div class="pb-brand-icon"><svg viewBox="0 0 20 20" fill="none">
-        <rect x="2"  y="2"  width="7" height="7" rx="1.8" fill="url(#pbg0)"/>
-        <rect x="11" y="2"  width="7" height="7" rx="1.8" fill="url(#pbg0)" opacity=".6"/>
-        <rect x="2"  y="11" width="7" height="7" rx="1.8" fill="url(#pbg0)" opacity=".4"/>
-        <rect x="11" y="11" width="7" height="7" rx="1.8" fill="url(#pbg0)" opacity=".2"/>
-        <defs><linearGradient id="pbg0" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#60a5fa"/>
-        </linearGradient></defs>
+        <rect x="2"  y="2"  width="7" height="7" rx="1.8" fill="#7ec5ff"/>
+        <rect x="11" y="2"  width="7" height="7" rx="1.8" fill="#7ec5ff" opacity=".6"/>
+        <rect x="2"  y="11" width="7" height="7" rx="1.8" fill="#7ec5ff" opacity=".4"/>
+        <rect x="11" y="11" width="7" height="7" rx="1.8" fill="#7ec5ff" opacity=".2"/>
       </svg></div>
       <span class="pb-brand-label">Project Board</span>
     </div>
@@ -592,7 +589,7 @@ body{padding:16px;overflow-y:auto;}
 .txt{font-size:12.5px;color:#374151;line-height:1.5;}
 .hd{font-size:18px;font-weight:750;color:#111827;letter-spacing:-.02em;}
 .prog-rail{height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;margin-top:6px;}
-.prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:99px;}
+.prog-fill{height:100%;background:#0176d3;border-radius:99px;}
 .avatar{width:32px;height:32px;border-radius:50%;background:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
 .row{display:flex;align-items:center;gap:8px;}
 .col{display:flex;flex-direction:column;gap:3px;}
@@ -831,8 +828,8 @@ function _pvHTML() { return `
 <style>
 :root {
   --pv-brand:#284f9e; --pv-brand-2:#3a6fd8; --pv-brand-3:#1a3570;
-  --pv-grad:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
-  --pv-grad-hd:linear-gradient(90deg,#1e3a80 0%,#3260c8 100%);
+  --pv-grad:#0176d3;
+  --pv-grad-hd:#0176d3;
   --pv-t1:#0f172a; --pv-t2:#1e293b; --pv-t3:#64748b; --pv-t4:#94a3b8;
   --pv-bd:#e2e8f0; --pv-bg:#f1f5fb;
   --pv-shsm:0 1px 4px rgba(15,23,42,.08);
@@ -890,13 +887,13 @@ function _pvHTML() { return `
   background:rgba(255,255,255,.15);
   display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7);
 }
-.pv-qs-1 { background:linear-gradient(135deg,#284f9e 0%,#3a6fd8 100%); }
-.pv-qs-2 { background:linear-gradient(135deg,#1e3570 0%,#284f9e 100%); }
-.pv-qs-3 { background:linear-gradient(135deg,#0c5fa5 0%,#1d8cf8 100%); }
-.pv-qs-4 { background:linear-gradient(135deg,#0891b2 0%,#22d3ee 100%); }
+.pv-qs-1 { background:#0176d3; }
+.pv-qs-2 { background:#032d60; }
+.pv-qs-3 { background:#014486; }
+.pv-qs-4 { background:#0e7490; }
 /* top bar */
 .pv-topbar {
-  background:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
+  background:#0176d3;
   padding:14px 20px;
   display:flex; align-items:center; gap:12px; flex-wrap:nowrap;
 }
@@ -907,7 +904,7 @@ function _pvHTML() { return `
 .pv-btn-add {
   display:inline-flex; align-items:center; gap:7px;
   padding:9px 20px; border-radius:var(--pv-rpill);
-  background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);
+  background:#fff;
   color:var(--pv-brand); border:none;
   font-size:13px; font-weight:800; cursor:pointer;
   box-shadow:0 3px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.8);
@@ -933,7 +930,7 @@ function _pvHTML() { return `
 }
 .pv-pill:hover { color:rgba(255,255,255,.9); background:rgba(255,255,255,.1); }
 .pv-pill.active {
-  background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(240,246,255,.95));
+  background:rgba(255,255,255,.95);
   color:var(--pv-brand); font-weight:800;
   box-shadow:0 2px 10px rgba(0,0,0,.25);
 }
@@ -962,7 +959,7 @@ function _pvHTML() { return `
 .pv-tbl-outer { overflow-x:auto; background:#fff; }
 .pv-tbl { border-collapse:collapse; min-width:900px; font-size:13px; width:100%; }
 /* gradient header */
-.pv-tbl thead tr { background:linear-gradient(90deg,#1e3a80 0%,#3260c8 100%); }
+.pv-tbl thead tr { background:#0176d3; }
 .pv-tbl th {
   padding:12px 14px; text-align:left;
   font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
@@ -979,7 +976,7 @@ function _pvHTML() { return `
 .pv-tbl thead .pv-tf-ti,
 .pv-tbl thead .pv-tf-fi,
 .pv-tbl thead .pv-tf-la,
-.pv-tbl thead .pv-tf-co { background:#1e3a80; }
+.pv-tbl thead .pv-tf-co { background:#0176d3; }
 .pv-tbl tbody .pv-tf-num { background:inherit; position:sticky; left:0; z-index:2; }
 .pv-tbl tbody .pv-tf-ti  { background:inherit; position:sticky; left:44px; z-index:2; }
 .pv-tbl tbody .pv-tf-fi  { background:inherit; position:sticky; left:102px; z-index:2; }
@@ -999,7 +996,7 @@ function _pvHTML() { return `
 .pv-tbl tbody tr:last-child { border-bottom:none; }
 .pv-tbl tbody tr:nth-child(even) { background:#f8faff; }
 /* OBVIOUS hover */
-.pv-tbl tbody tr:hover { background:linear-gradient(90deg,#dbeafe 0%,#eff6ff 100%) !important; }
+.pv-tbl tbody tr:hover { background:#e8f4fd !important; }
 .pv-tbl tbody tr:hover .pv-tf-num { box-shadow:inset 4px 0 0 #284f9e; }
 .pv-tbl tbody tr:hover .pv-rn { background:#284f9e; color:#fff; transform:scale(1.12); }
 .pv-tbl td { padding:11px 14px; color:var(--pv-t2); border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
@@ -1012,7 +1009,7 @@ function _pvHTML() { return `
 }
 /* company cell */
 .pv-co-c { display:flex; align-items:center; gap:9px; }
-.pv-co-m { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:800; flex-shrink:0; }
+.pv-co-m { width:28px; height:28px; border-radius:8px; background:#d3e9fb; color:#014486; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:800; flex-shrink:0; }
 .pv-co-n { font-weight:600; color:var(--pv-t1); }
 /* inline avatar */
 .pv-av-i { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; font-size:10px; font-weight:800; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.18); }
@@ -1031,17 +1028,17 @@ function _pvHTML() { return `
 .pv-b:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.14); }
 .pv-b::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
 /* prospect status — blue family */
-.pv-b-lead { background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1d4ed8; border:1px solid #93c5fd; }
-.pv-b-dis  { background:linear-gradient(135deg,#e0e7ff,#c7d2fe); color:#3730a3; border:1px solid #a5b4fc; }
-.pv-b-con  { background:linear-gradient(135deg,#cffafe,#a5f3fc); color:#0e7490; border:1px solid #67e8f9; }
-.pv-b-cvt  { background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#065f46; border:1px solid #6ee7b7; }
-.pv-b-lost { background:linear-gradient(135deg,#f1f5f9,#e2e8f0); color:#475569; border:1px solid #cbd5e1; }
-/* project status — warm amber family */
-.pv-b-ns   { background:linear-gradient(135deg,#fef9c3,#fef08a); color:#854d0e; border:1px solid #fde047; }
-.pv-b-exc  { background:linear-gradient(135deg,#ffedd5,#fed7aa); color:#9a3412; border:1px solid #fb923c; }
-.pv-b-top  { background:linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; border:1px solid #fbbf24; }
-.pv-b-fin  { background:linear-gradient(135deg,#fef9c3,#d9f99d); color:#3f6212; border:1px solid #a3e635; }
-.pv-b-hold { background:linear-gradient(135deg,#fde8d8,#fcd3b3); color:#7c2d12; border:1px solid #fdba74; }
+.pv-b-lead { background:#e8f4fd; color:#014486; border:1px solid #b0d4f1; }
+.pv-b-dis  { background:#ece9f5; color:#3e3794; border:1px solid #c5bde8; }
+.pv-b-con  { background:#e0f5f5; color:#0a5f6e; border:1px solid #8dd5d8; }
+.pv-b-cvt  { background:#eff9ef; color:#2e6b3e; border:1px solid #95d5a0; }
+.pv-b-lost { background:#f3f3f3; color:#706e6b; border:1px solid #c9c7c5; }
+/* project status */
+.pv-b-ns   { background:#fef9e3; color:#7a4f00; border:1px solid #f0d080; }
+.pv-b-exc  { background:#fef0d9; color:#9e4300; border:1px solid #f4b56a; }
+.pv-b-top  { background:#fde8e8; color:#ba0517; border:1px solid #f5a0a0; }
+.pv-b-fin  { background:#eff9ef; color:#2e6b3e; border:1px solid #95d5a0; }
+.pv-b-hold { background:#feebe0; color:#8a3600; border:1px solid #f0a87e; }
 /* badges section layout */
 .pv-bdg-wrap { padding:28px; }
 .pv-bdg-group-lbl { font-size:10px; font-weight:800; letter-spacing:.1em; color:var(--pv-t4); text-transform:uppercase; margin-bottom:14px; }
@@ -1161,7 +1158,7 @@ function _pvHTML() { return `
     <td class="pv-tf-num"><span class="pv-rn">1</span></td>
     <td class="pv-tf-ti">Arch.</td><td class="pv-tf-fi">Nabil</td><td class="pv-tf-la">Habr</td>
     <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">HA</div><span class="pv-co-n">Habr &amp; Associates</span></div></td>
-    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#284f9e,#3a6fd8)">NK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:#284f9e">NK</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">Principal Architect</td>
     <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-lead">Lead</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">+961 3 111 222</td>
@@ -1180,7 +1177,7 @@ function _pvHTML() { return `
     <td class="pv-tf-num"><span class="pv-rn">2</span></td>
     <td class="pv-tf-ti">Mr</td><td class="pv-tf-fi">Karim</td><td class="pv-tf-la">Abi Nader</td>
     <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">AN</div><span class="pv-co-n">Abi Nader Const.</span></div></td>
-    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#7c3aed,#9d5ced)">GK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:#6d28d9">GK</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">Project Manager</td>
     <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-dis">In Discussion</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">+961 70 999 888</td>
@@ -1199,7 +1196,7 @@ function _pvHTML() { return `
     <td class="pv-tf-num"><span class="pv-rn">3</span></td>
     <td class="pv-tf-ti">Ms</td><td class="pv-tf-fi">Lara</td><td class="pv-tf-la">Saab</td>
     <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">SD</div><span class="pv-co-n">Saab Development</span></div></td>
-    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">AK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:#0369a1">AK</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">Director</td>
     <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-con">Contacted</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">+961 1 234 567</td>
@@ -1218,7 +1215,7 @@ function _pvHTML() { return `
     <td class="pv-tf-num"><span class="pv-rn">4</span></td>
     <td class="pv-tf-ti">Eng.</td><td class="pv-tf-fi">Fadi</td><td class="pv-tf-la">Moussa</td>
     <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">ME</div><span class="pv-co-n">Moussa Engineering</span></div></td>
-    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#059669,#10b981)">NK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:#047857">NK</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">Site Engineer</td>
     <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-cvt">Converted</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">+961 3 456 789</td>
@@ -1237,7 +1234,7 @@ function _pvHTML() { return `
     <td class="pv-tf-num"><span class="pv-rn">5</span></td>
     <td class="pv-tf-ti">Mr</td><td class="pv-tf-fi">Tony</td><td class="pv-tf-la">Khoury</td>
     <td class="pv-tf-co"><div class="pv-co-c"><div class="pv-co-m">AW</div><span class="pv-co-n">Al-Wadi Group</span></div></td>
-    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:linear-gradient(135deg,#d97706,#f59e0b)">GK</span></td>
+    <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-av-i" style="background:#b45309">GK</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">CEO</td>
     <td class="pv-vc pv-vc-on" data-pvtab="0"><span class="pv-b pv-b-lost">Lost</span></td>
     <td class="pv-vc pv-vc-on" data-pvtab="0">+961 70 111 333</td>
@@ -1342,31 +1339,31 @@ function _pvHTML() { return `
 <div class="pv-card">
 <div class="pv-avs-wrap">
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#284f9e,#4080e8)">NK</div>
+    <div class="pv-av" style="background:#284f9e">NK</div>
     <div class="pv-av-name">Nabil Khoury</div><div class="pv-av-role">Sales Lead</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#6d28d9,#9d5ced)">GK</div>
+    <div class="pv-av" style="background:#6d28d9">GK</div>
     <div class="pv-av-name">Grece Khoury</div><div class="pv-av-role">Account Mgr</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#0369a1,#06b6d4)">AK</div>
+    <div class="pv-av" style="background:#0369a1">AK</div>
     <div class="pv-av-name">Anthony Karam</div><div class="pv-av-role">Director</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#047857,#10b981)">FM</div>
+    <div class="pv-av" style="background:#047857">FM</div>
     <div class="pv-av-name">Fadi Moussa</div><div class="pv-av-role">Field Rep</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#b91c1c,#ef4444)">TK</div>
+    <div class="pv-av" style="background:#b91c1c">TK</div>
     <div class="pv-av-name">Tony Khoury</div><div class="pv-av-role">Consultant</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#b45309,#f59e0b)">RK</div>
+    <div class="pv-av" style="background:#b45309">RK</div>
     <div class="pv-av-name">Rami Khodr</div><div class="pv-av-role">Technical</div>
   </div>
   <div class="pv-av-item">
-    <div class="pv-av" style="background:linear-gradient(135deg,#be185d,#f472b6)">LS</div>
+    <div class="pv-av" style="background:#be185d">LS</div>
     <div class="pv-av-name">Lara Saab</div><div class="pv-av-role">Project Mgr</div>
   </div>
 </div>
@@ -1712,7 +1709,7 @@ body.pb-fs .container.page-container
 }
 
 /* ── sidebar ──────────────────────────────────────────────────── */
-.pb-sidebar { width:220px; min-width:220px; flex-shrink:0; background:#111118; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; border-right:1px solid rgba(255,255,255,.04); }
+.pb-sidebar { width:220px; min-width:220px; flex-shrink:0; background:#032d60; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; border-right:1px solid rgba(255,255,255,.06); }
 .pb-sidebar::-webkit-scrollbar { display:none; }
 .pb-brand { display:flex; align-items:center; gap:9px; padding:18px 13px 13px; border-bottom:1px solid rgba(255,255,255,.04); }
 .pb-brand-icon { width:24px; height:24px; flex-shrink:0; }
@@ -1726,7 +1723,7 @@ body.pb-fs .container.page-container
 .pb-nav { display:flex; align-items:center; gap:8px; width:100%; padding:6px 7px; border-radius:7px; border:none; background:transparent; color:#44445c; font-size:12px; font-weight:450; cursor:pointer; text-align:left; transition:background .1s, color .1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .pb-nav svg { width:13px; height:13px; flex-shrink:0; }
 .pb-nav:hover  { background:rgba(255,255,255,.05); color:#b0b0c8; }
-.pb-nav.active { background:rgba(139,92,246,.14); color:#a78bfa; font-weight:580; }
+.pb-nav.active { background:rgba(1,118,211,0.22); color:#7ec5ff; font-weight:580; }
 .pb-dot    { width:7px; height:7px; border-radius:50%; flex-shrink:0; display:inline-block; }
 .pb-av-sm  { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:700; color:#fff; flex-shrink:0; }
 .pb-sidebar-foot { padding:10px 7px 18px; border-top:1px solid rgba(255,255,255,.04); display:flex; flex-direction:column; gap:5px; }
@@ -1856,10 +1853,10 @@ body.pb-fs .container.page-container
 .pb-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.09); }
 .pb-card-sel   { border-color:#8b5cf6!important; box-shadow:0 0 0 3px rgba(139,92,246,.18)!important; }
 .pb-card-stripe { height:3px; }
-.pb-card-open        .pb-card-stripe { background:linear-gradient(90deg,#3b82f6,#60a5fa); }
-.pb-card-in_progress .pb-card-stripe { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
-.pb-card-overdue     .pb-card-stripe { background:linear-gradient(90deg,#ef4444,#f87171); }
-.pb-card-completed   .pb-card-stripe { background:linear-gradient(90deg,#10b981,#34d399); }
+.pb-card-open        .pb-card-stripe { background:#0176d3; }
+.pb-card-in_progress .pb-card-stripe { background:#dd7a01; }
+.pb-card-overdue     .pb-card-stripe { background:#ea001e; }
+.pb-card-completed   .pb-card-stripe { background:#2e844a; }
 .pb-card-cancelled   .pb-card-stripe { background:#e5e7eb; }
 .pb-card-body { padding:12px 14px 12px; }
 .pb-card-toprow { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
@@ -1868,7 +1865,7 @@ body.pb-fs .container.page-container
 .pb-due-late    { color:#dc2626; font-weight:650; }
 .pb-prog-row    { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
 .pb-prog-rail   { flex:1; height:4px; background:#f3f4f6; border-radius:99px; overflow:hidden; }
-.pb-prog-fill   { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); border-radius:99px; transition:width .35s; }
+.pb-prog-fill   { height:100%; background:#0176d3; border-radius:99px; transition:width .35s; }
 .pb-prog-pct    { font-size:10.5px; font-weight:700; color:#7c3aed; min-width:24px; text-align:right; }
 .pb-card-tasks  { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-bottom:10px; min-height:20px; }
 .pb-ct-empty    { color:#d1d5db; font-size:11px; }
@@ -1899,7 +1896,7 @@ body.pb-fs .container.page-container
 .pb-ph-avs     { display:flex; }
 .pb-ph-prog-row{ display:flex; align-items:center; gap:6px; flex:1; }
 .pb-ph-rail    { flex:1; height:4px; background:#f3f4f6; border-radius:99px; overflow:hidden; }
-.pb-ph-fill    { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); border-radius:99px; transition:width .4s; }
+.pb-ph-fill    { height:100%; background:#0176d3; border-radius:99px; transition:width .4s; }
 .pb-ph-pct     { font-size:10.5px; font-weight:700; color:#7c3aed; min-width:24px; text-align:right; }
 .pb-panel-body { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#e5e7eb transparent; }
 .pb-tasks-hd   { display:flex; align-items:center; justify-content:space-between; padding:11px 16px 7px; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#9ca3af; position:sticky; top:0; background:#fff; border-bottom:1px solid #f5f5fa; }

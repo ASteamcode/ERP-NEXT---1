@@ -47,17 +47,11 @@ function _ov_build(wrapper) {
       <div class="ov-logo-wrap" id="ov-logo-wrap">
         <div class="ov-logo-fallback">
           <svg viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="url(#ovbg)"/>
+            <rect width="32" height="32" rx="8" fill="#0176d3"/>
             <rect x="6"  y="6"  width="8" height="8" rx="2" fill="rgba(255,255,255,.9)"/>
             <rect x="18" y="6"  width="8" height="8" rx="2" fill="rgba(255,255,255,.6)"/>
             <rect x="6"  y="18" width="8" height="8" rx="2" fill="rgba(255,255,255,.4)"/>
             <rect x="18" y="18" width="8" height="8" rx="2" fill="rgba(255,255,255,.2)"/>
-            <defs>
-              <linearGradient id="ovbg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#7c3aed"/>
-                <stop offset="100%" stop-color="#2563eb"/>
-              </linearGradient>
-            </defs>
           </svg>
         </div>
       </div>
@@ -152,17 +146,11 @@ function _ov_render_content(wrapper, co) {
 <div class="ov-welcome">
   <div class="ov-welcome-icon">
     <svg viewBox="0 0 48 48" fill="none">
-      <rect width="48" height="48" rx="12" fill="url(#owbg)"/>
+      <rect width="48" height="48" rx="12" fill="#0176d3"/>
       <rect x="10" y="10" width="12" height="12" rx="3" fill="rgba(255,255,255,.9)"/>
       <rect x="26" y="10" width="12" height="12" rx="3" fill="rgba(255,255,255,.55)"/>
       <rect x="10" y="26" width="12" height="12" rx="3" fill="rgba(255,255,255,.35)"/>
       <rect x="26" y="26" width="12" height="12" rx="3" fill="rgba(255,255,255,.18)"/>
-      <defs>
-        <linearGradient id="owbg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#2563eb"/>
-        </linearGradient>
-      </defs>
     </svg>
   </div>
   <h2 class="ov-welcome-title">Welcome to Overview</h2>
@@ -226,7 +214,7 @@ body.ov-fs .container.page-container
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
-    background: linear-gradient(160deg, #1a0533 0%, #0d1a3a 100%);
+    background: #032d60;
     border-right: 1px solid rgba(255,255,255,.06);
 }
 .ov-sidebar::-webkit-scrollbar { display: none; }
@@ -274,10 +262,7 @@ body.ov-fs .container.page-container
     font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
-    background: linear-gradient(90deg, #a78bfa, #60a5fa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #7ec5ff;
 }
 
 /* nav sections */
@@ -310,10 +295,10 @@ body.ov-fs .container.page-container
     text-decoration: none;
 }
 .ov-nav-item.active {
-    background: linear-gradient(90deg, rgba(124,58,237,.35), rgba(37,99,235,.25));
-    color: #c4b5fd;
+    background: rgba(1,118,211,0.2);
+    color: #7ec5ff;
     font-weight: 650;
-    box-shadow: inset 0 0 0 1px rgba(167,139,250,.2);
+    box-shadow: inset 0 0 0 1px rgba(1,118,211,0.3);
 }
 .ov-nav-icon {
     width: 16px;
@@ -471,7 +456,7 @@ body.ov-fs .container.page-container
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    background: #0176d3;
     display: flex;
     align-items: center;
     justify-content: center;
