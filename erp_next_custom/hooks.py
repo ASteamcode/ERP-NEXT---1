@@ -49,7 +49,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {"desktop": "public/js/desk_home.js"}
 
 # include js in doctype views
 doctype_js = {
