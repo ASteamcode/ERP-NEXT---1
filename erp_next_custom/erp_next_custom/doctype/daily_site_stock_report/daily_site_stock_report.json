@@ -1,0 +1,170 @@
+{
+  "doctype": "DocType",
+  "name": "Daily Site Stock Report",
+  "module": "Erp Next Custom",
+  "autoname": "naming_series:",
+  "is_submittable": 1,
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "report_information_section",
+    "naming_series",
+    "site_warehouse",
+    "report_date",
+    "column_break_1",
+    "supervisor",
+    "storekeeper",
+    "report_status",
+    "items_section",
+    "items",
+    "summary_section",
+    "total_opening_qty",
+    "total_in_qty",
+    "total_out_qty",
+    "column_break_2",
+    "total_damaged_lost_qty",
+    "total_closing_qty",
+    "notes_section",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "report_information_section",
+      "fieldtype": "Section Break",
+      "label": "Report Information"
+    },
+    {
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "label": "Naming Series",
+      "options": "DSSR-.YYYY.-.#####",
+      "reqd": 1
+    },
+    {
+      "fieldname": "site_warehouse",
+      "fieldtype": "Link",
+      "label": "Site / Warehouse",
+      "options": "Warehouse",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "report_date",
+      "fieldtype": "Date",
+      "label": "Date",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "supervisor",
+      "fieldtype": "Link",
+      "label": "Supervisor",
+      "options": "User"
+    },
+    {
+      "fieldname": "storekeeper",
+      "fieldtype": "Link",
+      "label": "Storekeeper",
+      "options": "User"
+    },
+    {
+      "fieldname": "report_status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Draft\nSubmitted\nCancelled",
+      "default": "Draft",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "items_section",
+      "fieldtype": "Section Break",
+      "label": "Items"
+    },
+    {
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Items",
+      "options": "Daily Site Stock Report Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "summary_section",
+      "fieldtype": "Section Break",
+      "label": "Stock Summary"
+    },
+    {
+      "fieldname": "total_opening_qty",
+      "fieldtype": "Float",
+      "label": "Total Opening Qty",
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_in_qty",
+      "fieldtype": "Float",
+      "label": "Total In Qty",
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_out_qty",
+      "fieldtype": "Float",
+      "label": "Total Out Qty",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_2",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "total_damaged_lost_qty",
+      "fieldtype": "Float",
+      "label": "Total Damaged / Lost Qty",
+      "read_only": 1
+    },
+    {
+      "fieldname": "total_closing_qty",
+      "fieldtype": "Float",
+      "label": "Total Closing Qty",
+      "read_only": 1
+    },
+    {
+      "fieldname": "notes_section",
+      "fieldtype": "Section Break",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "report": 1,
+      "share": 1
+    }
+  ],
+  "title_field": "site_warehouse",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "track_changes": 1,
+  "actions": [],
+  "links": [],
+  "states": []
+}
