@@ -70,9 +70,28 @@ function _pb_build(wrapper) {
         <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.2" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.2" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1.2" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor" opacity=".25"/></svg>
         Board
       </button>
-      <button class="pb-nav" data-view="templates">
-        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="5" rx="1.2" fill="currentColor" opacity=".9"/><rect x="1" y="8" width="6" height="7" rx="1.2" fill="currentColor" opacity=".55"/><rect x="9" y="8" width="6" height="7" rx="1.2" fill="currentColor" opacity=".3"/></svg>
-        Templates
+      <button class="pb-nav" data-view="prospect">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" fill="currentColor" opacity=".9"/><path d="M1 14c0-3 2-5 5-5s5 2 5 5" fill="currentColor" opacity=".5"/><line x1="12" y1="4" x2="15" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="12" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="12" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Sales CRM
+      </button>
+    </div>
+
+    <div class="pb-sidebar-sec">
+      <div class="pb-sec-hd">Module</div>
+      <button class="pb-nav pb-mod-item active" data-mod="">
+        <span class="pb-dot" style="background:rgba(255,255,255,.25)"></span>All
+      </button>
+      <button class="pb-nav pb-mod-item" data-mod="Prospect">
+        <span class="pb-dot" style="background:#3b82f6"></span>Sales CRM
+      </button>
+      <button class="pb-nav pb-mod-item" data-mod="CRM">
+        <span class="pb-dot" style="background:#0891b2"></span>CRM
+      </button>
+      <button class="pb-nav pb-mod-item" data-mod="Inventory">
+        <span class="pb-dot" style="background:#059669"></span>Inventory
+      </button>
+      <button class="pb-nav pb-mod-item" data-mod="General">
+        <span class="pb-dot" style="background:#6b7280"></span>General
       </button>
     </div>
 
@@ -92,10 +111,6 @@ function _pb_build(wrapper) {
     </div>
 
     <div class="pb-sidebar-foot">
-      <button class="pb-new-task-btn pb-new-btn">
-        <svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="1.5" x2="7" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1.5" y1="7" x2="12.5" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        New Task
-      </button>
       <button class="pb-back-btn">
         <svg viewBox="0 0 14 14" fill="none"><path d="M8.5 2.5L3 7l5.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Back to Desk
@@ -115,6 +130,9 @@ function _pb_build(wrapper) {
           <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.6"/><line x1="10.2" y1="10.2" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           <input id="pb-search" type="search" placeholder="Search tasks…" autocomplete="off">
         </label>
+        <button class="pb-icon-btn pb-new-task-btn" id="pb-new-task-hdr" title="New Task">
+          <svg viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
         <button class="pb-icon-btn" id="pb-refresh" title="Refresh">
           <svg viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 1 1 8 3a5 5 0 0 1 3.54 1.46L13 3v3.5h-3.5L11 5a3 3 0 1 0 .88 3.12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -138,6 +156,7 @@ function _pb_build(wrapper) {
 function _pb_wire(wrapper) {
     wrapper._pb_view   = "tasks";
     wrapper._pb_sel    = "";
+    wrapper._pb_module = "";
     wrapper._pb_member = "";
     wrapper._pb_search = "";
     wrapper._pb_detail = null;
@@ -181,6 +200,14 @@ function _pb_wire(wrapper) {
     // search
     $sh.on("input", "#pb-search", function () {
         wrapper._pb_search = $(this).val().toLowerCase();
+        _pb_render(wrapper);
+    });
+
+    // module filter
+    $sh.on("click", ".pb-mod-item", function () {
+        $sh.find(".pb-mod-item").removeClass("active");
+        $(this).addClass("active");
+        wrapper._pb_module = $(this).data("mod") || "";
         _pb_render(wrapper);
     });
 
@@ -274,38 +301,26 @@ function _pb_wire(wrapper) {
     });
 
     // ── KANBAN inline add ─────────────────────────────────────────
-    $sh.on("click", ".pb-col-add-btn", function () {
-        const col = $(this).data("col");
-        const $a = $sh.find(`.pb-col-adder[data-col="${col}"]`);
-        $a.show().find("input").focus();
-        $(this).hide();
-    });
-    $sh.on("click", ".pb-adder-cancel", function () {
-        const $a = $(this).closest(".pb-col-adder"), col = $a.data("col");
-        $a.hide().find("input").val("");
-        $sh.find(`.pb-col-add-btn[data-col="${col}"]`).show();
-    });
-    $sh.on("keydown", ".pb-adder-input", function (e) {
-        if (e.key === "Enter")  $(this).closest(".pb-col-adder").find(".pb-adder-ok").click();
-        if (e.key === "Escape") $(this).closest(".pb-col-adder").find(".pb-adder-cancel").click();
-    });
-    $sh.on("click", ".pb-adder-ok", function () {
-        const $a = $(this).closest(".pb-col-adder");
-        const subject = $a.find("input").val().trim(), col = $a.data("col");
+    $sh.on("keydown", ".pb-col-foot .pb-adder-input", function (e) {
+        if (e.key !== "Enter") return;
+        const $inp = $(this);
+        const subject = $inp.val().trim(), col = $inp.data("col");
         if (!subject) return;
         const projName = wrapper._pb_sel || ((wrapper._pb_projects || [])[0] || {}).name;
         if (!projName) { frappe.show_alert("Select a project first", 2); return; }
-        $a.find("input").prop("disabled", true);
+        $inp.prop("disabled", true);
         frappe.call({
             method: "frappe.client.insert",
-            args: { doc: { doctype: "Task", subject, project: projName, status: _STATUS_FOR_COL[col] || "Open" } },
+            args: { doc: {
+                doctype: "Task", subject, project: projName,
+                status: _STATUS_FOR_COL[col] || "Open",
+                custom_pb_module: wrapper._pb_module || "General",
+            }},
             callback(r) {
-                $a.find("input").prop("disabled", false).val("");
-                $a.hide();
-                $sh.find(`.pb-col-add-btn[data-col="${col}"]`).show();
+                $inp.prop("disabled", false).val("");
                 if (r.message) { wrapper._pb_tasks = [r.message, ...(wrapper._pb_tasks || [])]; _pb_render_kanban(wrapper, _pb_visible_tasks(wrapper)); }
             },
-            error() { $a.find("input").prop("disabled", false); },
+            error() { $inp.prop("disabled", false); },
         });
     });
 
@@ -393,10 +408,10 @@ function _pb_fill_sidebar(wrapper) {
 }
 
 function _pb_update_header(wrapper) {
-    if (wrapper._pb_view === "templates") {
-        $("#pb-title").text("Templates");
-        $("#pb-subtitle").text("Visual designer playground");
-        $("#pb-search").attr("placeholder", "Search templates…");
+    if (wrapper._pb_view === "prospect") {
+        $("#pb-title").text("Sales CRM");
+        $("#pb-subtitle").text("Live data");
+        $("#pb-search").attr("placeholder", "Search Sales CRM…");
     } else if (wrapper._pb_view === "board") {
         $("#pb-title").text("Projects");
         $("#pb-subtitle").text((wrapper._pb_projects||[]).length + " projects");
@@ -412,13 +427,17 @@ function _pb_update_header(wrapper) {
 
 function _pb_render(wrapper) {
     if (wrapper._pb_view === "board") _pb_render_board(wrapper);
-    else if (wrapper._pb_view === "templates") _pb_render_templates(wrapper);
+    else if (wrapper._pb_view === "prospect") _pb_render_prospect(wrapper);
     else _pb_render_kanban(wrapper, _pb_visible_tasks(wrapper));
 }
 
 function _pb_visible_tasks(wrapper) {
     return (wrapper._pb_tasks||[]).filter(t => {
         if (wrapper._pb_sel && t.project !== wrapper._pb_sel) return false;
+        if (wrapper._pb_module) {
+            const mod = t.custom_pb_module || "General";
+            if (mod !== wrapper._pb_module) return false;
+        }
         if (wrapper._pb_member) { try { if (!(JSON.parse(t._assign||"[]")||[]).includes(wrapper._pb_member)) return false; } catch(_){ return false; } }
         if (wrapper._pb_search && !(t.subject||"").toLowerCase().includes(wrapper._pb_search) && !(t.project||"").toLowerCase().includes(wrapper._pb_search)) return false;
         return true;
@@ -459,11 +478,7 @@ function _pb_render_kanban(wrapper, tasks) {
   </div>
   <div class="pb-col-body">${cards || `<div class="pb-col-empty">—</div>`}</div>
   <div class="pb-col-foot">
-    <button class="pb-col-add-btn" data-col="${col.key}">+ Add task</button>
-    <div class="pb-col-adder" data-col="${col.key}" style="display:none">
-      <input class="pb-adder-input" type="text" placeholder="Task name…">
-      <div class="pb-adder-row"><button class="pb-adder-ok">Add</button><button class="pb-adder-cancel">✕</button></div>
-    </div>
+    <input class="pb-adder-input" data-col="${col.key}" type="text" placeholder="Add task… (Enter)">
   </div>
 </div>`;
     }).join("");
@@ -471,11 +486,15 @@ function _pb_render_kanban(wrapper, tasks) {
     $("#pb-view-area").html(`<div class="pb-kanban">${html}</div>`);
 }
 
+const _MOD_COLORS = { Prospect:"#3b82f6", CRM:"#0891b2", Inventory:"#059669", General:"#6b7280" };
+
 function _tk_html(t, col, projMap, today, openDetail) {
     const assigns = (() => { try { return JSON.parse(t._assign||"[]")||[]; } catch(_){ return []; } })();
     const ov  = t.exp_end_date && t.exp_end_date < today && !["Completed","Cancelled"].includes(t.status);
     const proj = projMap[t.project] || t.project || "";
     const sel  = openDetail === t.name ? " pb-tk-selected" : "";
+    const mod  = t.custom_pb_module || "General";
+    const modC = _MOD_COLORS[mod] || "#6b7280";
     const avBtns = _T.map(m => {
         const on = assigns.includes(m.email);
         return `<button class="pb-av-btn ${on?"pb-av-on":"pb-av-off"}" data-task="${_e(t.name)}" data-email="${_e(m.email)}" ${on?`style="--avc:${m.color}"`:""}  title="${m.name}">${m.name[0]}</button>`;
@@ -483,7 +502,11 @@ function _tk_html(t, col, projMap, today, openDetail) {
     const dueHtml = t.exp_end_date ? `<span class="pb-tk-due${ov?" pb-tk-late":""}">${frappe.datetime.str_to_user(t.exp_end_date)}</span>` : "";
     return `
 <div class="pb-tk${ov?" pb-tk-ov":""}${sel}" data-name="${_e(t.name)}" draggable="true">
-  <div class="pb-tk-top">${proj?`<span class="pb-tk-proj">${_e(proj)}</span>`:""} ${dueHtml}</div>
+  <div class="pb-tk-top">
+    <span class="pb-tk-mod" style="color:${modC};border-color:${modC}22;background:${modC}12">${_e(mod)}</span>
+    ${proj?`<span class="pb-tk-proj">${_e(proj)}</span>`:""}
+    ${dueHtml}
+  </div>
   <div class="pb-tk-subj">${_e(t.subject||"")}</div>
   <div class="pb-tk-foot">
     <div class="pb-tk-assigns">${avBtns}</div>
@@ -783,7 +806,7 @@ function _pb_open_prospect_preview() {
         <line x1="7" y1="19" x2="29" y2="19" stroke="rgba(40,79,158,0.4)" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="10" y1="23" x2="26" y2="23" stroke="rgba(40,79,158,0.25)" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span class="pb-preview-title">Desktop View — Prospect Components</span>
+      <span class="pb-preview-title">Desktop View — Sales CRM Components</span>
     </div>
     <button class="pb-preview-close" id="pb-preview-close">
       <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -1068,14 +1091,14 @@ function _pvHTML() { return `
 <div class="pv-sec">
 <div class="pv-sec-hd">
   <span class="pv-sec-num">01</span>
-  <span class="pv-sec-title">Prospect Table</span>
+  <span class="pv-sec-title">Sales CRM Table</span>
   <span class="pv-sec-desc">Gradient header · sticky cols · obvious hover · live tab switching · quick stats strip</span>
   <div class="pv-sec-line"></div>
 </div>
 <div class="pv-qs-row" style="margin-bottom:16px">
   <div class="pv-qs-card pv-qs-1" style="padding:14px 16px">
     <div class="pv-qs-num" style="font-size:26px">32</div>
-    <div class="pv-qs-lbl" style="font-size:10px">Total Prospects</div>
+    <div class="pv-qs-lbl" style="font-size:10px">Total Sales CRM</div>
   </div>
   <div class="pv-qs-card pv-qs-2" style="padding:14px 16px">
     <div class="pv-qs-num" style="font-size:26px">12</div>
@@ -1307,7 +1330,7 @@ function _pvHTML() { return `
 </div>
 <div class="pv-card">
 <div class="pv-bdg-wrap">
-  <div class="pv-bdg-group-lbl">Prospect Status — Blue Family</div>
+  <div class="pv-bdg-group-lbl">Sales CRM Status — Blue Family</div>
   <div class="pv-bdg-row">
     <div class="pv-bdg-item"><span class="pv-b pv-b-lead">Lead</span><span class="pv-bdg-lbl">Lead</span></div>
     <div class="pv-bdg-item"><span class="pv-b pv-b-dis">In Discussion</span><span class="pv-bdg-lbl">In Discussion</span></div>
@@ -1381,7 +1404,7 @@ function _pvHTML() { return `
 <div class="pv-qs-row">
   <div class="pv-qs-card pv-qs-1">
     <div class="pv-qs-num">32</div>
-    <div class="pv-qs-lbl">Total Prospects</div>
+    <div class="pv-qs-lbl">Total Sales CRM</div>
     <div class="pv-qs-sub">↑ 4 added this week</div>
     <div class="pv-qs-icon">
       <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
@@ -1492,6 +1515,25 @@ const _PG_CFG = {
           telegram:"—",             linkedin:"—",             facebook:"—",                  instagram:"—",               website:"alfarisgroup.com" },
     ],
 };
+
+// ── prospect view ──────────────────────────────────────────────────
+function _pb_render_prospect(wrapper) {
+    $("#pb-view-area").html(`<div class="pb-loading"><div class="pb-spinner"></div></div>`);
+    frappe.call({
+        method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
+        callback(r) {
+            const rows = r.message || [];
+            const $area = $("#pb-view-area");
+            $area.html(`<div class="pb-prospect-wrap" id="pb-pg-mount"></div>`);
+            const container = document.getElementById("pb-pg-mount");
+            if (typeof PG !== "undefined" && PG.mount) {
+                PG.mount(container, rows);
+            } else {
+                container.innerHTML = `<div class="pb-empty"><p>Sales CRM grid unavailable.</p></div>`;
+            }
+        },
+    });
+}
 
 // ── board view ─────────────────────────────────────────────────────
 function _pb_render_board(wrapper) {
@@ -1637,6 +1679,9 @@ function _pb_new_task_modal(wrapper, default_status) {
             { fieldname:"project_display", label:"Project",   fieldtype:"Select",
               options: projs.map(p=>p.project_name||p.name).join("\n"), reqd:1,
               default: selProj?(selProj.project_name||selProj.name):"" },
+            { fieldname:"custom_pb_module", label:"Module",   fieldtype:"Select",
+              options:"General\nProspect\nCRM\nInventory",
+              default: wrapper._pb_module || "General" },
             { fieldname:"status",          label:"Status",    fieldtype:"Select",
               options:"Open\nWorking On\nCompleted", default:default_status||"Open" },
             { fieldname:"exp_end_date",    label:"Due Date",  fieldtype:"Date" },
@@ -1648,7 +1693,7 @@ function _pb_new_task_modal(wrapper, default_status) {
             d.hide();
             frappe.call({
                 method: "frappe.client.insert",
-                args: { doc: { doctype:"Task", subject:v.subject, project:proj.name, status:v.status, exp_end_date:v.exp_end_date } },
+                args: { doc: { doctype:"Task", subject:v.subject, project:proj.name, status:v.status, exp_end_date:v.exp_end_date, custom_pb_module:v.custom_pb_module||"General" } },
                 callback(r) {
                     if (!r.message) return;
                     frappe.show_alert({ message:"Task created", indicator:"green" }, 2);
@@ -1768,14 +1813,6 @@ body.pb-fs .container.page-container
 .pb-col-empty { text-align:center; padding:32px 0; color:#c4c4d0; font-size:22px; }
 
 .pb-col-foot { padding:6px 10px 10px; flex-shrink:0; }
-.pb-col-add-btn { width:100%; padding:7px; border-radius:7px; border:none; background:transparent; color:#9ca3af; font-size:12px; cursor:pointer; text-align:left; transition:background .1s, color .1s; }
-.pb-col-add-btn:hover { background:rgba(0,0,0,.04); color:#374151; }
-.pb-col-adder { padding-top:4px; }
-.pb-adder-input { width:100%; padding:6px 9px; border-radius:7px; border:1.5px solid #8b5cf6; outline:none; font-size:12.5px; color:#374151; background:#fff; font-family:inherit; box-sizing:border-box; }
-.pb-adder-row { display:flex; gap:5px; margin-top:5px; }
-.pb-adder-ok { flex:1; padding:5px; border-radius:6px; border:none; background:#7c3aed; color:#fff; font-size:12px; font-weight:600; cursor:pointer; }
-.pb-adder-ok:hover { background:#6d28d9; }
-.pb-adder-cancel { padding:5px 8px; border-radius:6px; border:1px solid #e5e7eb; background:#fff; color:#6b7280; font-size:12px; cursor:pointer; }
 
 /* ── task card ───────────────────────────────────────────────── */
 .pb-tk { background:#fff; border-radius:10px; border:1.5px solid #eeeef4; box-shadow:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.03); padding:10px 11px 9px; margin-bottom:8px; cursor:pointer; transition:box-shadow .15s, transform .15s, border-color .15s, opacity .2s; animation:pb-tk-in .18s ease both; user-select:none; }
@@ -1921,6 +1958,17 @@ body.pb-fs .container.page-container
 .pb-task-add-btn { width:30px; height:30px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#7c3aed; border:none; border-radius:7px; cursor:pointer; color:#fff; transition:background .1s; }
 .pb-task-add-btn svg { width:11px; height:11px; }
 .pb-task-add-btn:hover { background:#6d28d9; }
+
+/* ── module badge on task card ───────────────────────────────── */
+.pb-tk-mod { font-size:9.5px; font-weight:700; letter-spacing:.04em; padding:1px 6px; border-radius:4px; border:1px solid; white-space:nowrap; flex-shrink:0; }
+
+/* ── clean column footer adder ───────────────────────────────── */
+.pb-col-foot .pb-adder-input { width:100%; padding:6px 9px; border-radius:8px; border:1.5px solid transparent; background:rgba(0,0,0,.04); font-size:12px; color:#374151; font-family:inherit; outline:none; transition:border-color .15s, background .15s; box-sizing:border-box; }
+.pb-col-foot .pb-adder-input::placeholder { color:#b0b0c0; }
+.pb-col-foot .pb-adder-input:focus { border-color:#8b5cf6; background:#fff; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+
+/* ── prospect view ───────────────────────────────────────────── */
+.pb-prospect-wrap { flex:1; overflow:hidden; display:flex; flex-direction:column; height:100%; }
 
 /* ── loading / empty ─────────────────────────────────────────── */
 .pb-loading { display:flex; align-items:center; justify-content:center; width:100%; min-height:260px; }

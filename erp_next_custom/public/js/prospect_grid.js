@@ -16,7 +16,7 @@
 /* shell */
 .pg-shell{background:#fff;border-radius:14px;border:1.5px solid #dce4f0;overflow:hidden;box-shadow:0 4px 20px rgba(40,79,158,.10);}
 
-/* nav row — gradient blue bar */
+/* nav row */
 .pg-nav-row{
   display:grid;
   grid-template-columns:1fr auto 1fr;
@@ -25,7 +25,7 @@
   gap:10px;
   position:relative;
   z-index:20;
-  background:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
+  background:#1e3f85;
 }
 .pg-nav-left{display:flex;align-items:center;gap:8px;justify-content:flex-start;}
 .pg-nav-center{display:flex;justify-content:center;align-items:center;}
@@ -33,7 +33,7 @@
 
 /* pill track — dark translucent on gradient bg */
 .pg-pill-track{position:relative;display:inline-flex;align-items:center;background:rgba(0,0,0,.20);border-radius:99px;padding:4px;gap:0;}
-.pg-pill-ind{position:absolute;top:4px;bottom:4px;left:0;background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);border-radius:99px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;width:0;}
+.pg-pill-ind{position:absolute;top:4px;bottom:4px;left:0;background:#fff;border-radius:99px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;width:0;}
 .pg-pill{position:relative;z-index:1;padding:7px 16px;border:none;background:transparent;border-radius:99px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.58);cursor:pointer;transition:color .2s;white-space:nowrap;line-height:1;}
 .pg-pill:hover{color:rgba(255,255,255,.88);}
 .pg-pill.active{color:#284f9e;font-weight:800;}
@@ -59,7 +59,7 @@
 
 /* table */
 .pg-tbl{width:100%;border-collapse:separate;border-spacing:0;}
-.pg-tbl thead tr{background:linear-gradient(90deg,#1e3f85 0%,#3a6fd8 100%);}
+.pg-tbl thead tr{background:#1e3f85;}
 .pg-tbl th{background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
 .pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;}
@@ -101,21 +101,53 @@
 .pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
 .pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
 
+/* contact popup action bar */
+.pg-cp-actions{display:flex;gap:6px;padding:10px 14px 12px;border-top:1px solid rgba(0,0,0,.06);margin-top:2px;}
+.pg-cp-act{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;cursor:pointer;text-decoration:none;border:none;transition:background .12s,transform .1s;flex-shrink:0;}
+.pg-cp-act svg{width:15px;height:15px;}
+.pg-cp-act:hover{transform:scale(1.08);}
+.pg-cp-act-wa{background:#e7f5ee;color:#15803d;}
+.pg-cp-act-wa:hover{background:#bbf7d0;}
+.pg-cp-act-mail{background:#eff6ff;color:#1d4ed8;}
+.pg-cp-act-mail:hover{background:#dbeafe;}
+
+/* contact-link modal */
+.pg-cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.pg-cm-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:420px;overflow:hidden;display:flex;flex-direction:column;}
+.pg-cm-header{background:#1e3f85;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;letter-spacing:.02em;}
+.pg-cm-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;line-height:1;padding:0 2px;transition:color .12s;}
+.pg-cm-close:hover{color:#fff;}
+.pg-cm-body{padding:20px;display:flex;flex-direction:column;gap:12px;}
+.pg-cm-row{display:flex;flex-direction:column;gap:4px;}
+.pg-cm-label{font-size:11.5px;font-weight:700;color:#6b7280;letter-spacing:.04em;text-transform:uppercase;}
+.pg-cm-req{color:#dc2626;}
+.pg-cm-inp{border:1.5px solid #d1d5db;border-radius:8px;padding:8px 11px;font-size:13.5px;color:#111827;outline:none;transition:border-color .15s,box-shadow .15s;}
+.pg-cm-inp:focus{border-color:#1e3f85;box-shadow:0 0 0 3px rgba(30,63,133,.12);}
+.pg-cm-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#dc2626;}
+.pg-cm-footer{padding:14px 20px;border-top:1px solid #f0f0f4;display:flex;justify-content:flex-end;gap:10px;}
+.pg-cm-btn-cancel{padding:8px 16px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;transition:background .12s;}
+.pg-cm-btn-cancel:hover{background:#f9fafb;}
+.pg-cm-btn-save{padding:8px 18px;border:none;border-radius:8px;background:#1e3f85;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s,opacity .12s;}
+.pg-cm-btn-save:hover{background:#2d52a8;}
+.pg-cm-btn-save:disabled{opacity:.6;cursor:not-allowed;}
+
 /* status badges — blue family (prospect) + warm family (project) */
 .pg-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.01em;}
 .pg-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
 /* prospect status — blue family */
-.pg-badge-blue  {background:#e8f4fd;color:#014486;border:1px solid #b0d4f1;}
-.pg-badge-indigo{background:#ece9f5;color:#3e3794;border:1px solid #c5bde8;}
-.pg-badge-teal  {background:#e0f5f5;color:#0a5f6e;border:1px solid #8dd5d8;}
-.pg-badge-green {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
-.pg-badge-gray  {background:#f3f3f3;color:#706e6b;border:1px solid #c9c7c5;}
+.pg-badge-blue   {background:#e8f4fd;color:#014486;border:1px solid #b0d4f1;}
+.pg-badge-indigo {background:#ece9f5;color:#3e3794;border:1px solid #c5bde8;}
+.pg-badge-purple {background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;}
+.pg-badge-teal   {background:#e0f5f5;color:#0a5f6e;border:1px solid #8dd5d8;}
+.pg-badge-green  {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
+.pg-badge-emerald{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.pg-badge-gray   {background:#f3f3f3;color:#706e6b;border:1px solid #c9c7c5;}
 /* project status — warm family */
-.pg-badge-amber {background:#fef0d9;color:#9e4300;border:1px solid #f4b56a;}
-.pg-badge-yellow{background:#fef9e3;color:#7a4f00;border:1px solid #f0d080;}
-.pg-badge-orange{background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
-.pg-badge-lime  {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
-.pg-badge-red   {background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
+.pg-badge-amber  {background:#fef0d9;color:#9e4300;border:1px solid #f4b56a;}
+.pg-badge-yellow {background:#fef9e3;color:#7a4f00;border:1px solid #f0d080;}
+.pg-badge-orange {background:#fff3e0;color:#c2410c;border:1px solid #fdba74;}
+.pg-badge-lime   {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
+.pg-badge-red    {background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
 
 /* cell types */
 .pg-lnk{color:#2563eb;text-decoration:none;font-size:12.5px;display:inline-flex;align-items:center;gap:3px;cursor:default;}
@@ -274,8 +306,11 @@
 /* owner avatar */
 .pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .pg-owner-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
+.pg-contact-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.pg-contact-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
 /* owner popup */
-.pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.16);padding:16px;width:220px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 40px rgba(0,0,0,.14);padding:14px 14px 0;width:230px;opacity:0;transition:opacity .15s;pointer-events:none;overflow:hidden;}
+.pg-owner-popup .pg-owner-popup-rows{padding-bottom:12px;}
 .pg-owner-popup.pg-popup-vis{opacity:1;pointer-events:all;}
 .pg-owner-popup-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .pg-owner-popup-av{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
@@ -295,7 +330,7 @@
 
 /* toolbar buttons on gradient nav */
 /* Add Row — most prominent; white pill with brand blue text */
-.pg-tb-add{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border:none;border-radius:99px;background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);color:#284f9e;font-size:12.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);}
+.pg-tb-add{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border:none;border-radius:99px;background:#fff;color:#284f9e;font-size:12.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);}
 .pg-tb-add:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.8);}
 .pg-tb-add:active{transform:none;}
 /* Export — outlined ghost on gradient */
@@ -426,6 +461,16 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
+            case "contact-link": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const name = String(v);
+                const words = name.trim().split(/\s+/);
+                const ini = words.length === 1
+                    ? words[0][0].toUpperCase()
+                    : (words[0][0] + words[words.length - 1][0]).toUpperCase();
+                const color = _ownerColor(ini);
+                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}">${_e(ini)}</span>`;
+            }
             case "form-link": {
                 const dt = col.link_doctype || cfg.doctype || "";
                 return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
@@ -484,6 +529,80 @@
     let _ownerPopup = null, _ownerTimer = null;
     const _filesCache = {}; // name → files array
     const _ownerCache = {}; // owner email → user data
+
+    let _contactPopup = null, _contactTimer = null;
+    const _contactCache = {}; // full_name → Contact record
+
+    function _ensureContactPopup() {
+        if (_contactPopup) return;
+        _contactPopup = document.createElement("div");
+        _contactPopup.className = "pg-owner-popup";
+        _contactPopup.addEventListener("mouseenter", () => clearTimeout(_contactTimer));
+        _contactPopup.addEventListener("mouseleave", () => { _contactTimer = setTimeout(_hideContactPopup, 120); });
+        document.body.appendChild(_contactPopup);
+    }
+
+    function _hideContactPopup() {
+        if (_contactPopup) _contactPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _renderContactPopup(c, ini, color, root) {
+        const name    = c.full_name || ini;
+        const mobile  = c.mobile_no || "";
+        const email   = c.email_id || "";
+        const company = c.company_name || "";
+        const rowName = c.name || "";
+        const bldgSvg  = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
+        const phoneSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>`;
+        const digits   = mobile.replace(/\D/g, "");
+        _contactPopup.innerHTML =
+            `<div class="pg-owner-popup-top">` +
+            `<span class="pg-owner-popup-av" style="background:${_e(color)}">${_e(ini)}</span>` +
+            `<span class="pg-owner-popup-name">${_e(name)}</span>` +
+            `</div>` +
+            `<div class="pg-owner-popup-rows">` +
+            (company ? `<div class="pg-owner-popup-row">${bldgSvg}<span>${_e(company)}</span></div>` : "") +
+            (email   ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
+            (mobile  ? `<div class="pg-owner-popup-row">${phoneSvg}<span>${_e(mobile)}</span></div>` : "") +
+            `</div>` +
+            ((mobile || email) ?
+            `<div class="pg-cp-actions">` +
+            (mobile ? `<a class="pg-cp-act pg-cp-act-wa" href="https://wa.me/${_e(digits)}" target="_blank" rel="noopener" title="WhatsApp">${SVG.wa}</a>` : "") +
+            (email  ? `<button class="pg-cp-act pg-cp-act-mail pg-cp-mail" data-email="${_e(email)}" data-rowname="${_e(rowName)}" title="Send email">${SVG.mail}</button>` : "") +
+            `</div>` : "");
+        // wire mail button
+        const mailBtn = _contactPopup.querySelector(".pg-cp-mail");
+        if (mailBtn) {
+            mailBtn.addEventListener("click", () => {
+                _hideContactPopup();
+                if (root) _openCompose(email, rowName, root._pgCfg || {});
+            });
+        }
+    }
+
+    function _showContactPopup(anchor, contactName, ini, color, root) {
+        _ensureContactPopup();
+        _contactPopup.classList.add("pg-popup-vis");
+        if (_contactCache[contactName]) {
+            _renderContactPopup(_contactCache[contactName], ini, color, root);
+            _positionPopup(_contactPopup, anchor);
+            return;
+        }
+        _contactPopup.innerHTML = `<div style="padding:16px;font-size:12px;color:#9ca3af;text-align:center">Loading…</div>`;
+        _positionPopup(_contactPopup, anchor);
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id"], limit: 1 },
+            callback(r) {
+                const c = (r.message || [])[0] || { full_name: contactName };
+                _contactCache[contactName] = c;
+                if (_contactPopup.classList.contains("pg-popup-vis")) {
+                    _renderContactPopup(c, ini, color, root);
+                    _positionPopup(_contactPopup, anchor);
+                }
+            },
+        });
+    }
 
     function _parseMapsCoords(url) {
         const pats = [
@@ -1540,6 +1659,103 @@
             }, true);
 
             el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 150); });
+        } else if (ctype === "contact-link") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.placeholder = "Search contact…";
+            el.setAttribute("autocomplete", "off");
+            el.setAttribute("aria-label", "Search contact by name");
+            el.setAttribute("aria-autocomplete", "list");
+            el.setAttribute("aria-haspopup", "listbox");
+            _eFl.style.overflow = "visible";
+
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            drop.setAttribute("role", "listbox");
+            drop.setAttribute("aria-label", "Contact suggestions");
+            const tdRect = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 240)}px;`;
+            document.body.appendChild(drop);
+
+            let _acTimer = null, _acIdx = -1, _acNames = [];
+
+            const _pick = (fullName) => {
+                el.value = fullName;
+                drop.remove();
+                _closeEdit(true);
+            };
+
+            const _renderDrop = (contacts, q) => {
+                _acNames = contacts.map(c => c.full_name || c.name);
+                drop.innerHTML = "";
+                _acIdx = -1;
+                _acNames.forEach((name, i) => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item";
+                    d.setAttribute("role", "option");
+                    d.setAttribute("id", `pg-cl-opt-${i}`);
+                    d.textContent = name;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); _pick(name); });
+                    drop.appendChild(d);
+                });
+                const exact = _acNames.some(n => n.toLowerCase() === (q || "").toLowerCase());
+                if (q && !exact) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.setAttribute("role", "option");
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${_e(q)}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); drop.remove(); _closeEdit(false); _openContactModal(root, td, q, col.contactPre); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _query = (q) => {
+                if (!q) { drop.style.display = "none"; return; }
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name"], order_by: "full_name asc", limit: 8 },
+                    callback(r) { _renderDrop(r.message || [], q); },
+                });
+            };
+
+            el.addEventListener("input", () => {
+                clearTimeout(_acTimer);
+                _acIdx = -1;
+                _acTimer = setTimeout(() => _query(el.value.trim()), 180);
+            });
+
+            el.addEventListener("keydown", ev => {
+                const vis = drop.style.display !== "none";
+                const items = Array.from(drop.children);
+                if (ev.key === "ArrowDown" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.min(_acIdx + 1, items.length - 1);
+                    items.forEach((c, i) => { c.classList.toggle("pg-ac-active", i === _acIdx); c.setAttribute("aria-selected", i === _acIdx); });
+                    el.setAttribute("aria-activedescendant", `pg-cl-opt-${_acIdx}`);
+                    return;
+                }
+                if (ev.key === "ArrowUp" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.max(_acIdx - 1, 0);
+                    items.forEach((c, i) => { c.classList.toggle("pg-ac-active", i === _acIdx); c.setAttribute("aria-selected", i === _acIdx); });
+                    el.setAttribute("aria-activedescendant", `pg-cl-opt-${_acIdx}`);
+                    return;
+                }
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (!q) { drop.remove(); _closeEdit(false); return; }
+                    drop.remove(); _closeEdit(false); _openContactModal(root, td, q, col.contactPre);
+                }
+            }, true);
+
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 180); });
         } else if (ctype === "date") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -1598,6 +1814,195 @@
                 _navCell(root, td, e.key === "ArrowRight" ? "right" : "left");
             }
         });
+    }
+
+    function _openContactModal(root, td, prefill, defaultPre) {
+        const parts = (prefill || "").trim().split(/\s+/);
+        const firstName = parts[0] || "";
+        const lastName  = parts.slice(1).join(" ") || "";
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-cm-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-label", "Create Contact");
+
+        overlay.innerHTML = `
+            <div class="pg-cm-box" role="document">
+                <div class="pg-cm-header">
+                    <span>New Contact</span>
+                    <button class="pg-cm-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="pg-cm-body">
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Pre</label>
+                        <select class="pg-cm-inp" id="pg-cm-pre">
+                            <option value="">—</option>
+                            <option value="Mr">Mr</option>
+                            <option value="Ms">Ms</option>
+                            <option value="Mrs">Mrs</option>
+                            <option value="Dr">Dr</option>
+                            <option value="Eng" selected>Eng</option>
+                            <option value="Arch" selected>Arch</option>
+                        </select>
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">First Name <span class="pg-cm-req">*</span></label>
+                        <input class="pg-cm-inp" id="pg-cm-first" type="text" value="${_e(firstName)}" required autocomplete="given-name">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Last Name</label>
+                        <input class="pg-cm-inp" id="pg-cm-last" type="text" value="${_e(lastName)}" autocomplete="family-name">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Mobile</label>
+                        <input class="pg-cm-inp" id="pg-cm-mobile" type="tel" autocomplete="tel">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Email</label>
+                        <input class="pg-cm-inp" id="pg-cm-email" type="email" autocomplete="email">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Company</label>
+                        <input class="pg-cm-inp" id="pg-cm-company" type="text" autocomplete="organization">
+                    </div>
+                    <div class="pg-cm-err" id="pg-cm-err" style="display:none;"></div>
+                </div>
+                <div class="pg-cm-footer">
+                    <button class="pg-cm-btn-cancel">Cancel</button>
+                    <button class="pg-cm-btn-save">Save Contact</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+
+        const box      = overlay.querySelector(".pg-cm-box");
+        const selPre   = overlay.querySelector("#pg-cm-pre");
+        const inpFirst = overlay.querySelector("#pg-cm-first");
+        const inpLast  = overlay.querySelector("#pg-cm-last");
+        const inpMob   = overlay.querySelector("#pg-cm-mobile");
+        const inpEmail = overlay.querySelector("#pg-cm-email");
+        const inpComp  = overlay.querySelector("#pg-cm-company");
+        const errEl    = overlay.querySelector("#pg-cm-err");
+        const btnSave  = overlay.querySelector(".pg-cm-btn-save");
+        const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
+        const btnClose = overlay.querySelector(".pg-cm-close");
+
+        // Default Pre per column config (falls back to "Arch" for architect column)
+        selPre.value = (defaultPre !== undefined ? defaultPre : "Arch");
+
+        // Focus trap helpers
+        const focusable = () => Array.from(box.querySelectorAll(
+            'input, select, button:not([disabled])'
+        )).filter(el => !el.closest("[disabled]"));
+
+        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp];
+
+        setTimeout(() => inpFirst.focus(), 60);
+
+        const close = () => { overlay.remove(); };
+
+        const doSave = () => btnSave.click();
+
+        // Enter moves focus top→bottom; on last field triggers save
+        fields.forEach((inp, i) => {
+            inp.addEventListener("keydown", e => {
+                if (e.key !== "Enter") return;
+                // For <select>, only intercept if not open (browser handles open state)
+                if (inp.tagName === "SELECT" && inp.size > 1) return;
+                e.preventDefault();
+                if (i < fields.length - 1) {
+                    fields[i + 1].focus();
+                } else {
+                    doSave();
+                }
+            });
+        });
+
+        const trapFocus = (e) => {
+            if (e.key !== "Tab") return;
+            const els = focusable();
+            const first = els[0], last = els[els.length - 1];
+            if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+            else            { if (document.activeElement === last)  { e.preventDefault(); first.focus(); } }
+        };
+
+        overlay.addEventListener("keydown", e => {
+            if (e.key === "Escape") { close(); return; }
+            trapFocus(e);
+        });
+
+        overlay.addEventListener("mousedown", e => { if (e.target === overlay) close(); });
+        btnClose.addEventListener("click", close);
+        btnCxl.addEventListener("click", close);
+
+        btnSave.addEventListener("click", () => {
+            const fn = inpFirst.value.trim();
+            if (!fn) {
+                errEl.textContent = "First Name is required.";
+                errEl.style.display = "block";
+                inpFirst.focus();
+                return;
+            }
+            errEl.style.display = "none";
+            btnSave.disabled = true;
+            btnSave.textContent = "Saving…";
+
+            const doc = {
+                doctype: "Contact",
+                salutation: selPre.value || undefined,
+                first_name: fn,
+                last_name: inpLast.value.trim() || undefined,
+                company_name: inpComp.value.trim() || undefined,
+            };
+            if (inpMob.value.trim()) {
+                doc.phone_nos = [{ phone: inpMob.value.trim(), is_primary_mobile_no: 1 }];
+            }
+            if (inpEmail.value.trim()) {
+                doc.email_ids = [{ email_id: inpEmail.value.trim(), is_primary: 1 }];
+            }
+
+            frappe.call({
+                method: "frappe.client.insert",
+                args: { doc },
+                callback(r) {
+                    close();
+                    if (r.message) {
+                        const fullName = r.message.full_name
+                            || [r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
+                            || [doc.first_name, doc.last_name].filter(Boolean).join(" ");
+                        // Update cell immediately with avatar rendering
+                        const col = _colCfgForTd(root, td);
+                        td.dataset.val = fullName;
+                        const fakeRow = {};
+                        if (col) fakeRow[col.key] = fullName;
+                        td.innerHTML = col ? renderCell(col, fakeRow) : `<span>${_e(fullName)}</span>`;
+                        // Persist to Frappe
+                        if (col && col.frappe_field) {
+                            frappe.call({
+                                method: "frappe.client.set_value",
+                                args: { doctype: "Prospect", name: td.dataset.rowName, fieldname: col.frappe_field, value: fullName },
+                            });
+                        }
+                        if (_eIn && _eTd === td) { _eTd = null; _eIn = null; _eRoot = null; if (_eFl) _eFl.innerHTML = ""; }
+                    }
+                },
+                error() {
+                    btnSave.disabled = false;
+                    btnSave.textContent = "Save Contact";
+                    errEl.textContent = "Failed to create contact. Please try again.";
+                    errEl.style.display = "block";
+                },
+            });
+        });
+    }
+
+    function _colCfgForTd(root, td) {
+        const key = td.dataset.ckey || td.dataset.key;
+        if (!key || !root._pgCfg) return null;
+        return (root._pgCfg.cols || []).find(c => c.key === key)
+            || (root._pgCfg.fixed || []).find(c => c.key === key)
+            || null;
     }
 
     function _closeEdit(save) {
@@ -1922,6 +2327,23 @@
             if (!e.target.closest(".pg-owner-av")) return;
             clearTimeout(_ownerTimer);
             _ownerTimer = setTimeout(_hideOwnerPopup, 120);
+        }, true);
+
+        // ── Contact avatar hover popup ───────────────────────────
+        root.addEventListener("mouseenter", e => {
+            const av = e.target.closest(".pg-contact-av");
+            if (!av) return;
+            const contactName = av.dataset.contactName || "";
+            const ini         = av.dataset.ini          || "?";
+            const color       = av.dataset.color        || "#6b7280";
+            clearTimeout(_contactTimer);
+            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root), 180);
+        }, true);
+
+        root.addEventListener("mouseleave", e => {
+            if (!e.target.closest(".pg-contact-av")) return;
+            clearTimeout(_contactTimer);
+            _contactTimer = setTimeout(_hideContactPopup, 120);
         }, true);
 
         // ── File upload / camera ────────────────────────────────

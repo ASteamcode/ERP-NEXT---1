@@ -95,7 +95,7 @@ def get_tasks_data(project=None):
         filters["project"] = project
     return frappe.get_list(
         "Task",
-        fields=["name", "subject", "status", "project", "exp_end_date", "_assign", "priority"],
+        fields=["name", "subject", "status", "project", "exp_end_date", "_assign", "priority", "custom_pb_module"],
         filters=filters,
         order_by="exp_end_date asc, creation desc",
         limit=500,
@@ -117,6 +117,13 @@ def toggle_assignee(task_name, user_email):
         cur.append(user_email)
     frappe.db.set_value("Task", task_name, "_assign", _j.dumps(cur))
     return {"assigns": cur}
+
+
+@frappe.whitelist()
+def set_task_module(task_name, module):
+    _check_access()
+    frappe.db.set_value("Task", task_name, "custom_pb_module", module)
+    return {"module": module}
 
 
 @frappe.whitelist()
@@ -159,8 +166,8 @@ def get_prospects():
         fields=[
             "name", "company_name", "industry", "website", "owner",
             "custom_salutation", "custom_first_name", "custom_last_name",
-            "custom_prospect_status", "custom_mobile", "custom_email",
-            "custom_site_location", "custom_maps_url", "custom_position",
+            "custom_prospect_status", "custom_stage", "custom_mobile", "custom_email",
+            "custom_site_location", "custom_maps_url", "custom_description", "custom_position",
             "custom_has_drawing",
             "custom_project_status", "custom_project_start",
             "custom_floors", "custom_area", "custom_scaffold_type", "custom_project_type",
@@ -198,10 +205,12 @@ def get_prospects():
             "company":  r.company_name or "",
             "role":     r.custom_position or "",
             "status":   r.custom_prospect_status or "Lead",
+            "stage":    r.custom_stage or "Prospect",
             "mobile":   r.custom_mobile or "",
             "email":    r.custom_email or "",
-            "city":     r.custom_site_location or "",
+            "city":        r.custom_site_location or "",
             "maps":        r.custom_maps_url or "",
+            "description": r.custom_description or "",
             "has_drawing": r.custom_has_drawing or 0,
             "owner":          owner_email,
             "owner_initials": _initials(owner_email),
