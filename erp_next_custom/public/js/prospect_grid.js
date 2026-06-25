@@ -2420,7 +2420,7 @@
 
         // Build menu dialog
         const menuDlg = new frappe.ui.Dialog({
-            title: `Edit: ${row.first || ""} ${row.last || ""}`.trim() || "Edit Prospect",
+            title: "Edit Prospect",
             fields: [{
                 fieldtype: "HTML",
                 fieldname: "menu_html",
