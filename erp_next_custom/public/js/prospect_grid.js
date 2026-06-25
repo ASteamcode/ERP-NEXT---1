@@ -16,7 +16,7 @@
 /* shell */
 .pg-shell{background:#fff;border-radius:14px;border:1.5px solid #dce4f0;overflow:hidden;box-shadow:0 4px 20px rgba(40,79,158,.10);}
 
-/* nav row — gradient blue bar */
+/* nav row */
 .pg-nav-row{
   display:grid;
   grid-template-columns:1fr auto 1fr;
@@ -25,7 +25,7 @@
   gap:10px;
   position:relative;
   z-index:20;
-  background:linear-gradient(135deg,#1e3f85 0%,#3a6fd8 100%);
+  background:#1e3f85;
 }
 .pg-nav-left{display:flex;align-items:center;gap:8px;justify-content:flex-start;}
 .pg-nav-center{display:flex;justify-content:center;align-items:center;}
@@ -33,7 +33,7 @@
 
 /* pill track — dark translucent on gradient bg */
 .pg-pill-track{position:relative;display:inline-flex;align-items:center;background:rgba(0,0,0,.20);border-radius:99px;padding:4px;gap:0;}
-.pg-pill-ind{position:absolute;top:4px;bottom:4px;left:0;background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);border-radius:99px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;width:0;}
+.pg-pill-ind{position:absolute;top:4px;bottom:4px;left:0;background:#fff;border-radius:99px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0;width:0;}
 .pg-pill{position:relative;z-index:1;padding:7px 16px;border:none;background:transparent;border-radius:99px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.58);cursor:pointer;transition:color .2s;white-space:nowrap;line-height:1;}
 .pg-pill:hover{color:rgba(255,255,255,.88);}
 .pg-pill.active{color:#284f9e;font-weight:800;}
@@ -59,7 +59,7 @@
 
 /* table */
 .pg-tbl{width:100%;border-collapse:separate;border-spacing:0;}
-.pg-tbl thead tr{background:linear-gradient(90deg,#1e3f85 0%,#3a6fd8 100%);}
+.pg-tbl thead tr{background:#1e3f85;}
 .pg-tbl th{background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
 .pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;}
@@ -295,7 +295,7 @@
 
 /* toolbar buttons on gradient nav */
 /* Add Row — most prominent; white pill with brand blue text */
-.pg-tb-add{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border:none;border-radius:99px;background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);color:#284f9e;font-size:12.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);}
+.pg-tb-add{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border:none;border-radius:99px;background:#fff;color:#284f9e;font-size:12.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);}
 .pg-tb-add:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.8);}
 .pg-tb-add:active{transform:none;}
 /* Export — outlined ghost on gradient */
