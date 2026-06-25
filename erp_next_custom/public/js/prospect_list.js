@@ -64,8 +64,8 @@ const _PROSPECT_CFG = {
     rows: [],
     editable: true,
     doctype: "Prospect",
-    searchPlaceholder: "Search prospects…",
-    exportLabel: "Export Prospects",
+    searchPlaceholder: "Search Sales CRM…",
+    exportLabel: "Export Sales CRM",
 };
 
 // ── Listview hook ──────────────────────────────────────────────────
@@ -118,7 +118,7 @@ function _pl_render(listview) {
                 return rows.filter(d => { if (!d.creation) return false; const c = new Date(d.creation); return c.getMonth()===m && c.getFullYear()===y; }).length;
             })();
             const _qs_cards = [
-                { num: _qs_total,      label: "Total Prospects", sub: "all time",         colorCls: "pg-qs-c1",
+                { num: _qs_total,      label: "Total Sales CRM", sub: "all time",         colorCls: "pg-qs-c1",
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5"/><circle cx="12" cy="11" r="3"/><path d="M9 11h6"/></svg>` },
                 { num: _qs_leads,      label: "Active Leads",   sub: "prospect status",   colorCls: "pg-qs-c2",
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 4H14l-3.5 2.5 1.5 4L8 10.5 4 12.5l1.5-4L2 6h4.5z"/></svg>` },
