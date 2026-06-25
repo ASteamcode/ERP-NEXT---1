@@ -375,13 +375,14 @@
 
     // ── Hook into the desk page ───────────────────────────────────────────
     frappe.pages["desktop"].on_page_load = function (wrapper) {
-        frappe.pages["desktop"]._dh_rendered = false;
+        // Tell Frappe's container to hide the sidebar for this page
+        frappe.pages["desktop"].page = { hide_sidebar: true };
         renderHome(wrapper);
-        frappe.pages["desktop"]._dh_rendered = true;
     };
 
     frappe.pages["desktop"].on_page_show = function (wrapper) {
-        // No-op: DOM is preserved by Frappe; no re-render needed on back/forward.
+        // Re-apply sidebar hide on every show (covers back navigation)
+        frappe.app && frappe.app.sidebar && frappe.app.sidebar.toggle(true);
     };
 
 })();
