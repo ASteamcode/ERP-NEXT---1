@@ -170,13 +170,11 @@ role_home_page = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Prospect": {
+        "before_insert": "erp_next_custom.customize.prospect.set_prospect_name",
+    }
+}
 
 # Scheduled Tasks
 # ---------------

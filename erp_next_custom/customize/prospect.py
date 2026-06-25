@@ -1,4 +1,11 @@
+import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+
+def set_prospect_name(doc, method=None):
+    """Give every Prospect a unique auto-incremented name so multiple
+    prospects from the same company are allowed."""
+    doc.name = frappe.generate_hash(length=8)
 
 # ── Custom fields added to the Prospect DocType ───────────────────
 # ERPNext's Prospect already has: company_name, industry, website
