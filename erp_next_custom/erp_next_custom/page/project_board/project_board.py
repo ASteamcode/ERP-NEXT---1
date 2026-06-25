@@ -95,7 +95,7 @@ def get_tasks_data(project=None):
         filters["project"] = project
     return frappe.get_list(
         "Task",
-        fields=["name", "subject", "status", "project", "exp_end_date", "_assign", "priority"],
+        fields=["name", "subject", "status", "project", "exp_end_date", "_assign", "priority", "custom_pb_module"],
         filters=filters,
         order_by="exp_end_date asc, creation desc",
         limit=500,
@@ -117,6 +117,13 @@ def toggle_assignee(task_name, user_email):
         cur.append(user_email)
     frappe.db.set_value("Task", task_name, "_assign", _j.dumps(cur))
     return {"assigns": cur}
+
+
+@frappe.whitelist()
+def set_task_module(task_name, module):
+    _check_access()
+    frappe.db.set_value("Task", task_name, "custom_pb_module", module)
+    return {"module": module}
 
 
 @frappe.whitelist()
