@@ -348,6 +348,143 @@
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
 .pg-form-link{font-size:12px;font-weight:600;color:#1e3f85;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-decoration:none;}
 .pg-form-link:hover{color:#3a6fd8;text-decoration:underline;}
+
+/* ── Mobile card view ──────────────────────────────────────── */
+.pg-mob-cards{display:none;}
+
+@media (max-width: 768px){
+  html,body{overflow-y:auto!important;height:auto!important;}
+  .pg-shell{background:#f0f4fb;border-radius:0;border:none;box-shadow:none;min-height:100vh;}
+
+  /* Nav: hide pills, tabs, export, delete; show only add + search */
+  .pg-nav-row{
+    background:#f0f4fb;
+    border-bottom:none;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px 10px;
+    grid-template-columns:none;
+  }
+  .pg-nav-center,.pg-tb-del,.pg-tb-exp{display:none!important;}
+  .pg-nav-left{gap:0;}
+  .pg-nav-right{flex:1;}
+
+  /* Add button → blue square icon */
+  .pg-tb-add{
+    width:46px!important;min-width:46px;height:46px!important;
+    border-radius:14px!important;padding:0!important;
+    background:linear-gradient(135deg,#2563eb,#4f46e5)!important;
+    color:#fff!important;border:none!important;
+    box-shadow:0 4px 14px rgba(37,99,235,.40)!important;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:0!important;
+  }
+  .pg-tb-add svg{width:22px;height:22px;}
+
+  /* Search */
+  .pg-search-wrap{width:100%;}
+  .pg-search{
+    width:100%!important;height:40px;
+    background:#fff!important;border:1.5px solid #e2e8f4!important;
+    border-radius:12px!important;color:#1e293b!important;
+    padding-left:36px!important;font-size:13px!important;
+    box-shadow:0 1px 4px rgba(0,0,0,.06)!important;
+  }
+  .pg-search::placeholder{color:#94a3b8!important;}
+  .pg-search:focus{border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.10)!important;}
+  .pg-search-icon{left:12px!important;color:#94a3b8!important;width:15px;height:15px;}
+  .pg-search-wrap:focus-within .pg-search-icon{color:#2563eb!important;}
+
+  /* Hide desktop table */
+  .pg-tbl-outer{display:none!important;}
+
+  /* Card list */
+  .pg-mob-cards{display:block;padding:4px 14px 80px;}
+
+  /* Individual card */
+  .pg-mob-card{
+    background:#fff;border-radius:18px;
+    border:1.5px solid #e8edf8;
+    box-shadow:0 2px 12px rgba(37,99,235,.07);
+    margin-bottom:12px;overflow:hidden;
+    transition:box-shadow .2s,border-color .2s;
+  }
+  .pg-mob-card.pg-mob-expanded{border-color:#bfdbfe;box-shadow:0 4px 20px rgba(37,99,235,.14);}
+
+  /* Card header (always visible) */
+  .pg-mob-head{display:flex;align-items:center;gap:12px;padding:14px 14px 0;}
+
+  /* Avatar */
+  .pg-mob-av{
+    width:44px;height:44px;min-width:44px;border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:17px;font-weight:800;flex-shrink:0;
+    box-shadow:0 2px 8px rgba(37,99,235,.30);
+  }
+
+  /* Name + company */
+  .pg-mob-info{flex:1;min-width:0;}
+  .pg-mob-name{font-size:15px;font-weight:800;color:#0f172a;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pg-mob-company{font-size:12px;color:#64748b;font-weight:500;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* Status + chevron stacked on right */
+  .pg-mob-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+  .pg-mob-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .pg-mob-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .pg-mob-badge-blue  {background:#eff6ff;color:#2563eb;}
+  .pg-mob-badge-amber {background:#fffbeb;color:#d97706;}
+  .pg-mob-badge-gray  {background:#f3f4f6;color:#6b7280;}
+  .pg-mob-badge-green {background:#ecfdf5;color:#059669;}
+  .pg-mob-badge-red   {background:#fef2f2;color:#dc2626;}
+  .pg-mob-chevron{width:18px;height:18px;color:#94a3b8;transition:transform .25s,color .15s;flex-shrink:0;}
+  .pg-mob-expanded .pg-mob-chevron{transform:rotate(180deg);color:#2563eb;}
+
+  /* Action row */
+  .pg-mob-actions{display:flex;gap:10px;padding:12px 14px 14px;}
+  .pg-mob-action{
+    width:34px;height:34px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;
+    text-decoration:none;border:none;cursor:pointer;
+    transition:background .15s,transform .1s;flex-shrink:0;
+    font-size:15px;
+  }
+  .pg-mob-action:hover{transform:scale(1.1);}
+  .pg-mob-action-phone{background:#eff6ff;color:#2563eb;}
+  .pg-mob-action-wa   {background:#f0fdf4;color:#16a34a;}
+  .pg-mob-action-maps {background:#fef2f2;color:#ef4444;}
+  .pg-mob-action-edit {background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;}
+
+  /* Expandable detail panel */
+  .pg-mob-details{
+    max-height:0;overflow:hidden;
+    transition:max-height .38s cubic-bezier(.4,0,.2,1);
+  }
+  .pg-mob-expanded .pg-mob-details{max-height:600px;}
+  .pg-mob-details-inner{border-top:1px solid #f0f4fb;padding:12px 14px 14px;}
+
+  .pg-mob-section{
+    font-size:10px;font-weight:800;color:#2563eb;
+    text-transform:uppercase;letter-spacing:.6px;
+    margin:10px 0 6px;padding-bottom:4px;
+    border-bottom:1px solid #e8edf8;
+  }
+  .pg-mob-section:first-child{margin-top:0;}
+  .pg-mob-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #f8fafc;}
+  .pg-mob-row:last-child{border-bottom:none;}
+  .pg-mob-lbl{font-size:11px;color:#64748b;font-weight:600;}
+  .pg-mob-val{font-size:12px;color:#1e293b;font-weight:600;text-align:right;max-width:60%;word-break:break-word;}
+
+  .pg-mob-view-btn{
+    display:block;width:100%;margin-top:12px;padding:10px;
+    border-radius:12px;background:#2563eb;color:#fff;
+    text-align:center;font-weight:700;font-size:13px;
+    text-decoration:none;border:none;cursor:pointer;
+    transition:background .15s;
+  }
+  .pg-mob-view-btn:hover{background:#1d4ed8;}
+}
 `;
 
     const SVG = {
@@ -1438,6 +1575,69 @@
         popup.style.top  = top  + "px";
     }
 
+    // ── Mobile card builder ────────────────────────────────────────
+    const _MOB_STATUS_CLS = {
+        "Lead":          "pg-mob-badge-blue",
+        "In Discussion": "pg-mob-badge-amber",
+        "Contacted":     "pg-mob-badge-gray",
+        "Converted":     "pg-mob-badge-green",
+        "Lost":          "pg-mob-badge-red",
+    };
+
+    const _CHEVRON_SVG = `<svg class="pg-mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    const _PHONE_SVG   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.8a19.79 19.79 0 01-3-8.57A2 2 0 012.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.16 6.16l1.27-.45a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`;
+    const _PIN_SVG     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+    const _EDIT_SVG    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
+    function _buildMobileCards(rows) {
+        return rows.map(r => {
+            const first    = r.first || "";
+            const last     = r.last  || "";
+            const initials = ((first[0] || "") + (last[0] || "")).toUpperCase() || (r.company || "?")[0].toUpperCase();
+            const name     = _e(r.name || "");
+            const status   = r.status || "";
+            const badgeCls = _MOB_STATUS_CLS[status] || "pg-mob-badge-gray";
+            const digits   = String(r.mobile || "").replace(/\D/g, "");
+            const phoneHtml = r.mobile
+                ? `<a class="pg-mob-action pg-mob-action-phone" href="tel:${_e(r.mobile)}">${_PHONE_SVG}</a>
+                   <a class="pg-mob-action pg-mob-action-wa" href="https://wa.me/${_e(digits)}" target="_blank">${SVG.wa}</a>`
+                : "";
+            const mapsHtml = r.maps
+                ? `<a class="pg-mob-action pg-mob-action-maps" href="${_e(r.maps)}" target="_blank">${_PIN_SVG}</a>`
+                : "";
+
+            return `<div class="pg-mob-card" data-row-name="${name}">
+  <div class="pg-mob-head">
+    <div class="pg-mob-av">${_e(initials)}</div>
+    <div class="pg-mob-info">
+      <div class="pg-mob-name">${_e(first)} ${_e(last)}</div>
+      <div class="pg-mob-company">${_e(r.company || "")}</div>
+    </div>
+    <div class="pg-mob-side">
+      ${status ? `<span class="pg-mob-badge ${badgeCls}">${_e(status)}</span>` : ""}
+      ${_CHEVRON_SVG}
+    </div>
+  </div>
+  <div class="pg-mob-actions">
+    ${phoneHtml}
+    ${mapsHtml}
+    <button class="pg-mob-action pg-mob-action-edit" data-name="${name}">${_EDIT_SVG}</button>
+  </div>
+  <div class="pg-mob-details">
+    <div class="pg-mob-details-inner">
+      <div class="pg-mob-section">Contact</div>
+      ${r.role   ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Role</span><span class="pg-mob-val">${_e(r.role)}</span></div>` : ""}
+      ${r.mobile ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Mobile</span><span class="pg-mob-val">${_e(r.mobile)}</span></div>` : ""}
+      ${r.email  ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Email</span><span class="pg-mob-val">${_e(r.email)}</span></div>` : ""}
+      ${r.city   ? `<div class="pg-mob-section">Site</div><div class="pg-mob-row"><span class="pg-mob-lbl">Location</span><span class="pg-mob-val">${_e(r.city)}</span></div>` : ""}
+      ${r.pstatus ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Project</span><span class="pg-mob-val">${_e(r.pstatus)}</span></div>` : ""}
+      <a class="pg-mob-view-btn" href="/app/prospect/${name}">View Full Record</a>
+    </div>
+  </div>
+</div>`;
+        }).join("");
+    }
+
     // ── Mount ──────────────────────────────────────────────────────
     function mount(el, cfg) {
         injectStyles();
@@ -1459,6 +1659,7 @@
             `<button class="pg-pill${i===0?" active":""}" data-tab="${i}">${label}</button>`
         ).join("");
         const rowsHtml = cfg.rows.map((r, i) => buildRow(cfg, r, i)).join("");
+        const cardsHtml = _buildMobileCards(cfg.rows);
 
         el.innerHTML = `<div class="pg-shell">
   <div class="pg-nav-row">
@@ -1475,7 +1676,7 @@
     <div class="pg-nav-right">
       <div class="pg-search-wrap">
         ${SVG.search}
-        <input type="text" class="pg-search" placeholder="${cfg.searchPlaceholder || 'Search…'}">
+        <input type="text" class="pg-search" placeholder="${cfg.searchPlaceholder || 'Search prospects…'}">
       </div>
       <button class="pg-tb-exp">${SVG.export} ${cfg.exportLabel || 'Export'}</button>
     </div>
@@ -1486,6 +1687,7 @@
       <tbody>${rowsHtml}</tbody>
     </table>
   </div>
+  <div class="pg-mob-cards">${cardsHtml}</div>
 </div>`;
 
         // Apply sticky offsets
@@ -2122,6 +2324,98 @@
         if (cnt) cnt.textContent = sel;
     }
 
+    // ── Mobile edit dialog ──────────────────────────────────────────
+    function _openMobEdit(row, cfg, reload) {
+        const sections = [
+            {
+                label: "Contact Information",
+                fields: [
+                    { label: "First Name",    fn: "custom_first_name",     ft: "Data",     def: row.first    || "" },
+                    { label: "Last Name",     fn: "custom_last_name",      ft: "Data",     def: row.last     || "" },
+                    { label: "Role",          fn: "custom_position",       ft: "Data",     def: row.role     || "" },
+                    { label: "Status",        fn: "custom_prospect_status",ft: "Select",   def: row.status   || "Lead",
+                      options: "Lead\nIn Discussion\nContacted\nConverted\nLost" },
+                    { label: "Primary Mobile",fn: "custom_mobile",         ft: "Data",     def: row.mobile   || "" },
+                    { label: "Email",         fn: "custom_email",          ft: "Data",     def: row.email    || "" },
+                ],
+            },
+            {
+                label: "Site Information",
+                fields: [
+                    { label: "Site Location", fn: "custom_site_location",  ft: "Data",     def: row.city     || "" },
+                    { label: "Google Maps",   fn: "custom_maps_url",       ft: "Data",     def: row.maps     || "" },
+                    { label: "Area (sqm)",    fn: "custom_area",           ft: "Data",     def: row.area     || "" },
+                    { label: "Floors",        fn: "custom_floors",         ft: "Data",     def: row.floors   || "" },
+                ],
+            },
+            {
+                label: "Project Information",
+                fields: [
+                    { label: "Project Status",fn: "custom_project_status", ft: "Data",     def: row.pstatus  || "" },
+                    { label: "Scaffold Type", fn: "custom_scaffold_type",  ft: "Data",     def: row.scaffold || "" },
+                    { label: "Project Type",  fn: "custom_project_type",   ft: "Data",     def: row.ptype    || "" },
+                    { label: "Contract Value",fn: "custom_contract_value", ft: "Currency", def: row.contract || "" },
+                ],
+            },
+        ];
+
+        // Build menu dialog
+        const menuDlg = new frappe.ui.Dialog({
+            title: `Edit: ${row.first || ""} ${row.last || ""}`.trim() || "Edit Prospect",
+            fields: [{
+                fieldtype: "HTML",
+                fieldname: "menu_html",
+                options: sections.map(s =>
+                    `<button type="button" style="display:block;width:100%;margin-bottom:10px;padding:13px 16px;border:none;border-radius:14px;background:#eff6ff;color:#2563eb;font-weight:700;font-size:14px;text-align:left;cursor:pointer;" data-section="${_e(s.label)}">${_e(s.label)}</button>`
+                ).join(""),
+            }],
+        });
+        menuDlg.show();
+
+        setTimeout(() => {
+            menuDlg.$wrapper.find("[data-section]").on("click", function () {
+                const label = $(this).data("section");
+                const sec   = sections.find(s => s.label === label);
+                if (!sec) return;
+                menuDlg.hide();
+
+                const editDlg = new frappe.ui.Dialog({
+                    title: sec.label,
+                    fields: sec.fields.map(f => ({
+                        label:    f.label,
+                        fieldname:f.fn,
+                        fieldtype:f.ft,
+                        options:  f.options || undefined,
+                        default:  f.def,
+                    })),
+                    primary_action_label: "Save",
+                    primary_action(vals) {
+                        if (!vals) return;
+                        frappe.call({
+                            method: "frappe.client.get",
+                            args: { doctype: "Prospect", name: row.name },
+                            callback(res) {
+                                const doc = res.message;
+                                Object.keys(vals).forEach(k => { doc[k] = vals[k]; });
+                                frappe.call({
+                                    method: "frappe.client.save",
+                                    args: { doc },
+                                    callback(sr) {
+                                        if (sr.exc) { frappe.show_alert({ message: "Save failed", indicator: "red" }, 4); return; }
+                                        editDlg.hide();
+                                        frappe.show_alert({ message: "Saved", indicator: "green" }, 2);
+                                        setTimeout(reload, 600);
+                                    },
+                                });
+                            },
+                        });
+                    },
+                });
+                editDlg.show();
+            });
+        }, 200);
+    }
+
 // ── Full wiring ────────────────────────────────────────────────
     function _wire(root, cfg) {
         const tabCount = cfg.tabs.length;
@@ -2412,6 +2706,25 @@
             });
         });
 
+        // ── Mobile card expand/collapse ──────────────────────────
+        root.addEventListener("click", e => {
+            const card = e.target.closest(".pg-mob-card");
+            if (!card) return;
+            if (e.target.closest(".pg-mob-action")) return;
+            card.classList.toggle("pg-mob-expanded");
+        });
+
+        // ── Mobile card edit button ──────────────────────────────
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-mob-action-edit");
+            if (!btn) return;
+            e.stopPropagation();
+            const name = btn.dataset.name;
+            const row  = (cfg.rows || []).find(r => r.name === name);
+            if (!row) return;
+            _openMobEdit(row, cfg, () => _reload(root));
+        });
+
         // ── Search ──────────────────────────────────────────────
         const $search = root.querySelector(".pg-search");
         if ($search) {
@@ -2420,6 +2733,9 @@
                 root.querySelectorAll("tbody tr").forEach(tr => {
                     if (!q) { tr.style.display = ""; return; }
                     tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
+                });
+                root.querySelectorAll(".pg-mob-card").forEach(card => {
+                    card.style.display = !q || card.textContent.toLowerCase().includes(q) ? "" : "none";
                 });
             });
         }
