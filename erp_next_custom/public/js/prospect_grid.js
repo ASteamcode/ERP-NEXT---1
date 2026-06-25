@@ -101,6 +101,26 @@
 .pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
 .pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
 
+/* contact-link modal */
+.pg-cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.pg-cm-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:420px;overflow:hidden;display:flex;flex-direction:column;}
+.pg-cm-header{background:#1e3f85;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;letter-spacing:.02em;}
+.pg-cm-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;line-height:1;padding:0 2px;transition:color .12s;}
+.pg-cm-close:hover{color:#fff;}
+.pg-cm-body{padding:20px;display:flex;flex-direction:column;gap:12px;}
+.pg-cm-row{display:flex;flex-direction:column;gap:4px;}
+.pg-cm-label{font-size:11.5px;font-weight:700;color:#6b7280;letter-spacing:.04em;text-transform:uppercase;}
+.pg-cm-req{color:#dc2626;}
+.pg-cm-inp{border:1.5px solid #d1d5db;border-radius:8px;padding:8px 11px;font-size:13.5px;color:#111827;outline:none;transition:border-color .15s,box-shadow .15s;}
+.pg-cm-inp:focus{border-color:#1e3f85;box-shadow:0 0 0 3px rgba(30,63,133,.12);}
+.pg-cm-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#dc2626;}
+.pg-cm-footer{padding:14px 20px;border-top:1px solid #f0f0f4;display:flex;justify-content:flex-end;gap:10px;}
+.pg-cm-btn-cancel{padding:8px 16px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;transition:background .12s;}
+.pg-cm-btn-cancel:hover{background:#f9fafb;}
+.pg-cm-btn-save{padding:8px 18px;border:none;border-radius:8px;background:#1e3f85;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s,opacity .12s;}
+.pg-cm-btn-save:hover{background:#2d52a8;}
+.pg-cm-btn-save:disabled{opacity:.6;cursor:not-allowed;}
+
 /* status badges — blue family (prospect) + warm family (project) */
 .pg-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.01em;}
 .pg-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
@@ -1540,6 +1560,103 @@
             }, true);
 
             el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 150); });
+        } else if (ctype === "contact-link") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.placeholder = "Search contact…";
+            el.setAttribute("autocomplete", "off");
+            el.setAttribute("aria-label", "Search contact by name");
+            el.setAttribute("aria-autocomplete", "list");
+            el.setAttribute("aria-haspopup", "listbox");
+            _eFl.style.overflow = "visible";
+
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            drop.setAttribute("role", "listbox");
+            drop.setAttribute("aria-label", "Contact suggestions");
+            const tdRect = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 240)}px;`;
+            document.body.appendChild(drop);
+
+            let _acTimer = null, _acIdx = -1, _acNames = [];
+
+            const _pick = (fullName) => {
+                el.value = fullName;
+                drop.remove();
+                _closeEdit(true);
+            };
+
+            const _renderDrop = (contacts, q) => {
+                _acNames = contacts.map(c => c.full_name || c.name);
+                drop.innerHTML = "";
+                _acIdx = -1;
+                _acNames.forEach((name, i) => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item";
+                    d.setAttribute("role", "option");
+                    d.setAttribute("id", `pg-cl-opt-${i}`);
+                    d.textContent = name;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); _pick(name); });
+                    drop.appendChild(d);
+                });
+                const exact = _acNames.some(n => n.toLowerCase() === (q || "").toLowerCase());
+                if (q && !exact) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.setAttribute("role", "option");
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${_e(q)}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); drop.remove(); _closeEdit(false); _openContactModal(root, td, q); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _query = (q) => {
+                if (!q) { drop.style.display = "none"; return; }
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name"], order_by: "full_name asc", limit: 8 },
+                    callback(r) { _renderDrop(r.message || [], q); },
+                });
+            };
+
+            el.addEventListener("input", () => {
+                clearTimeout(_acTimer);
+                _acIdx = -1;
+                _acTimer = setTimeout(() => _query(el.value.trim()), 180);
+            });
+
+            el.addEventListener("keydown", ev => {
+                const vis = drop.style.display !== "none";
+                const items = Array.from(drop.children);
+                if (ev.key === "ArrowDown" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.min(_acIdx + 1, items.length - 1);
+                    items.forEach((c, i) => { c.classList.toggle("pg-ac-active", i === _acIdx); c.setAttribute("aria-selected", i === _acIdx); });
+                    el.setAttribute("aria-activedescendant", `pg-cl-opt-${_acIdx}`);
+                    return;
+                }
+                if (ev.key === "ArrowUp" && vis) {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    _acIdx = Math.max(_acIdx - 1, 0);
+                    items.forEach((c, i) => { c.classList.toggle("pg-ac-active", i === _acIdx); c.setAttribute("aria-selected", i === _acIdx); });
+                    el.setAttribute("aria-activedescendant", `pg-cl-opt-${_acIdx}`);
+                    return;
+                }
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault(); ev.stopImmediatePropagation();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (!q) { drop.remove(); _closeEdit(false); return; }
+                    drop.remove(); _closeEdit(false); _openContactModal(root, td, q);
+                }
+            }, true);
+
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 180); });
         } else if (ctype === "date") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -1598,6 +1715,158 @@
                 _navCell(root, td, e.key === "ArrowRight" ? "right" : "left");
             }
         });
+    }
+
+    function _openContactModal(root, td, prefill) {
+        const parts = (prefill || "").trim().split(/\s+/);
+        const firstName = parts[0] || "";
+        const lastName  = parts.slice(1).join(" ") || "";
+
+        const overlay = document.createElement("div");
+        overlay.className = "pg-cm-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-label", "Create Contact");
+
+        overlay.innerHTML = `
+            <div class="pg-cm-box" role="document">
+                <div class="pg-cm-header">
+                    <span>New Contact</span>
+                    <button class="pg-cm-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="pg-cm-body">
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">First Name <span class="pg-cm-req">*</span></label>
+                        <input class="pg-cm-inp" id="pg-cm-first" type="text" value="${_e(firstName)}" required autocomplete="given-name">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Last Name</label>
+                        <input class="pg-cm-inp" id="pg-cm-last" type="text" value="${_e(lastName)}" autocomplete="family-name">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Mobile</label>
+                        <input class="pg-cm-inp" id="pg-cm-mobile" type="tel" autocomplete="tel">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Email</label>
+                        <input class="pg-cm-inp" id="pg-cm-email" type="email" autocomplete="email">
+                    </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Company</label>
+                        <input class="pg-cm-inp" id="pg-cm-company" type="text" autocomplete="organization">
+                    </div>
+                    <div class="pg-cm-err" id="pg-cm-err" style="display:none;"></div>
+                </div>
+                <div class="pg-cm-footer">
+                    <button class="pg-cm-btn-cancel">Cancel</button>
+                    <button class="pg-cm-btn-save">Save Contact</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+
+        const box      = overlay.querySelector(".pg-cm-box");
+        const inpFirst = overlay.querySelector("#pg-cm-first");
+        const inpLast  = overlay.querySelector("#pg-cm-last");
+        const inpMob   = overlay.querySelector("#pg-cm-mobile");
+        const inpEmail = overlay.querySelector("#pg-cm-email");
+        const inpComp  = overlay.querySelector("#pg-cm-company");
+        const errEl    = overlay.querySelector("#pg-cm-err");
+        const btnSave  = overlay.querySelector(".pg-cm-btn-save");
+        const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
+        const btnClose = overlay.querySelector(".pg-cm-close");
+
+        // Focus trap helpers
+        const focusable = () => Array.from(box.querySelectorAll(
+            'input, button:not([disabled])'
+        )).filter(el => !el.closest("[disabled]"));
+
+        setTimeout(() => inpFirst.focus(), 60);
+
+        const close = () => { overlay.remove(); };
+
+        const trapFocus = (e) => {
+            if (e.key !== "Tab") return;
+            const els = focusable();
+            const first = els[0], last = els[els.length - 1];
+            if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+            else            { if (document.activeElement === last)  { e.preventDefault(); first.focus(); } }
+        };
+
+        overlay.addEventListener("keydown", e => {
+            if (e.key === "Escape") { close(); return; }
+            trapFocus(e);
+        });
+
+        overlay.addEventListener("mousedown", e => { if (e.target === overlay) close(); });
+        btnClose.addEventListener("click", close);
+        btnCxl.addEventListener("click", close);
+
+        btnSave.addEventListener("click", () => {
+            const fn = inpFirst.value.trim();
+            if (!fn) {
+                errEl.textContent = "First Name is required.";
+                errEl.style.display = "block";
+                inpFirst.focus();
+                return;
+            }
+            errEl.style.display = "none";
+            btnSave.disabled = true;
+            btnSave.textContent = "Saving…";
+
+            const doc = {
+                doctype: "Contact",
+                first_name: fn,
+                last_name: inpLast.value.trim() || undefined,
+                company_name: inpComp.value.trim() || undefined,
+            };
+            if (inpMob.value.trim()) {
+                doc.phone_nos = [{ phone: inpMob.value.trim(), is_primary_mobile_no: 1 }];
+            }
+            if (inpEmail.value.trim()) {
+                doc.email_ids = [{ email_id: inpEmail.value.trim(), is_primary: 1 }];
+            }
+
+            frappe.call({
+                method: "frappe.client.insert",
+                args: { doc },
+                callback(r) {
+                    close();
+                    if (r.message) {
+                        const fullName = [r.message.first_name, r.message.last_name].filter(Boolean).join(" ");
+                        if (_eIn && _eTd === td) {
+                            _eIn.value = fullName;
+                            _closeEdit(true);
+                        } else {
+                            // Edit was already closed — directly set
+                            const cfg = _colCfgForTd(root, td);
+                            if (cfg) {
+                                td.dataset.val = fullName;
+                                td.querySelector(".pg-cv") && (td.querySelector(".pg-cv").textContent = fullName);
+                                if (cfg.frappe_field) {
+                                    frappe.call({
+                                        method: "frappe.client.set_value",
+                                        args: { doctype: "Prospect", name: td.dataset.rowName, fieldname: cfg.frappe_field, value: fullName },
+                                    });
+                                }
+                            }
+                        }
+                    }
+                },
+                error() {
+                    btnSave.disabled = false;
+                    btnSave.textContent = "Save Contact";
+                    errEl.textContent = "Failed to create contact. Please try again.";
+                    errEl.style.display = "block";
+                },
+            });
+        });
+    }
+
+    function _colCfgForTd(root, td) {
+        const key = td.dataset.key;
+        if (!key || !root._pgCfg) return null;
+        return (root._pgCfg.cols || []).find(c => c.key === key) || null;
     }
 
     function _closeEdit(save) {
