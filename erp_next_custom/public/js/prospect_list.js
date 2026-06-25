@@ -112,8 +112,6 @@ function _pl_render(listview) {
     if (!host) return;
     GL.hideNative(listview);
 
-    const isMobile = window.innerWidth < 768;
-
     host.innerHTML = `<div class="pl-loading">Loading prospects…</div>`;
 
     frappe.call({
@@ -141,17 +139,6 @@ function _pl_render(listview) {
                 { num: _qs_rate + "%", label: "Conversion",     sub: "converted / total", colorCls: "pg-qs-c4",
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,11 5,7 9,9 15,3"/><polyline points="11,3 15,3 15,7"/></svg>` },
             ];
-
-            if (isMobile) {
-                PM.mount(host, rows, {
-                    onReload() { _pl_render(listview); },
-                    onEdit(name, frappe_field, value) {
-                        frappe.db.set_value("Prospect", name, frappe_field, value)
-                            .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
-                    },
-                });
-                return;
-            }
 
             // Prepend unsaved draft row if one exists
             const displayRows = _draftRow ? [...rows, _draftRow] : rows;
