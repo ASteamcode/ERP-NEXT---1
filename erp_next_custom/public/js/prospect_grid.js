@@ -135,17 +135,19 @@
 .pg-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.01em;}
 .pg-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
 /* prospect status — blue family */
-.pg-badge-blue  {background:#e8f4fd;color:#014486;border:1px solid #b0d4f1;}
-.pg-badge-indigo{background:#ece9f5;color:#3e3794;border:1px solid #c5bde8;}
-.pg-badge-teal  {background:#e0f5f5;color:#0a5f6e;border:1px solid #8dd5d8;}
-.pg-badge-green {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
-.pg-badge-gray  {background:#f3f3f3;color:#706e6b;border:1px solid #c9c7c5;}
+.pg-badge-blue   {background:#e8f4fd;color:#014486;border:1px solid #b0d4f1;}
+.pg-badge-indigo {background:#ece9f5;color:#3e3794;border:1px solid #c5bde8;}
+.pg-badge-purple {background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;}
+.pg-badge-teal   {background:#e0f5f5;color:#0a5f6e;border:1px solid #8dd5d8;}
+.pg-badge-green  {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
+.pg-badge-emerald{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.pg-badge-gray   {background:#f3f3f3;color:#706e6b;border:1px solid #c9c7c5;}
 /* project status — warm family */
-.pg-badge-amber {background:#fef0d9;color:#9e4300;border:1px solid #f4b56a;}
-.pg-badge-yellow{background:#fef9e3;color:#7a4f00;border:1px solid #f0d080;}
-.pg-badge-orange{background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
-.pg-badge-lime  {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
-.pg-badge-red   {background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
+.pg-badge-amber  {background:#fef0d9;color:#9e4300;border:1px solid #f4b56a;}
+.pg-badge-yellow {background:#fef9e3;color:#7a4f00;border:1px solid #f0d080;}
+.pg-badge-orange {background:#fff3e0;color:#c2410c;border:1px solid #fdba74;}
+.pg-badge-lime   {background:#eff9ef;color:#2e6b3e;border:1px solid #95d5a0;}
+.pg-badge-red    {background:#fde8e8;color:#ba0517;border:1px solid #f5a0a0;}
 
 /* cell types */
 .pg-lnk{color:#2563eb;text-decoration:none;font-size:12.5px;display:inline-flex;align-items:center;gap:3px;cursor:default;}

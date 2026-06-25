@@ -60,6 +60,16 @@ FIELDS = [
         "in_filter": 1,
         "default": "Lead",
     },
+    {
+        "fieldname": "custom_stage",
+        "fieldtype": "Select",
+        "label": "Stage",
+        "options": "\nProspect\nOutreached\nPassby Visit\nLead\nSite Visit\nQuotation\nNegotiation\nWon\nJob Scheduled\nLost",
+        "insert_after": "custom_prospect_status",
+        "in_list_view": 1,
+        "in_filter": 1,
+        "default": "Prospect",
+    },
 
     # ── Contact details ──────────────────────────────────────────
     {
@@ -107,10 +117,16 @@ FIELDS = [
         "insert_after": "custom_site_location",
     },
     {
+        "fieldname": "custom_description",
+        "fieldtype": "Small Text",
+        "label": "Description",
+        "insert_after": "custom_maps_url",
+    },
+    {
         "fieldname": "custom_drawing",
         "fieldtype": "Long Text",
         "label": "Drawing",
-        "insert_after": "custom_maps_url",
+        "insert_after": "custom_description",
         "hidden": 1,
     },
     {
