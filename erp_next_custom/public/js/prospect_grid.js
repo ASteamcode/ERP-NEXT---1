@@ -484,6 +484,55 @@
     transition:background .15s;
   }
   .pg-mob-view-btn:hover{background:#1d4ed8;}
+
+  /* ── Frappe dialog overrides on mobile ── */
+  .modal-dialog{max-width:420px!important;margin:18px auto!important;}
+  .modal-content{
+    border-radius:24px!important;border:none!important;overflow:hidden;
+    box-shadow:0 18px 45px rgba(37,99,235,.22)!important;
+  }
+  .modal-header{
+    background:linear-gradient(135deg,#2563eb,#7c3aed)!important;
+    color:#fff!important;border:none!important;padding:18px!important;
+  }
+  .modal-title{color:#fff!important;font-weight:800!important;}
+  .modal-header .btn-modal-close,.modal-header .close{color:rgba(255,255,255,.8)!important;opacity:1!important;}
+  .modal-body{background:#fff!important;padding:20px!important;}
+  .modal-footer{background:#fff!important;border-top:1px solid #e8edf8!important;padding:12px 20px!important;}
+  .control-label,.frappe-control .control-label{
+    color:#2563eb!important;font-size:11px!important;font-weight:800!important;
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px!important;
+  }
+  .form-control,input.form-control,select.form-control,textarea.form-control{
+    border:1.5px solid #dbeafe!important;border-radius:12px!important;
+    min-height:38px!important;background:#fff!important;
+    padding:8px 12px!important;font-size:13px!important;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .form-control:focus,input.form-control:focus,select.form-control:focus,textarea.form-control:focus{
+    border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.12)!important;
+  }
+  .btn.btn-primary{
+    background:linear-gradient(135deg,#2563eb,#7c3aed)!important;
+    border:none!important;border-radius:14px!important;
+    min-height:42px!important;font-weight:800!important;font-size:14px!important;
+    box-shadow:0 4px 14px rgba(37,99,235,.35)!important;
+    transition:opacity .15s!important;
+  }
+  .btn.btn-primary:hover{opacity:.9!important;}
+  .btn.btn-secondary,.btn.btn-default{
+    border-radius:14px!important;min-height:42px!important;
+    font-weight:700!important;border:1.5px solid #dbeafe!important;
+    background:#f8fbff!important;color:#2563eb!important;
+  }
+  /* Section picker buttons inside our edit menu */
+  .pg-mob-section-btn{
+    display:block;width:100%;margin-bottom:10px;padding:14px 16px;
+    border:none;border-radius:14px;background:#eff6ff;color:#2563eb;
+    font-weight:800;font-size:14px;text-align:left;cursor:pointer;
+    transition:background .15s;
+  }
+  .pg-mob-section-btn:hover{background:#dbeafe;}
 }
 `;
 
@@ -2366,7 +2415,7 @@
                 fieldtype: "HTML",
                 fieldname: "menu_html",
                 options: sections.map(s =>
-                    `<button type="button" style="display:block;width:100%;margin-bottom:10px;padding:13px 16px;border:none;border-radius:14px;background:#eff6ff;color:#2563eb;font-weight:700;font-size:14px;text-align:left;cursor:pointer;" data-section="${_e(s.label)}">${_e(s.label)}</button>`
+                    `<button type="button" class="pg-mob-section-btn" data-section="${_e(s.label)}">${_e(s.label)}</button>`
                 ).join(""),
             }],
         });
