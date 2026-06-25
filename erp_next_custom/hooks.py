@@ -49,7 +49,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {"desktop": "public/js/desk_home.js"}
 
 # include js in doctype views
 doctype_js = {
@@ -69,6 +69,7 @@ doctype_list_js = {
     "Quotation":            "public/js/quotation_list.js",
     "Item":        "public/js/item_list.js",
     "Prospect":    "public/js/prospect_list.js",
+    "Stock Entry":           "public/js/stock_entry_form.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
