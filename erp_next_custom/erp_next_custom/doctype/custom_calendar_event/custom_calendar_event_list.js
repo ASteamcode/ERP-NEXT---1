@@ -11,7 +11,7 @@ const CAL_START_H     = 6;
 const CAL_END_H       = 22;
 const CAL_TOTAL_SLOTS = (CAL_END_H - CAL_START_H) * 2;
 const CAL_TOTAL_H     = CAL_TOTAL_SLOTS * CAL_SLOT_H;
-const CAL_STYLE_VER   = "v9";
+const CAL_STYLE_VER   = "v10";
 
 const CAL_DAY_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const CAL_MON_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -542,66 +542,235 @@ function cal_loading() {
 
 // ── Quick-create dialog ───────────────────────────────────────────────────────
 function cal_quick_create(dateStr, startTime, presetEndTime, presetAssigned) {
-	const endTime  = presetEndTime || cal_m2t(cal_t2m(startTime) + 30);
-	const [y,m,d]  = dateStr.split("-");
-	const dt       = new Date(+y, +m - 1, +d);
-	const dateDisp = `${CAL_DAY_SHORT[dt.getDay()]} ${d} ${CAL_MON_SHORT[+m - 1]} ${y}`;
+	// Normalize HH:mm → HH:mm:ss to avoid Frappe validation errors
+	const _norm = t => t && t.split(":").length === 2 ? t + ":00" : (t || "");
+	startTime        = _norm(startTime);
+	const endTime    = _norm(presetEndTime) || cal_m2t(cal_t2m(startTime) + 60);
 
-	const dlg = new frappe.ui.Dialog({
-		title:  __("New Event — {0}", [dateDisp]),
-		fields: [
-			{ label: __("Title"),          fieldname: "title",          fieldtype: "Data",   reqd: 1 },
-			{ label: __("Event Type"),     fieldname: "event_type",     fieldtype: "Select",
-			  options: "\nMeeting\nSite Visit\nInstallation\nSurvey\nDelivery\nInspection\nOther" },
-			{ label: __("Contact Person"), fieldname: "contact_person", fieldtype: "Data"    },
-			{ label: __("Crew No."),       fieldname: "crew_number",    fieldtype: "Int"     },
-			{ fieldtype: "Column Break" },
-			{ label: __("Start Time"),     fieldname: "start_time",     fieldtype: "Time",   default: startTime },
-			{ label: __("End Time"),       fieldname: "end_time",       fieldtype: "Time",   default: endTime   },
-			{ label: __("Location"),       fieldname: "location",       fieldtype: "Data"    },
-		],
-		primary_action_label:   __("Save"),
-		secondary_action_label: __("Edit Full Form"),
-		primary_action(vals) {
-			frappe.call({
-				method: "frappe.client.insert",
-				args: { doc: {
-					doctype: CAL_DOCTYPE, title: vals.title,
-					event_type: vals.event_type || "", status: "Draft",
-					start_date: dateStr, end_date: dateStr,
-					start_time: vals.start_time || startTime,
-					end_time:   vals.end_time   || endTime,
-					contact_person: vals.contact_person || "",
-					crew_number:    vals.crew_number    || 0,
-					location:       vals.location       || "",
-					assigned_to:    presetAssigned || "",
-				}},
-				callback({ exc, message }) {
-					if (exc || !message) return;
-					frappe.show_alert({ message: __("Event created"), indicator: "green" }, 1.5);
-					dlg.hide(); cal_fetch();
-				},
-			});
-		},
-		secondary_action() {
-			const title = dlg.get_value("title") || __("New Event");
-			dlg.hide();
-			frappe.call({
-				method: "frappe.client.insert",
-				args: { doc: {
-					doctype: CAL_DOCTYPE, title, status: "Draft",
-					start_date: dateStr, end_date: dateStr,
-					start_time: dlg.get_value("start_time") || startTime,
-					end_time:   dlg.get_value("end_time")   || endTime,
-				}},
-				callback({ exc, message }) {
-					if (!exc && message) frappe.set_route("Form", CAL_DOCTYPE, message.name);
-				},
-			});
-		},
+	const [y,m,d]   = dateStr.split("-");
+	const dt        = new Date(+y, +m - 1, +d);
+	const dateDisp  = `${CAL_DAY_SHORT[dt.getDay()]} ${+d} ${CAL_MON_SHORT[+m - 1]} ${y}`;
+
+	// Time helper: HH:mm:ss → HH:mm for <input type="time">
+	const toInput = t => t ? t.slice(0, 5) : "";
+	// <input type="time"> value → HH:mm:ss
+	const fromInput = v => v ? v + ":00" : "";
+
+	const TYPES = ["Meeting","Site Visit","Installation","Survey","Delivery","Inspection","Other"];
+	const TYPE_ICONS = {
+		"Meeting":      `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="5" r="2"/><circle cx="10.5" cy="5" r="2"/><path d="M1.5 13c0-2.21 1.79-4 4-4h5c2.21 0 4 1.79 4 4"/></svg>`,
+		"Site Visit":   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5S12.5 9.75 12.5 6c0-2.49-2.01-4.5-4.5-4.5z"/><circle cx="8" cy="6" r="1.5"/></svg>`,
+		"Installation": `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5l1.5 1.5-7 7-2 .5.5-2 7-7z"/><path d="M9 4l2 2"/></svg>`,
+		"Survey":       `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="11" height="13" rx="1.5"/><line x1="5" y1="5.5" x2="11" y2="5.5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="10.5" x2="8.5" y2="10.5"/></svg>`,
+		"Delivery":     `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="9" height="7" rx="1"/><path d="M10 7h2.5l2 3v2H10V7z"/><circle cx="4" cy="13" r="1.2"/><circle cx="12.5" cy="13" r="1.2"/></svg>`,
+		"Inspection":   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="9.9" y1="9.9" x2="14" y2="14"/><line x1="5" y1="6.5" x2="8" y2="6.5"/><line x1="6.5" y1="5" x2="6.5" y2="8"/></svg>`,
+		"Other":        `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="13" cy="8" r="1"/></svg>`,
+	};
+
+	const PALETTE = ["#4A90D9","#27AE60","#E67E22","#9B59B6","#1ABC9C","#F39C12","#E74C3C","#2C3E50","#7F8C8D"];
+
+	let selType  = "";
+	let selColor = "";
+
+	// ── Build overlay ────────────────────────────────────────────────────────────
+	const overlay = document.createElement("div");
+	overlay.className = "cce-overlay";
+	overlay.innerHTML = `
+<div class="cce-modal" role="dialog" aria-modal="true">
+
+  <div class="cce-header" id="cce-hdr">
+    <div class="cce-header-top">
+      <span class="cce-date-label"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="display:inline-block;vertical-align:middle;margin-right:5px;opacity:.85"><rect x="1" y="2" width="12" height="11" rx="1.5"/><line x1="1" y1="5.5" x2="13" y2="5.5"/><line x1="4.5" y1="1" x2="4.5" y2="3.5"/><line x1="9.5" y1="1" x2="9.5" y2="3.5"/></svg>${dateDisp}</span>
+      <button class="cce-close-btn" id="cce-close" title="Close">
+        <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
+          <line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <input class="cce-title-inp" id="cce-title" type="text" placeholder="Event title…" autocomplete="off">
+  </div>
+
+  <div class="cce-body">
+
+    <!-- Type chips -->
+    <div class="cce-section">
+      <div class="cce-section-label">Event Type</div>
+      <div class="cce-type-chips" id="cce-types">
+        ${TYPES.map(t => `
+          <button class="cce-type-chip" data-type="${t}" style="--chip-color:${CAL_TYPE_COLOR[t]}">
+            <span class="cce-chip-icon">${TYPE_ICONS[t]}</span>
+            <span class="cce-chip-label">${t}</span>
+          </button>`).join("")}
+      </div>
+    </div>
+
+    <!-- Time row -->
+    <div class="cce-row-2">
+      <div class="cce-field">
+        <label class="cce-label">
+          <svg viewBox="0 0 14 14" fill="none" width="11" height="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="5.5"/><polyline points="7,4 7,7 9.5,8.5"/></svg>
+          Start Time
+        </label>
+        <input class="cce-input" id="cce-start" type="time" value="${toInput(startTime)}">
+      </div>
+      <div class="cce-field-arrow">→</div>
+      <div class="cce-field">
+        <label class="cce-label">
+          <svg viewBox="0 0 14 14" fill="none" width="11" height="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="5.5"/><polyline points="7,4 7,7 9.5,8.5"/></svg>
+          End Time
+        </label>
+        <input class="cce-input" id="cce-end" type="time" value="${toInput(endTime)}">
+      </div>
+    </div>
+
+    <!-- Contact + Location -->
+    <div class="cce-row-2">
+      <div class="cce-field">
+        <label class="cce-label">
+          <svg viewBox="0 0 14 14" fill="none" width="11" height="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="5" r="2.5"/><path d="M2.5 12.5c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5"/></svg>
+          Contact Person
+        </label>
+        <input class="cce-input" id="cce-contact" type="text" placeholder="Name…" autocomplete="off">
+      </div>
+      <div class="cce-field">
+        <label class="cce-label">
+          <svg viewBox="0 0 14 14" fill="none" width="11" height="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 1.5C4.79 1.5 3 3.29 3 5.5c0 3 4 7 4 7s4-4 4-7c0-2.21-1.79-4-4-4z"/><circle cx="7" cy="5.5" r="1.2"/></svg>
+          Location
+        </label>
+        <input class="cce-input" id="cce-location" type="text" placeholder="Address or place…" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Crew -->
+    <div class="cce-row-crew">
+      <div class="cce-field" style="max-width:140px">
+        <label class="cce-label"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><circle cx="5" cy="4.5" r="2"/><circle cx="9.5" cy="4.5" r="2"/><path d="M1 12c0-2.21 1.79-4 4-4h1"/><path d="M7 12c0-2.21 1.79-4 4-4"/></svg> Crew No.</label>
+        <input class="cce-input" id="cce-crew" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <!-- Color override -->
+    <div class="cce-section">
+      <div class="cce-section-label">Color Override <span class="cce-section-hint">(optional — leave blank to use type color)</span></div>
+      <div class="cce-palette" id="cce-palette">
+        ${PALETTE.map(c => `<button class="cce-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join("")}
+        <button class="cce-swatch cce-swatch-none" data-color="" title="Use type color">✕</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cce-footer">
+    <button class="cce-btn-ghost" id="cce-cancel">Cancel</button>
+    <button class="cce-btn-outline" id="cce-full">Edit Full Form</button>
+    <button class="cce-btn-primary" id="cce-save">
+      <svg viewBox="0 0 14 14" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg>
+      Save Event
+    </button>
+  </div>
+
+</div>`;
+
+	document.body.appendChild(overlay);
+	requestAnimationFrame(() => overlay.classList.add("cce-overlay--in"));
+
+	const modal  = overlay.querySelector(".cce-modal");
+	const header = overlay.querySelector("#cce-hdr");
+	const titleI = overlay.querySelector("#cce-title");
+
+	// ── Color helpers ────────────────────────────────────────────────────────────
+	function updateHeaderColor() {
+		const color = selColor || CAL_TYPE_COLOR[selType] || "#0176d3";
+		header.style.background = color;
+	}
+
+	function selectType(type) {
+		selType = type;
+		overlay.querySelectorAll(".cce-type-chip").forEach(ch => {
+			ch.classList.toggle("cce-type-chip--active", ch.dataset.type === type);
+		});
+		updateHeaderColor();
+	}
+
+	function selectColor(color) {
+		selColor = color;
+		overlay.querySelectorAll(".cce-swatch").forEach(sw => {
+			sw.classList.toggle("cce-swatch--active", sw.dataset.color === color);
+		});
+		updateHeaderColor();
+	}
+
+	// Init header color
+	updateHeaderColor();
+
+	// ── Close ────────────────────────────────────────────────────────────────────
+	function closeModal() {
+		overlay.classList.remove("cce-overlay--in");
+		setTimeout(() => overlay.remove(), 220);
+	}
+
+	overlay.querySelector("#cce-close").addEventListener("click", closeModal);
+	overlay.querySelector("#cce-cancel").addEventListener("click", closeModal);
+	overlay.addEventListener("mousedown", e => { if (e.target === overlay) closeModal(); });
+	document.addEventListener("keydown", function _esc(e) {
+		if (e.key === "Escape") { closeModal(); document.removeEventListener("keydown", _esc); }
 	});
-	dlg.show();
-	setTimeout(() => dlg.fields_dict.title?.$input?.focus(), 120);
+
+	// ── Type chips ───────────────────────────────────────────────────────────────
+	overlay.querySelectorAll(".cce-type-chip").forEach(ch => {
+		ch.addEventListener("click", () => selectType(
+			selType === ch.dataset.type ? "" : ch.dataset.type
+		));
+	});
+
+	// ── Palette ──────────────────────────────────────────────────────────────────
+	overlay.querySelectorAll(".cce-swatch").forEach(sw => {
+		sw.addEventListener("click", () => selectColor(sw.dataset.color));
+	});
+
+	// ── Save ─────────────────────────────────────────────────────────────────────
+	function doSave(andOpen) {
+		const title = titleI.value.trim();
+		if (!title) { titleI.focus(); titleI.classList.add("cce-inp-err"); return; }
+		titleI.classList.remove("cce-inp-err");
+
+		const btn = overlay.querySelector("#cce-save");
+		btn.disabled = true;
+		btn.textContent = "Saving…";
+
+		const start = fromInput(overlay.querySelector("#cce-start").value) || startTime;
+		const end   = fromInput(overlay.querySelector("#cce-end").value)   || endTime;
+
+		frappe.call({
+			method: "frappe.client.insert",
+			args: { doc: {
+				doctype: CAL_DOCTYPE, title,
+				event_type: selType || "",
+				status: "Draft",
+				start_date: dateStr, end_date: dateStr,
+				start_time: start, end_time: end,
+				contact_person: overlay.querySelector("#cce-contact").value.trim(),
+				crew_number:    parseInt(overlay.querySelector("#cce-crew").value) || 0,
+				location:       overlay.querySelector("#cce-location").value.trim(),
+				assigned_to:    presetAssigned || "",
+				color:          selColor || "",
+			}},
+			callback({ exc, message }) {
+				btn.disabled = false;
+				btn.innerHTML = `<svg viewBox="0 0 14 14" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg> Save Event`;
+				if (exc || !message) return;
+				closeModal();
+				if (andOpen) frappe.set_route("Form", CAL_DOCTYPE, message.name);
+				else { frappe.show_alert({ message: "Event created", indicator: "green" }, 1.5); cal_fetch(); }
+			},
+		});
+	}
+
+	overlay.querySelector("#cce-save").addEventListener("click", () => doSave(false));
+	overlay.querySelector("#cce-full").addEventListener("click", () => doSave(true));
+
+	setTimeout(() => titleI.focus(), 80);
 }
 
 // ── Date / time utilities ─────────────────────────────────────────────────────
@@ -836,6 +1005,162 @@ function cal_inject_styles() {
 			.cal-ev-title { font-size:10px; }
 			.cal-search { width:120px; }
 		}
+
+		/* ══════════════════════════════════════════════════════════
+		   QUICK-CREATE MODAL
+		══════════════════════════════════════════════════════════ */
+		.cce-overlay {
+			position:fixed; inset:0; z-index:9999;
+			background:rgba(15,25,50,.45); backdrop-filter:blur(4px);
+			display:flex; align-items:center; justify-content:center;
+			opacity:0; transition:opacity .2s ease;
+		}
+		.cce-overlay--in { opacity:1; }
+		.cce-overlay--in .cce-modal {
+			transform:translateY(0) scale(1);
+			opacity:1;
+		}
+
+		.cce-modal {
+			background:#fff; border-radius:20px;
+			width:520px; max-width:calc(100vw - 32px);
+			box-shadow:0 24px 80px rgba(0,0,0,.22), 0 4px 16px rgba(0,0,0,.12);
+			overflow:hidden; display:flex; flex-direction:column;
+			transform:translateY(18px) scale(.97); opacity:0;
+			transition:transform .22s cubic-bezier(.2,0,.2,1), opacity .22s ease;
+			font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+		}
+
+		/* ── Modal header (color-changing) ── */
+		.cce-header {
+			padding:18px 20px 16px;
+			background:#0176d3;
+			transition:background .3s ease;
+			flex-shrink:0;
+		}
+		.cce-header-top {
+			display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
+		}
+		.cce-date-label {
+			font-size:11px; font-weight:600; color:rgba(255,255,255,.8); letter-spacing:.03em;
+		}
+		.cce-close-btn {
+			width:26px; height:26px; border-radius:50%; border:none;
+			background:rgba(255,255,255,.18); color:#fff; cursor:pointer;
+			display:flex; align-items:center; justify-content:center;
+			transition:background .15s;
+		}
+		.cce-close-btn:hover { background:rgba(255,255,255,.32); }
+		.cce-title-inp {
+			width:100%; border:none; outline:none; background:transparent;
+			font-size:20px; font-weight:700; color:#fff;
+			placeholder-color:rgba(255,255,255,.5);
+			caret-color:#fff; letter-spacing:-.02em;
+		}
+		.cce-title-inp::placeholder { color:rgba(255,255,255,.5); }
+		.cce-title-inp.cce-inp-err { animation:cce-shake .3s ease; }
+		@keyframes cce-shake {
+			0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+		}
+
+		/* ── Body ── */
+		.cce-body { padding:18px 20px 8px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; max-height:60vh; }
+
+		/* ── Section ── */
+		.cce-section { display:flex; flex-direction:column; gap:8px; }
+		.cce-section-label {
+			font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8;
+		}
+		.cce-section-hint { font-weight:500; text-transform:none; letter-spacing:0; color:#c0c8d8; }
+
+		/* ── Type chips ── */
+		.cce-type-chips { display:flex; flex-wrap:wrap; gap:6px; }
+		.cce-type-chip {
+			display:inline-flex; align-items:center; gap:5px;
+			padding:6px 12px; border-radius:99px; cursor:pointer;
+			border:2px solid var(--chip-color); background:transparent;
+			color:var(--chip-color); font-size:12px; font-weight:600;
+			transition:all .16s; white-space:nowrap;
+		}
+		.cce-type-chip:hover {
+			background:var(--chip-color); color:#fff; transform:translateY(-1px);
+			box-shadow:0 4px 12px color-mix(in srgb, var(--chip-color) 40%, transparent);
+		}
+		.cce-type-chip--active {
+			background:var(--chip-color); color:#fff;
+			box-shadow:0 4px 14px color-mix(in srgb, var(--chip-color) 40%, transparent);
+			transform:translateY(-1px);
+		}
+		.cce-chip-icon { width:13px; height:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+		.cce-chip-icon svg { width:13px; height:13px; }
+		.cce-chip-label { font-size:12px; }
+
+		/* ── Two-col row ── */
+		.cce-row-2 {
+			display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:end;
+		}
+		.cce-field-arrow { color:#cbd5e1; font-size:16px; padding-bottom:10px; text-align:center; }
+		.cce-row-crew { display:flex; }
+
+		/* ── Fields ── */
+		.cce-field { display:flex; flex-direction:column; gap:5px; }
+		.cce-label {
+			display:flex; align-items:center; gap:5px;
+			font-size:11px; font-weight:600; color:#64748b; letter-spacing:.02em;
+		}
+		.cce-input {
+			padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px;
+			font-size:13px; color:#1e293b; background:#f8fafc;
+			outline:none; transition:border-color .15s, box-shadow .15s, background .15s;
+			font-family:inherit; width:100%; box-sizing:border-box;
+		}
+		.cce-input:focus {
+			border-color:#0176d3; background:#fff;
+			box-shadow:0 0 0 3px rgba(1,118,211,.12);
+		}
+
+		/* ── Color palette ── */
+		.cce-palette { display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+		.cce-swatch {
+			width:26px; height:26px; border-radius:50%; border:2.5px solid transparent;
+			cursor:pointer; transition:transform .14s, box-shadow .14s, border-color .14s;
+			flex-shrink:0;
+		}
+		.cce-swatch:hover { transform:scale(1.2); box-shadow:0 3px 10px rgba(0,0,0,.22); }
+		.cce-swatch--active { border-color:#fff; box-shadow:0 0 0 2.5px currentColor, 0 3px 10px rgba(0,0,0,.2); transform:scale(1.15); }
+		.cce-swatch-none {
+			background:#f1f5f9 !important; color:#94a3b8; font-size:12px; font-weight:700;
+			display:flex; align-items:center; justify-content:center; border-color:#e2e8f0;
+		}
+		.cce-swatch-none:hover { background:#e2e8f0 !important; }
+
+		/* ── Footer ── */
+		.cce-footer {
+			display:flex; align-items:center; gap:8px; padding:14px 20px 18px;
+			border-top:1px solid #f1f5f9; flex-shrink:0;
+		}
+		.cce-btn-ghost {
+			padding:8px 14px; border:none; background:transparent;
+			color:#94a3b8; font-size:12.5px; font-weight:600; cursor:pointer;
+			border-radius:8px; transition:color .15s, background .15s; font-family:inherit;
+		}
+		.cce-btn-ghost:hover { color:#475569; background:#f1f5f9; }
+		.cce-btn-outline {
+			padding:8px 16px; border:1.5px solid #e2e8f0; background:#fff;
+			color:#475569; font-size:12.5px; font-weight:600; cursor:pointer;
+			border-radius:8px; transition:all .15s; font-family:inherit;
+		}
+		.cce-btn-outline:hover { border-color:#0176d3; color:#0176d3; }
+		.cce-btn-primary {
+			margin-left:auto; display:inline-flex; align-items:center; gap:6px;
+			padding:9px 22px; border:none; border-radius:10px;
+			background:#0176d3; color:#fff;
+			font-size:13px; font-weight:700; cursor:pointer;
+			box-shadow:0 4px 14px rgba(1,118,211,.35);
+			transition:transform .15s, box-shadow .15s, background .15s; font-family:inherit;
+		}
+		.cce-btn-primary:hover { background:#0165b8; transform:translateY(-1px); box-shadow:0 6px 20px rgba(1,118,211,.4); }
+		.cce-btn-primary:disabled { opacity:.65; transform:none; cursor:not-allowed; }
 	`;
 	document.head.appendChild(s);
 }
