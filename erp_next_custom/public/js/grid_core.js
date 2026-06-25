@@ -1826,6 +1826,7 @@
         // Listview
         suppressRefresh,
         hideNative,
+        hideChrome,
         bootstrap,
         // Layout
         gridTpl,

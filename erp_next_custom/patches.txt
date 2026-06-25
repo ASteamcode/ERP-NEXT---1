@@ -5,3 +5,5 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 erp_next_custom.patches.v1_normalise_item_customization
+erp_next_custom.patches.create_item_custom_fields
+erp_next_custom.patches.reset_stock_entry_customization

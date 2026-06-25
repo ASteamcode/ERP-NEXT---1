@@ -9,7 +9,7 @@
     s.textContent = `
 /* ── Core sidebar background ── */
 .body-sidebar {
-  background: linear-gradient(180deg, #1a3576 0%, #1e3f85 40%, #2a52a8 100%) !important;
+  background: #032d60 !important;
   border-right: none !important;
   box-shadow: 3px 0 18px rgba(20,40,110,.28) !important;
 }
@@ -153,43 +153,43 @@
 
 /* Color map — gradient fills matching pg-badge */
 .indicator-pill.blue, .indicator-pill[data-color="blue"] {
-  background: linear-gradient(135deg,#dbeafe,#bfdbfe) !important;
-  color: #1d4ed8 !important; border-color: #93c5fd !important;
+  background: #e8f4fd !important;
+  color: #014486 !important; border-color: #b0d4f1 !important;
 }
 .indicator-pill.purple, .indicator-pill[data-color="purple"],
 .indicator-pill.indigo, .indicator-pill[data-color="indigo"] {
-  background: linear-gradient(135deg,#e0e7ff,#c7d2fe) !important;
-  color: #3730a3 !important; border-color: #a5b4fc !important;
+  background: #ece9f5 !important;
+  color: #3e3794 !important; border-color: #c5bde8 !important;
 }
 .indicator-pill.cyan, .indicator-pill[data-color="cyan"],
 .indicator-pill.teal, .indicator-pill[data-color="teal"] {
-  background: linear-gradient(135deg,#cffafe,#a5f3fc) !important;
-  color: #0e7490 !important; border-color: #67e8f9 !important;
+  background: #e0f5f5 !important;
+  color: #0a5f6e !important; border-color: #8dd5d8 !important;
 }
 .indicator-pill.green, .indicator-pill[data-color="green"] {
-  background: linear-gradient(135deg,#d1fae5,#a7f3d0) !important;
-  color: #065f46 !important; border-color: #6ee7b7 !important;
+  background: #eff9ef !important;
+  color: #2e6b3e !important; border-color: #95d5a0 !important;
 }
 .indicator-pill.gray, .indicator-pill.grey,
 .indicator-pill[data-color="gray"], .indicator-pill[data-color="grey"],
 .indicator-pill.light-blue {
-  background: linear-gradient(135deg,#f1f5f9,#e2e8f0) !important;
-  color: #475569 !important; border-color: #cbd5e1 !important;
+  background: #f3f3f3 !important;
+  color: #706e6b !important; border-color: #c9c7c5 !important;
 }
 .indicator-pill.yellow, .indicator-pill[data-color="yellow"] {
-  background: linear-gradient(135deg,#fef9c3,#fef08a) !important;
-  color: #854d0e !important; border-color: #fde047 !important;
+  background: #fef9e3 !important;
+  color: #7a4f00 !important; border-color: #f0d080 !important;
 }
 .indicator-pill.orange, .indicator-pill[data-color="orange"] {
-  background: linear-gradient(135deg,#ffedd5,#fed7aa) !important;
-  color: #9a3412 !important; border-color: #fb923c !important;
+  background: #fef0d9 !important;
+  color: #9e4300 !important; border-color: #f4b56a !important;
 }
 .indicator-pill.red, .indicator-pill[data-color="red"] {
-  background: linear-gradient(135deg,#fde8d8,#fcd3b3) !important;
-  color: #7c2d12 !important; border-color: #fdba74 !important;
+  background: #fde8e8 !important;
+  color: #ba0517 !important; border-color: #f5a0a0 !important;
 }
 .indicator-pill.pink, .indicator-pill[data-color="pink"] {
-  background: linear-gradient(135deg,#fce7f3,#fbcfe8) !important;
+  background: #fde8f3 !important;
   color: #9d174d !important; border-color: #f9a8d4 !important;
 }
 

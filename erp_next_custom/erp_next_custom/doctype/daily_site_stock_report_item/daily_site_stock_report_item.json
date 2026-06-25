@@ -1,0 +1,111 @@
+{
+  "doctype": "DocType",
+  "name": "Daily Site Stock Report Item",
+  "module": "Erp Next Custom",
+  "istable": 1,
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "item_code",
+    "item_name",
+    "uom",
+    "opening_qty",
+    "in_qty",
+    "out_qty",
+    "damaged_lost_qty",
+    "closing_qty",
+    "physical_count_qty",
+    "difference_qty",
+    "remarks"
+  ],
+  "fields": [
+    {
+      "fieldname": "item_code",
+      "fieldtype": "Link",
+      "label": "Item",
+      "options": "Item",
+      "reqd": 1,
+      "in_list_view": 1,
+      "columns": 2
+    },
+    {
+      "fieldname": "item_name",
+      "fieldtype": "Data",
+      "label": "Item Name",
+      "read_only": 1,
+      "in_list_view": 1,
+      "columns": 2
+    },
+    {
+      "fieldname": "uom",
+      "fieldtype": "Link",
+      "label": "UOM",
+      "options": "UOM",
+      "read_only": 1,
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "opening_qty",
+      "fieldtype": "Float",
+      "label": "Opening Qty",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "in_qty",
+      "fieldtype": "Float",
+      "label": "In Qty",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "out_qty",
+      "fieldtype": "Float",
+      "label": "Out Qty",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "damaged_lost_qty",
+      "fieldtype": "Float",
+      "label": "Damaged / Lost Qty",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "closing_qty",
+      "fieldtype": "Float",
+      "label": "Closing Qty",
+      "read_only": 1,
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "physical_count_qty",
+      "fieldtype": "Float",
+      "label": "Physical Count Qty",
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "difference_qty",
+      "fieldtype": "Float",
+      "label": "Difference Qty",
+      "read_only": 1,
+      "in_list_view": 1,
+      "columns": 1
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "Remarks"
+    }
+  ],
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "actions": [],
+  "links": [],
+  "states": []
+}

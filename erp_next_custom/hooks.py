@@ -54,6 +54,7 @@ app_include_js = [
 # include js in doctype views
 doctype_js = {
     "Item":                  "public/js/item_form.js",
+    "Stock Entry":           "public/js/stock_entry.js",
     "CRM Log":               "erp_next_custom/doctype/crm_log/crm_log.js",
     "Site Survey":           "erp_next_custom/doctype/site_survey/site_survey.js",
     "Measurement Take Off":  "erp_next_custom/doctype/measurement_take_off/measurement_take_off.js",
@@ -287,8 +288,8 @@ role_home_page = {
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker"]]]},
-    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker"]]]},
+    {"doctype": "Workspace", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker", "Inventory"]]]},
+    {"doctype": "Workspace Sidebar", "filters": [["name", "in", ["CRM", "Overview", "Project Tracker", "Inventory"]]]},
     {"doctype": "Warehouse", "filters": [["name", "like", "% - AS"]]},
     {"doctype": "Item Group"},
 ]
