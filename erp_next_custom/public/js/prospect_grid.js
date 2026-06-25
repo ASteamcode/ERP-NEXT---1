@@ -101,6 +101,16 @@
 .pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
 .pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
 
+/* contact popup action bar */
+.pg-cp-actions{display:flex;gap:6px;padding:10px 14px 12px;border-top:1px solid rgba(0,0,0,.06);margin-top:2px;}
+.pg-cp-act{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;cursor:pointer;text-decoration:none;border:none;transition:background .12s,transform .1s;flex-shrink:0;}
+.pg-cp-act svg{width:15px;height:15px;}
+.pg-cp-act:hover{transform:scale(1.08);}
+.pg-cp-act-wa{background:#e7f5ee;color:#15803d;}
+.pg-cp-act-wa:hover{background:#bbf7d0;}
+.pg-cp-act-mail{background:#eff6ff;color:#1d4ed8;}
+.pg-cp-act-mail:hover{background:#dbeafe;}
+
 /* contact-link modal */
 .pg-cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200000;display:flex;align-items:center;justify-content:center;padding:16px;}
 .pg-cm-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:420px;overflow:hidden;display:flex;flex-direction:column;}
@@ -297,7 +307,8 @@
 .pg-contact-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .pg-contact-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
 /* owner popup */
-.pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.16);padding:16px;width:220px;opacity:0;transition:opacity .15s;pointer-events:none;}
+.pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 40px rgba(0,0,0,.14);padding:14px 14px 0;width:230px;opacity:0;transition:opacity .15s;pointer-events:none;overflow:hidden;}
+.pg-owner-popup .pg-owner-popup-rows{padding-bottom:12px;}
 .pg-owner-popup.pg-popup-vis{opacity:1;pointer-events:all;}
 .pg-owner-popup-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .pg-owner-popup-av{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
@@ -533,13 +544,15 @@
         if (_contactPopup) _contactPopup.classList.remove("pg-popup-vis");
     }
 
-    function _renderContactPopup(c, ini, color) {
+    function _renderContactPopup(c, ini, color, root) {
         const name    = c.full_name || ini;
         const mobile  = c.mobile_no || "";
         const email   = c.email_id || "";
         const company = c.company_name || "";
-        const bldgSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
+        const rowName = c.name || "";
+        const bldgSvg  = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
         const phoneSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>`;
+        const digits   = mobile.replace(/\D/g, "");
         _contactPopup.innerHTML =
             `<div class="pg-owner-popup-top">` +
             `<span class="pg-owner-popup-av" style="background:${_e(color)}">${_e(ini)}</span>` +
@@ -549,14 +562,27 @@
             (company ? `<div class="pg-owner-popup-row">${bldgSvg}<span>${_e(company)}</span></div>` : "") +
             (email   ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
             (mobile  ? `<div class="pg-owner-popup-row">${phoneSvg}<span>${_e(mobile)}</span></div>` : "") +
-            `</div>`;
+            `</div>` +
+            ((mobile || email) ?
+            `<div class="pg-cp-actions">` +
+            (mobile ? `<a class="pg-cp-act pg-cp-act-wa" href="https://wa.me/${_e(digits)}" target="_blank" rel="noopener" title="WhatsApp">${SVG.wa}</a>` : "") +
+            (email  ? `<button class="pg-cp-act pg-cp-act-mail pg-cp-mail" data-email="${_e(email)}" data-rowname="${_e(rowName)}" title="Send email">${SVG.mail}</button>` : "") +
+            `</div>` : "");
+        // wire mail button
+        const mailBtn = _contactPopup.querySelector(".pg-cp-mail");
+        if (mailBtn) {
+            mailBtn.addEventListener("click", () => {
+                _hideContactPopup();
+                if (root) _openCompose(email, rowName, root._pgCfg || {});
+            });
+        }
     }
 
-    function _showContactPopup(anchor, contactName, ini, color) {
+    function _showContactPopup(anchor, contactName, ini, color, root) {
         _ensureContactPopup();
         _contactPopup.classList.add("pg-popup-vis");
         if (_contactCache[contactName]) {
-            _renderContactPopup(_contactCache[contactName], ini, color);
+            _renderContactPopup(_contactCache[contactName], ini, color, root);
             _positionPopup(_contactPopup, anchor);
             return;
         }
@@ -569,7 +595,7 @@
                 const c = (r.message || [])[0] || { full_name: contactName };
                 _contactCache[contactName] = c;
                 if (_contactPopup.classList.contains("pg-popup-vis")) {
-                    _renderContactPopup(c, ini, color);
+                    _renderContactPopup(c, ini, color, root);
                     _positionPopup(_contactPopup, anchor);
                 }
             },
@@ -1678,7 +1704,7 @@
                     d.className = "pg-ac-item pg-ac-create";
                     d.setAttribute("role", "option");
                     d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${_e(q)}</strong>"`;
-                    d.addEventListener("mousedown", ev => { ev.preventDefault(); drop.remove(); _closeEdit(false); _openContactModal(root, td, q); });
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); drop.remove(); _closeEdit(false); _openContactModal(root, td, q, col.contactPre); });
                     drop.appendChild(d);
                 }
                 drop.style.display = drop.children.length ? "block" : "none";
@@ -1723,7 +1749,7 @@
                     if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
                     const q = el.value.trim();
                     if (!q) { drop.remove(); _closeEdit(false); return; }
-                    drop.remove(); _closeEdit(false); _openContactModal(root, td, q);
+                    drop.remove(); _closeEdit(false); _openContactModal(root, td, q, col.contactPre);
                 }
             }, true);
 
@@ -1788,7 +1814,7 @@
         });
     }
 
-    function _openContactModal(root, td, prefill) {
+    function _openContactModal(root, td, prefill, defaultPre) {
         const parts = (prefill || "").trim().split(/\s+/);
         const firstName = parts[0] || "";
         const lastName  = parts.slice(1).join(" ") || "";
@@ -1860,8 +1886,8 @@
         const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
         const btnClose = overlay.querySelector(".pg-cm-close");
 
-        // Default Pre to "Arch"
-        selPre.value = "Arch";
+        // Default Pre per column config (falls back to "Arch" for architect column)
+        selPre.value = (defaultPre !== undefined ? defaultPre : "Arch");
 
         // Focus trap helpers
         const focusable = () => Array.from(box.querySelectorAll(
@@ -2309,7 +2335,7 @@
             const ini         = av.dataset.ini          || "?";
             const color       = av.dataset.color        || "#6b7280";
             clearTimeout(_contactTimer);
-            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color), 180);
+            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root), 180);
         }, true);
 
         root.addEventListener("mouseleave", e => {
