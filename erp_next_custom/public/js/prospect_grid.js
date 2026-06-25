@@ -294,6 +294,8 @@
 /* owner avatar */
 .pg-owner-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .pg-owner-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
+.pg-contact-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.pg-contact-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
 /* owner popup */
 .pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:12px;border:1.5px solid #e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.16);padding:16px;width:220px;opacity:0;transition:opacity .15s;pointer-events:none;}
 .pg-owner-popup.pg-popup-vis{opacity:1;pointer-events:all;}
@@ -446,6 +448,16 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
+            case "contact-link": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const name = String(v);
+                const words = name.trim().split(/\s+/);
+                const ini = words.length === 1
+                    ? words[0][0].toUpperCase()
+                    : (words[0][0] + words[words.length - 1][0]).toUpperCase();
+                const color = _ownerColor(ini);
+                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}">${_e(ini)}</span>`;
+            }
             case "form-link": {
                 const dt = col.link_doctype || cfg.doctype || "";
                 return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
@@ -504,6 +516,65 @@
     let _ownerPopup = null, _ownerTimer = null;
     const _filesCache = {}; // name → files array
     const _ownerCache = {}; // owner email → user data
+
+    let _contactPopup = null, _contactTimer = null;
+    const _contactCache = {}; // full_name → Contact record
+
+    function _ensureContactPopup() {
+        if (_contactPopup) return;
+        _contactPopup = document.createElement("div");
+        _contactPopup.className = "pg-owner-popup";
+        _contactPopup.addEventListener("mouseenter", () => clearTimeout(_contactTimer));
+        _contactPopup.addEventListener("mouseleave", () => { _contactTimer = setTimeout(_hideContactPopup, 120); });
+        document.body.appendChild(_contactPopup);
+    }
+
+    function _hideContactPopup() {
+        if (_contactPopup) _contactPopup.classList.remove("pg-popup-vis");
+    }
+
+    function _renderContactPopup(c, ini, color) {
+        const name    = c.full_name || ini;
+        const mobile  = c.mobile_no || "";
+        const email   = c.email_id || "";
+        const company = c.company_name || "";
+        const bldgSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
+        const phoneSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>`;
+        _contactPopup.innerHTML =
+            `<div class="pg-owner-popup-top">` +
+            `<span class="pg-owner-popup-av" style="background:${_e(color)}">${_e(ini)}</span>` +
+            `<span class="pg-owner-popup-name">${_e(name)}</span>` +
+            `</div>` +
+            `<div class="pg-owner-popup-rows">` +
+            (company ? `<div class="pg-owner-popup-row">${bldgSvg}<span>${_e(company)}</span></div>` : "") +
+            (email   ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
+            (mobile  ? `<div class="pg-owner-popup-row">${phoneSvg}<span>${_e(mobile)}</span></div>` : "") +
+            `</div>`;
+    }
+
+    function _showContactPopup(anchor, contactName, ini, color) {
+        _ensureContactPopup();
+        _contactPopup.classList.add("pg-popup-vis");
+        if (_contactCache[contactName]) {
+            _renderContactPopup(_contactCache[contactName], ini, color);
+            _positionPopup(_contactPopup, anchor);
+            return;
+        }
+        _contactPopup.innerHTML = `<div style="padding:16px;font-size:12px;color:#9ca3af;text-align:center">Loading…</div>`;
+        _positionPopup(_contactPopup, anchor);
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id"], limit: 1 },
+            callback(r) {
+                const c = (r.message || [])[0] || { full_name: contactName };
+                _contactCache[contactName] = c;
+                if (_contactPopup.classList.contains("pg-popup-vis")) {
+                    _renderContactPopup(c, ini, color);
+                    _positionPopup(_contactPopup, anchor);
+                }
+            },
+        });
+    }
 
     function _parseMapsCoords(url) {
         const pats = [
@@ -1736,6 +1807,18 @@
                 </div>
                 <div class="pg-cm-body">
                     <div class="pg-cm-row">
+                        <label class="pg-cm-label">Pre</label>
+                        <select class="pg-cm-inp" id="pg-cm-pre">
+                            <option value="">—</option>
+                            <option value="Mr">Mr</option>
+                            <option value="Ms">Ms</option>
+                            <option value="Mrs">Mrs</option>
+                            <option value="Dr">Dr</option>
+                            <option value="Eng" selected>Eng</option>
+                            <option value="Arch" selected>Arch</option>
+                        </select>
+                    </div>
+                    <div class="pg-cm-row">
                         <label class="pg-cm-label">First Name <span class="pg-cm-req">*</span></label>
                         <input class="pg-cm-inp" id="pg-cm-first" type="text" value="${_e(firstName)}" required autocomplete="given-name">
                     </div>
@@ -1766,6 +1849,7 @@
         document.body.appendChild(overlay);
 
         const box      = overlay.querySelector(".pg-cm-box");
+        const selPre   = overlay.querySelector("#pg-cm-pre");
         const inpFirst = overlay.querySelector("#pg-cm-first");
         const inpLast  = overlay.querySelector("#pg-cm-last");
         const inpMob   = overlay.querySelector("#pg-cm-mobile");
@@ -1776,14 +1860,36 @@
         const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
         const btnClose = overlay.querySelector(".pg-cm-close");
 
+        // Default Pre to "Arch"
+        selPre.value = "Arch";
+
         // Focus trap helpers
         const focusable = () => Array.from(box.querySelectorAll(
-            'input, button:not([disabled])'
+            'input, select, button:not([disabled])'
         )).filter(el => !el.closest("[disabled]"));
+
+        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp];
 
         setTimeout(() => inpFirst.focus(), 60);
 
         const close = () => { overlay.remove(); };
+
+        const doSave = () => btnSave.click();
+
+        // Enter moves focus top→bottom; on last field triggers save
+        fields.forEach((inp, i) => {
+            inp.addEventListener("keydown", e => {
+                if (e.key !== "Enter") return;
+                // For <select>, only intercept if not open (browser handles open state)
+                if (inp.tagName === "SELECT" && inp.size > 1) return;
+                e.preventDefault();
+                if (i < fields.length - 1) {
+                    fields[i + 1].focus();
+                } else {
+                    doSave();
+                }
+            });
+        });
 
         const trapFocus = (e) => {
             if (e.key !== "Tab") return;
@@ -1816,6 +1922,7 @@
 
             const doc = {
                 doctype: "Contact",
+                salutation: selPre.value || undefined,
                 first_name: fn,
                 last_name: inpLast.value.trim() || undefined,
                 company_name: inpComp.value.trim() || undefined,
@@ -1833,24 +1940,23 @@
                 callback(r) {
                     close();
                     if (r.message) {
-                        const fullName = [r.message.first_name, r.message.last_name].filter(Boolean).join(" ");
-                        if (_eIn && _eTd === td) {
-                            _eIn.value = fullName;
-                            _closeEdit(true);
-                        } else {
-                            // Edit was already closed — directly set
-                            const cfg = _colCfgForTd(root, td);
-                            if (cfg) {
-                                td.dataset.val = fullName;
-                                td.querySelector(".pg-cv") && (td.querySelector(".pg-cv").textContent = fullName);
-                                if (cfg.frappe_field) {
-                                    frappe.call({
-                                        method: "frappe.client.set_value",
-                                        args: { doctype: "Prospect", name: td.dataset.rowName, fieldname: cfg.frappe_field, value: fullName },
-                                    });
-                                }
-                            }
+                        const fullName = r.message.full_name
+                            || [r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
+                            || [doc.first_name, doc.last_name].filter(Boolean).join(" ");
+                        // Update cell immediately with avatar rendering
+                        const col = _colCfgForTd(root, td);
+                        td.dataset.val = fullName;
+                        const fakeRow = {};
+                        if (col) fakeRow[col.key] = fullName;
+                        td.innerHTML = col ? renderCell(col, fakeRow) : `<span>${_e(fullName)}</span>`;
+                        // Persist to Frappe
+                        if (col && col.frappe_field) {
+                            frappe.call({
+                                method: "frappe.client.set_value",
+                                args: { doctype: "Prospect", name: td.dataset.rowName, fieldname: col.frappe_field, value: fullName },
+                            });
                         }
+                        if (_eIn && _eTd === td) { _eTd = null; _eIn = null; _eRoot = null; if (_eFl) _eFl.innerHTML = ""; }
                     }
                 },
                 error() {
@@ -1864,9 +1970,11 @@
     }
 
     function _colCfgForTd(root, td) {
-        const key = td.dataset.key;
+        const key = td.dataset.ckey || td.dataset.key;
         if (!key || !root._pgCfg) return null;
-        return (root._pgCfg.cols || []).find(c => c.key === key) || null;
+        return (root._pgCfg.cols || []).find(c => c.key === key)
+            || (root._pgCfg.fixed || []).find(c => c.key === key)
+            || null;
     }
 
     function _closeEdit(save) {
@@ -2191,6 +2299,23 @@
             if (!e.target.closest(".pg-owner-av")) return;
             clearTimeout(_ownerTimer);
             _ownerTimer = setTimeout(_hideOwnerPopup, 120);
+        }, true);
+
+        // ── Contact avatar hover popup ───────────────────────────
+        root.addEventListener("mouseenter", e => {
+            const av = e.target.closest(".pg-contact-av");
+            if (!av) return;
+            const contactName = av.dataset.contactName || "";
+            const ini         = av.dataset.ini          || "?";
+            const color       = av.dataset.color        || "#6b7280";
+            clearTimeout(_contactTimer);
+            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color), 180);
+        }, true);
+
+        root.addEventListener("mouseleave", e => {
+            if (!e.target.closest(".pg-contact-av")) return;
+            clearTimeout(_contactTimer);
+            _contactTimer = setTimeout(_hideContactPopup, 120);
         }, true);
 
         // ── File upload / camera ────────────────────────────────
