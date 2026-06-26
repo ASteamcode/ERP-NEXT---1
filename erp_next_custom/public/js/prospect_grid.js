@@ -1814,7 +1814,9 @@
             const lmWrap = document.createElement("div");
             lmWrap.className = "pg-load-more-wrap";
             lmWrap.innerHTML = `<button class="pg-load-more-btn">Load More</button>`;
-            el.appendChild(lmWrap);
+            // append inside .pg-shell so it's not clipped by overflow:hidden on the shell
+            const shell = el.querySelector(".pg-shell") || el;
+            shell.appendChild(lmWrap);
             lmWrap.querySelector(".pg-load-more-btn").addEventListener("click", () => {
                 lmWrap.querySelector(".pg-load-more-btn").textContent = "Loading…";
                 lmWrap.querySelector(".pg-load-more-btn").disabled = true;

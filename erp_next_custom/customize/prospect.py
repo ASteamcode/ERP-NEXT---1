@@ -66,8 +66,9 @@ FIELDS = [
     },
     {
         "fieldname": "custom_position",
-        "fieldtype": "Data",
+        "fieldtype": "Autocomplete",
         "label": "Role",
+        "options": "\nOwner / Partner\nGeneral Manager\nProject Manager\nSite Engineer\nSite Foreman / معلم\nTechnical / Studies Engineer\nProcurement / Purchasing\nArchitect\nQuantity Surveyor\nAccountant / Finance\nOther",
         "insert_after": "custom_lead_source",
     },
     {
