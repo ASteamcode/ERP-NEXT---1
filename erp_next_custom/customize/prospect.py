@@ -169,7 +169,7 @@ FIELDS = [
         "fieldname": "custom_project_status",
         "fieldtype": "Select",
         "label": "Project Status",
-        "options": "\nCommercial\nResidential\nIndustrial\nReligious\nBuilding – New Construction\nBuilding – Renovation / Façade\nHigh-Rise / Tower\nIndustrial / Plant\nBridge / Infrastructure\nHeritage / Restoration\nShoring / Propping\nEvent / Temporary Structure\nOther",
+        "options": "\nEmpty lot\nExcavation\nConcrete structure\nTopped out\nFinishing\nMEP\nCompleted",
         "insert_after": "custom_scope_section",
         "in_filter": 1,
     },
@@ -207,7 +207,7 @@ FIELDS = [
         "fieldname": "custom_project_type",
         "fieldtype": "Select",
         "label": "Project Type",
-        "options": "\nResidential\nCommercial\nMixed-Use\nHigh-Rise\nIndustrial\nInfrastructure",
+        "options": "\nCommercial\nResidential\nIndustrial\nReligious\nBuilding – New Construction\nBuilding – Renovation / Façade\nHigh-Rise / Tower\nIndustrial / Plant\nBridge / Infrastructure\nHeritage / Restoration\nShoring / Propping\nEvent / Temporary Structure\nOther",
         "insert_after": "custom_scaffold_type",
     },
     {
