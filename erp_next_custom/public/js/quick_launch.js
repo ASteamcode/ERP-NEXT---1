@@ -646,18 +646,33 @@
     // Leaflet map instance and marker layer
     let _trMap = null, _trMarkers = [];
 
+    // ── Green flash banner (shown briefly on each location push) ─────────
+    let _bannerTimer = null;
+    function _flashLocationBanner() {
+        let bar = document.getElementById("gl-loc-banner");
+        if (!bar) {
+            bar = document.createElement("div");
+            bar.id = "gl-loc-banner";
+            bar.innerHTML = `<svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="flex-shrink:0"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>Location updated`;
+            bar.style.cssText = "position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99998;display:inline-flex;align-items:center;gap:5px;background:none;color:#16a34a;font-size:11px;font-weight:600;letter-spacing:.01em;pointer-events:none;white-space:nowrap;text-shadow:0 0 8px rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.15);transition:opacity .4s ease;";
+            document.body.appendChild(bar);
+        }
+        bar.style.opacity = "1";
+        clearTimeout(_bannerTimer);
+        _bannerTimer = setTimeout(() => { bar.style.opacity = "0"; }, 2200);
+    }
+    function _injectLocationBanner() {} // kept for call-sites, no longer persistent
+
     // ── Location tracking (start after permission) ────────────────────────
     let _lastCity = "";
     function _startLocationTracking() {
         if (!navigator.geolocation) return;
         navigator.geolocation.watchPosition(pos => {
             const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-            // Reverse geocode for city name (once per significant move)
-            const _push = (city) => frappe.call({
-                method: "erp_next_custom.erp_next_custom.api.update_location",
-                args: { lat, lng, accuracy, city },
-                error() {},
-            });
+            const _push = (city) => {
+                frappe.call({ method: "erp_next_custom.erp_next_custom.api.update_location", args: { lat, lng, accuracy, city }, error() {} });
+                _flashLocationBanner();
+            };
             if (!_lastCity) {
                 fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`, { headers: { "Accept-Language": "en" } })
                     .then(r => r.json())
@@ -671,16 +686,6 @@
                 _push(_lastCity);
             }
         }, () => {}, { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 });
-    }
-
-    // ── Green top banner (visible to all when location tracking active) ──
-    function _injectLocationBanner() {
-        if (document.getElementById("gl-loc-banner")) return;
-        const bar = document.createElement("div");
-        bar.id = "gl-loc-banner";
-        bar.innerHTML = `<svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="flex-shrink:0"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>Administrators can see your current location while you are online`;
-        bar.style.cssText = "position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99998;display:inline-flex;align-items:center;gap:5px;padding:0;background:none;color:#16a34a;font-size:11px;font-weight:600;letter-spacing:.01em;pointer-events:none;white-space:nowrap;text-shadow:0 0 8px rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.15);";
-        document.body.appendChild(bar);
     }
 
     const EXPAND_ICON = `<svg viewBox="0 0 12 12" fill="none"><path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
