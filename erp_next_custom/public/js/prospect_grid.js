@@ -1809,6 +1809,8 @@
     let _eIn = null;
     let _eTd = null;
     let _eRoot = null;
+    let _hoverEdit = false;   // true when edit was opened by hover (not click)
+    let _hoverCloseTimer = null;
 
     function _ensureFloat() {
         if (_eFl) return;
@@ -2055,20 +2057,13 @@
             el.type = "text";
             el.value = val;
             el.placeholder = "Paste Google Maps URL…";
-        } else if (ctype === "notes" && ckey === "description") {
+        } else if (ctype === "notes") {
             const H = 160;
-            _eFl.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${H}px;z-index:99999;pointer-events:none;`;
+            _eFl.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${Math.max(rect.width, 260)}px;height:${H}px;z-index:99999;pointer-events:none;`;
             el = document.createElement("textarea");
             el.className = "pg-float-input";
             el.style.padding = "6px 12px";
             el.style.resize = "none";
-            el.value = val;
-        } else if (ctype === "notes") {
-            el = document.createElement("textarea");
-            el.className = "pg-float-input";
-            el.style.padding = "4px 8px";
-            el.style.resize = "none";
-            el.style.overflow = "hidden";
             el.value = val;
         } else {
             el = document.createElement("input");
@@ -2086,6 +2081,7 @@
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
         if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
 
+        el.addEventListener("focus",   () => { clearTimeout(_hoverCloseTimer); _hoverEdit = false; }); // click-in → no longer hover-managed
         el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
@@ -2324,6 +2320,8 @@
 
     function _closeEdit(save) {
         if (!_eIn || !_eTd) return;
+        clearTimeout(_hoverCloseTimer);
+        _hoverEdit = false;
         const newVal = _eIn.value;
         const td = _eTd, root = _eRoot;
         _eTd = null; _eIn = null; _eRoot = null;
@@ -2620,8 +2618,24 @@
             root.addEventListener("mouseenter", e => {
                 const td = e.target.closest("td.pg-ed");
                 if (!td || td.dataset.ctype !== "notes") return;
+                clearTimeout(_hoverCloseTimer);
                 if (_eTd === td) return; // already editing this cell
+                _hoverEdit = true;
                 _openEdit(root, td);
+                // Keep open while mouse is over the float wrapper
+                if (_eFl) {
+                    _eFl.onmouseenter = () => clearTimeout(_hoverCloseTimer);
+                    _eFl.onmouseleave = () => {
+                        if (_hoverEdit) _hoverCloseTimer = setTimeout(() => _closeEdit(true), 120);
+                    };
+                }
+            }, true);
+
+            // Close on mouseleave of notes cell (grace period for moving to float)
+            root.addEventListener("mouseleave", e => {
+                const td = e.target.closest("td.pg-ed");
+                if (!td || td.dataset.ctype !== "notes" || !_hoverEdit) return;
+                _hoverCloseTimer = setTimeout(() => { if (_hoverEdit) _closeEdit(true); }, 120);
             }, true);
         }
 
