@@ -318,6 +318,8 @@
 .pg-owner-popup-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;}
 .pg-owner-popup-icon{width:14px;height:14px;color:#9ca3af;flex-shrink:0;}
 .pg-owner-popup-loc{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f5;}
+.pg-cp-ref-row{border-top:1px solid #f0f0f5;margin-top:6px;padding-top:6px;}
+.pg-cp-ref-sel{flex:1;border:none;outline:none;font-size:11.5px;color:#374151;font-family:inherit;background:transparent;cursor:pointer;min-width:0;}
 
 /* search — ghost on gradient nav bar */
 .pg-search-wrap{position:relative;display:flex;align-items:center;}
@@ -662,7 +664,8 @@
                     ? words[0][0].toUpperCase()
                     : (words[0][0] + words[words.length - 1][0]).toUpperCase();
                 const color = _ownerColor(ini);
-                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}">${_e(ini)}</span>`;
+                const rowOwner = row.owner || "";
+                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}" data-row-owner="${_e(rowOwner)}">${_e(ini)}</span>`;
             }
             case "form-link": {
                 const dt = col.link_doctype || cfg.doctype || "";
@@ -739,14 +742,17 @@
         if (_contactPopup) _contactPopup.classList.remove("pg-popup-vis");
     }
 
-    function _renderContactPopup(c, ini, color, root) {
+    function _renderContactPopup(c, ini, color, root, rowOwner) {
         const name    = c.full_name || ini;
         const mobile  = c.mobile_no || "";
         const email   = c.email_id || "";
         const company = c.company_name || "";
         const rowName = c.name || "";
+        const ref     = c.custom_reference_user || rowOwner || "";
+        const refLabel = c.custom_reference_full_name || ref.split("@")[0] || ref;
         const bldgSvg  = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
         const phoneSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>`;
+        const refSvg   = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>`;
         const digits   = mobile.replace(/\D/g, "");
         _contactPopup.innerHTML =
             `<div class="pg-owner-popup-top">` +
@@ -757,12 +763,43 @@
             (company ? `<div class="pg-owner-popup-row">${bldgSvg}<span>${_e(company)}</span></div>` : "") +
             (email   ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
             (mobile  ? `<div class="pg-owner-popup-row">${phoneSvg}<span>${_e(mobile)}</span></div>` : "") +
+            `<div class="pg-owner-popup-row pg-cp-ref-row">` +
+                refSvg +
+                `<select class="pg-cp-ref-sel" data-contact-name="${_e(rowName)}" data-current="${_e(ref)}" title="Reference person">` +
+                    `<option value="${_e(ref)}">${_e(refLabel || "Set reference…")}</option>` +
+                `</select>` +
+            `</div>` +
             `</div>` +
             ((mobile || email) ?
             `<div class="pg-cp-actions">` +
             (mobile ? `<a class="pg-cp-act pg-cp-act-wa" href="https://wa.me/${_e(digits)}" target="_blank" rel="noopener" title="WhatsApp">${SVG.wa}</a>` : "") +
             (email  ? `<button class="pg-cp-act pg-cp-act-mail pg-cp-mail" data-email="${_e(email)}" data-rowname="${_e(rowName)}" title="Send email">${SVG.mail}</button>` : "") +
             `</div>` : "");
+
+        // Populate reference dropdown with User list
+        const refSel = _contactPopup.querySelector(".pg-cp-ref-sel");
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "User", filters: [["enabled", "=", 1], ["user_type", "=", "System User"]], fields: ["name", "full_name"], limit: 50 },
+            callback(r) {
+                if (!refSel.isConnected) return;
+                const users = r.message || [];
+                refSel.innerHTML = `<option value="">— No reference —</option>` +
+                    users.map(u => `<option value="${_e(u.name)}"${u.name === ref ? " selected" : ""}>${_e(u.full_name || u.name)}</option>`).join("");
+                if (ref && !users.find(u => u.name === ref)) {
+                    refSel.innerHTML += `<option value="${_e(ref)}" selected>${_e(refLabel)}</option>`;
+                }
+            },
+        });
+
+        refSel.addEventListener("change", () => {
+            const newRef = refSel.value;
+            const cName  = refSel.dataset.contactName;
+            if (!cName) return;
+            frappe.db.set_value("Contact", cName, "custom_reference_user", newRef);
+            if (_contactCache[name]) _contactCache[name].custom_reference_user = newRef;
+        });
+
         // wire mail button
         const mailBtn = _contactPopup.querySelector(".pg-cp-mail");
         if (mailBtn) {
@@ -773,11 +810,11 @@
         }
     }
 
-    function _showContactPopup(anchor, contactName, ini, color, root) {
+    function _showContactPopup(anchor, contactName, ini, color, root, rowOwner) {
         _ensureContactPopup();
         _contactPopup.classList.add("pg-popup-vis");
         if (_contactCache[contactName]) {
-            _renderContactPopup(_contactCache[contactName], ini, color, root);
+            _renderContactPopup(_contactCache[contactName], ini, color, root, rowOwner);
             _positionPopup(_contactPopup, anchor);
             return;
         }
@@ -785,12 +822,12 @@
         _positionPopup(_contactPopup, anchor);
         frappe.call({
             method: "frappe.client.get_list",
-            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id"], limit: 1 },
+            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id", "custom_reference_user"], limit: 1 },
             callback(r) {
                 const c = (r.message || [])[0] || { full_name: contactName };
                 _contactCache[contactName] = c;
                 if (_contactPopup.classList.contains("pg-popup-vis")) {
-                    _renderContactPopup(c, ini, color, root);
+                    _renderContactPopup(c, ini, color, root, rowOwner);
                     _positionPopup(_contactPopup, anchor);
                 }
             },
@@ -2126,6 +2163,12 @@
                         <label class="pg-cm-label">Company</label>
                         <input class="pg-cm-inp" id="pg-cm-company" type="text" autocomplete="organization">
                     </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Reference</label>
+                        <select class="pg-cm-inp" id="pg-cm-ref">
+                            <option value="${_e(frappe.session.user)}">${_e(frappe.session.user)}</option>
+                        </select>
+                    </div>
                     <div class="pg-cm-err" id="pg-cm-err" style="display:none;"></div>
                 </div>
                 <div class="pg-cm-footer">
@@ -2143,10 +2186,23 @@
         const inpMob   = overlay.querySelector("#pg-cm-mobile");
         const inpEmail = overlay.querySelector("#pg-cm-email");
         const inpComp  = overlay.querySelector("#pg-cm-company");
+        const selRef   = overlay.querySelector("#pg-cm-ref");
         const errEl    = overlay.querySelector("#pg-cm-err");
         const btnSave  = overlay.querySelector(".pg-cm-btn-save");
         const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
         const btnClose = overlay.querySelector(".pg-cm-close");
+
+        // Populate reference dropdown with system users
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "User", filters: [["enabled", "=", 1], ["user_type", "=", "System User"]], fields: ["name", "full_name"], limit: 50 },
+            callback(r) {
+                const users = r.message || [];
+                selRef.innerHTML = users.map(u =>
+                    `<option value="${_e(u.name)}"${u.name === frappe.session.user ? " selected" : ""}>${_e(u.full_name || u.name)}</option>`
+                ).join("");
+            },
+        });
 
         // Default Pre per column config (falls back to "Arch" for architect column)
         selPre.value = (defaultPre !== undefined ? defaultPre : "Arch");
@@ -2156,7 +2212,7 @@
             'input, select, button:not([disabled])'
         )).filter(el => !el.closest("[disabled]"));
 
-        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp];
+        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp, selRef];
 
         setTimeout(() => inpFirst.focus(), 60);
 
@@ -2214,6 +2270,7 @@
                 first_name: fn,
                 last_name: inpLast.value.trim() || undefined,
                 company_name: inpComp.value.trim() || undefined,
+                custom_reference_user: selRef.value || frappe.session.user,
             };
             if (inpMob.value.trim()) {
                 doc.phone_nos = [{ phone: inpMob.value.trim(), is_primary_mobile_no: 1 }];
@@ -2683,8 +2740,9 @@
             const contactName = av.dataset.contactName || "";
             const ini         = av.dataset.ini          || "?";
             const color       = av.dataset.color        || "#6b7280";
+            const rowOwner    = av.dataset.rowOwner     || "";
             clearTimeout(_contactTimer);
-            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root), 180);
+            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root, rowOwner), 180);
         }, true);
 
         root.addEventListener("mouseleave", e => {

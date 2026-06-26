@@ -52,10 +52,17 @@ FIELDS = [
         "bold": 1,
     },
     {
+        "fieldname": "custom_lead_source",
+        "fieldtype": "Select",
+        "label": "Source",
+        "options": "\nReferral\nCold Call\nWalk-in\nWebsite\nExhibition\nSocial Media\nDigital",
+        "insert_after": "custom_last_name",
+    },
+    {
         "fieldname": "custom_position",
         "fieldtype": "Data",
         "label": "Role",
-        "insert_after": "custom_last_name",
+        "insert_after": "custom_lead_source",
     },
     {
         "fieldname": "custom_prospect_status",

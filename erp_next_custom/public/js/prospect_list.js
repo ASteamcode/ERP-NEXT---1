@@ -32,6 +32,8 @@ const _PROSPECT_CFG = {
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
+        { tab: 0, key: "source",   label: "Source",         type: "select", frappe_field: "custom_lead_source",
+          options: ["", "Referral", "Cold Call", "Walk-in", "Website", "Exhibition", "Social Media", "Digital"] },
         { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
         { tab: 0, key: "stage",    label: "Stage",          type: "status", frappe_field: "custom_stage",
           map: {
