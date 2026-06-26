@@ -1903,7 +1903,7 @@
             ".sort-filter-area", ".tag-filters-area",
             ".list-header-meta", ".list-toolbar-wrapper", ".list-toolbar",
             ".list-row-head", ".list-headers", ".list-subjects",
-            "header.frappe-list-head",
+            "header.frappe-list-head", ".list-paging-area",
         ].join(",")).hide();
     }
 

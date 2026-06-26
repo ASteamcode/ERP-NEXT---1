@@ -72,7 +72,7 @@ function _pb_build(wrapper) {
       </button>
       <button class="pb-nav" data-view="prospect">
         <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" fill="currentColor" opacity=".9"/><path d="M1 14c0-3 2-5 5-5s5 2 5 5" fill="currentColor" opacity=".5"/><line x1="12" y1="4" x2="15" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="12" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="12" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        Sales CRM
+        Sales REP CRM
       </button>
     </div>
 
@@ -82,7 +82,7 @@ function _pb_build(wrapper) {
         <span class="pb-dot" style="background:rgba(255,255,255,.25)"></span>All
       </button>
       <button class="pb-nav pb-mod-item" data-mod="Prospect">
-        <span class="pb-dot" style="background:#3b82f6"></span>Sales CRM
+        <span class="pb-dot" style="background:#3b82f6"></span>Sales REP CRM
       </button>
       <button class="pb-nav pb-mod-item" data-mod="CRM">
         <span class="pb-dot" style="background:#0891b2"></span>CRM
@@ -409,9 +409,9 @@ function _pb_fill_sidebar(wrapper) {
 
 function _pb_update_header(wrapper) {
     if (wrapper._pb_view === "prospect") {
-        $("#pb-title").text("Sales CRM");
+        $("#pb-title").text("Sales REP CRM");
         $("#pb-subtitle").text("Live data");
-        $("#pb-search").attr("placeholder", "Search Sales CRM…");
+        $("#pb-search").attr("placeholder", "Search Sales REP CRM…");
     } else if (wrapper._pb_view === "board") {
         $("#pb-title").text("Projects");
         $("#pb-subtitle").text((wrapper._pb_projects||[]).length + " projects");
@@ -806,7 +806,7 @@ function _pb_open_prospect_preview() {
         <line x1="7" y1="19" x2="29" y2="19" stroke="rgba(40,79,158,0.4)" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="10" y1="23" x2="26" y2="23" stroke="rgba(40,79,158,0.25)" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span class="pb-preview-title">Desktop View — Sales CRM Components</span>
+      <span class="pb-preview-title">Desktop View — Sales REP CRM Components</span>
     </div>
     <button class="pb-preview-close" id="pb-preview-close">
       <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -1091,14 +1091,14 @@ function _pvHTML() { return `
 <div class="pv-sec">
 <div class="pv-sec-hd">
   <span class="pv-sec-num">01</span>
-  <span class="pv-sec-title">Sales CRM Table</span>
+  <span class="pv-sec-title">Sales REP CRM Table</span>
   <span class="pv-sec-desc">Gradient header · sticky cols · obvious hover · live tab switching · quick stats strip</span>
   <div class="pv-sec-line"></div>
 </div>
 <div class="pv-qs-row" style="margin-bottom:16px">
   <div class="pv-qs-card pv-qs-1" style="padding:14px 16px">
     <div class="pv-qs-num" style="font-size:26px">32</div>
-    <div class="pv-qs-lbl" style="font-size:10px">Total Sales CRM</div>
+    <div class="pv-qs-lbl" style="font-size:10px">Total Sales REP CRM</div>
   </div>
   <div class="pv-qs-card pv-qs-2" style="padding:14px 16px">
     <div class="pv-qs-num" style="font-size:26px">12</div>
@@ -1330,7 +1330,7 @@ function _pvHTML() { return `
 </div>
 <div class="pv-card">
 <div class="pv-bdg-wrap">
-  <div class="pv-bdg-group-lbl">Sales CRM Status — Blue Family</div>
+  <div class="pv-bdg-group-lbl">Sales REP CRM Status — Blue Family</div>
   <div class="pv-bdg-row">
     <div class="pv-bdg-item"><span class="pv-b pv-b-lead">Lead</span><span class="pv-bdg-lbl">Lead</span></div>
     <div class="pv-bdg-item"><span class="pv-b pv-b-dis">In Discussion</span><span class="pv-bdg-lbl">In Discussion</span></div>
@@ -1404,7 +1404,7 @@ function _pvHTML() { return `
 <div class="pv-qs-row">
   <div class="pv-qs-card pv-qs-1">
     <div class="pv-qs-num">32</div>
-    <div class="pv-qs-lbl">Total Sales CRM</div>
+    <div class="pv-qs-lbl">Total Sales REP CRM</div>
     <div class="pv-qs-sub">↑ 4 added this week</div>
     <div class="pv-qs-icon">
       <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
@@ -1529,7 +1529,7 @@ function _pb_render_prospect(wrapper) {
             if (typeof PG !== "undefined" && PG.mount) {
                 PG.mount(container, rows);
             } else {
-                container.innerHTML = `<div class="pb-empty"><p>Sales CRM grid unavailable.</p></div>`;
+                container.innerHTML = `<div class="pb-empty"><p>Sales REP CRM grid unavailable.</p></div>`;
             }
         },
     });

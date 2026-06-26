@@ -250,7 +250,7 @@ window.PM = (() => {
                     callback() {
                         _rows = _rows.filter(r => r.name !== btn.dataset.name);
                         _renderList();
-                        frappe.show_alert({ message: "Sales CRM deleted", indicator: "orange" }, 3);
+                        frappe.show_alert({ message: "Sales REP CRM deleted", indicator: "orange" }, 3);
                     },
                 });
             });
@@ -553,7 +553,7 @@ window.PM = (() => {
     // ── Add new prospect (FAB) ────────────────────────────────────────────────
     function _openAddDialog() {
         const d = new frappe.ui.Dialog({
-            title: "Add Sales CRM",
+            title: "Add Sales REP CRM",
             fields: [
                 { label: "First Name", fieldname: "custom_first_name", fieldtype: "Data" },
                 { label: "Last Name",  fieldname: "custom_last_name",  fieldtype: "Data" },
@@ -570,7 +570,7 @@ window.PM = (() => {
                     method: "frappe.client.insert",
                     args: { doc: Object.assign({ doctype: "Prospect" }, vals) },
                     callback(r) {
-                        frappe.show_alert({ message: "Sales CRM created", indicator: "green" }, 3);
+                        frappe.show_alert({ message: "Sales REP CRM created", indicator: "green" }, 3);
                         if (_opts.onReload) _opts.onReload();
                     },
                 });
