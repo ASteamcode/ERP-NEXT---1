@@ -297,6 +297,18 @@ FIELDS = [
         "label": "Instagram",
         "insert_after": "custom_facebook",
     },
+    {
+        "fieldname": "custom_tiktok",
+        "fieldtype": "Data",
+        "label": "TikTok",
+        "insert_after": "custom_instagram",
+    },
+    {
+        "fieldname": "custom_x",
+        "fieldtype": "Data",
+        "label": "X",
+        "insert_after": "custom_tiktok",
+    },
 ]
 
 

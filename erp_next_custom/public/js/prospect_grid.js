@@ -603,6 +603,8 @@
                 if (!/^https?:\/\//i.test(href)) {
                     if (col.key === "instagram" && href.startsWith("@")) href = "https://instagram.com/" + href.slice(1);
                     else if (col.key === "telegram" && href.startsWith("@"))  href = "https://t.me/" + href.slice(1);
+                    else if (col.key === "tiktok"   && href.startsWith("@"))  href = "https://tiktok.com/@" + href.slice(1);
+                    else if (col.key === "x"        && href.startsWith("@"))  href = "https://x.com/" + href.slice(1);
                     else href = "https://" + href;
                 }
                 return `<a class="pg-social-lnk" href="${_e(href)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${_e(val)}${SVG.extlnk}</a>`;
