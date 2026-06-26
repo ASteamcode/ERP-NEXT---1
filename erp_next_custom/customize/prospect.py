@@ -52,6 +52,13 @@ FIELDS = [
         "bold": 1,
     },
     {
+        "fieldname": "custom_company_activity_type",
+        "fieldtype": "Select",
+        "label": "Activity Type",
+        "options": "\nConstruction\nRenovation\nFit-out\nInfrastructure\nIndustrial\nDemolition\nOther",
+        "insert_after": "custom_last_name",
+    },
+    {
         "fieldname": "custom_lead_source",
         "fieldtype": "Select",
         "label": "Source",
