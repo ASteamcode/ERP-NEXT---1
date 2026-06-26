@@ -21,6 +21,29 @@ function _focusDraftCompany(host) {
     });
 }
 
+function _extractMapsLocation(url) {
+    try {
+        // /maps/place/PLACE+NAME/@lat,lng  →  "Place Name"
+        const placeMatch = url.match(/\/maps\/place\/([^/@?]+)/);
+        if (placeMatch) {
+            return decodeURIComponent(placeMatch[1].replace(/\+/g, " ")).trim();
+        }
+        // ?q=QUERY or &q=QUERY
+        const qMatch = url.match(/[?&]q=([^&]+)/);
+        if (qMatch) {
+            const q = decodeURIComponent(qMatch[1].replace(/\+/g, " ")).trim();
+            // Skip if it looks like pure coordinates
+            if (!/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(q)) return q;
+        }
+        // /maps/search/QUERY/@...
+        const searchMatch = url.match(/\/maps\/search\/([^/@?]+)/);
+        if (searchMatch) {
+            return decodeURIComponent(searchMatch[1].replace(/\+/g, " ")).trim();
+        }
+    } catch(e) {}
+    return null;
+}
+
 const _PROSPECT_CFG = {
     tabs: ["Profile & Contact", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
@@ -32,8 +55,7 @@ const _PROSPECT_CFG = {
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
-        { tab: 0, key: "activity", label: "Activity Type",   type: "select", frappe_field: "custom_company_activity_type",
-          options: ["", "Construction", "Renovation", "Fit-out", "Infrastructure", "Industrial", "Demolition", "Other"] },
+        { tab: 0, key: "activity", label: "Activity Type",   type: "text",   frappe_field: "custom_company_activity_type" },
         { tab: 0, key: "source",   label: "Source",         type: "select", frappe_field: "custom_lead_source",
           options: ["", "Referral", "Cold Call", "Walk-in", "Website", "Exhibition", "Social Media", "Digital"] },
         { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
@@ -193,6 +215,21 @@ function _pl_render(listview) {
                     // ── Normal saved row ────────────────────────────────
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
+
+                    // ── Maps → auto-fill Site Location if empty ─────────
+                    if (frappe_field === "custom_maps_url" && value) {
+                        const row = rows.find(r => r.name === name);
+                        if (row && !row.city) {
+                            const loc = _extractMapsLocation(value);
+                            if (loc) {
+                                frappe.db.set_value("Prospect", name, "custom_site_location", loc);
+                                row.city = loc;
+                                // Update cell in DOM without full reload
+                                const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
+                                if (td) { td.dataset.val = loc; td.textContent = loc; }
+                            }
+                        }
+                    }
                 },
 
                 onAddRow(reload) {

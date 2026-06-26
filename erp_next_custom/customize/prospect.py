@@ -53,9 +53,8 @@ FIELDS = [
     },
     {
         "fieldname": "custom_company_activity_type",
-        "fieldtype": "Select",
+        "fieldtype": "Data",
         "label": "Activity Type",
-        "options": "\nConstruction\nRenovation\nFit-out\nInfrastructure\nIndustrial\nDemolition\nOther",
         "insert_after": "custom_last_name",
     },
     {
