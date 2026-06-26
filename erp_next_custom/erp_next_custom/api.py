@@ -114,41 +114,50 @@ def send_whatsapp_message(to, message, prospect_name=None):
 
 
 # ── User Location Tracking ─────────────────────────────────────────────────
-_LOC_TTL = 300  # 5 minutes — location expires if user goes idle
+_LOC_TTL   = 300   # 5 min — individual location expires when user goes idle
+_INDEX_KEY = "uloc_active_users"  # stores list of active user emails
+
 
 @frappe.whitelist()
-def update_location(lat, lng, accuracy=None):
+def update_location(lat, lng, accuracy=None, city=None):
     """Called by the frontend watchPosition handler to push the user's GPS position."""
     user = frappe.session.user
     if not user or user == "Guest":
         return
+
     payload = {
-        "user":     user,
-        "lat":      float(lat),
-        "lng":      float(lng),
-        "accuracy": float(accuracy) if accuracy else None,
-        "ts":       frappe.utils.now(),
+        "user":      user,
+        "lat":       float(lat),
+        "lng":       float(lng),
+        "accuracy":  float(accuracy) if accuracy else None,
+        "city":      city or "",
+        "ts":        frappe.utils.now(),
         "full_name": frappe.db.get_value("User", user, "full_name") or user,
     }
-    frappe.cache.set_value(f"user_loc:{user}", payload, expires_in_sec=_LOC_TTL)
+
+    # Store individual payload with TTL
+    frappe.cache.set_value(f"uloc_{user}", payload, expires_in_sec=_LOC_TTL)
+
+    # Keep a simple index list of who's active (no TTL — cleaned up in get_locations)
+    active = frappe.cache.get_value(_INDEX_KEY) or []
+    if user not in active:
+        active.append(user)
+        frappe.cache.set_value(_INDEX_KEY, active)
+
     return {"ok": True}
 
 
 @frappe.whitelist()
 def get_locations():
-    """Return all users who have a live location in the cache."""
-    # Find all keys matching user_loc:*
-    pattern = "user_loc:*"
-    try:
-        keys = frappe.cache.get_keys(pattern)
-    except Exception:
-        keys = []
-    out = []
-    for key in keys:
-        try:
-            data = frappe.cache.get_value(key.decode() if isinstance(key, bytes) else key)
-            if data:
-                out.append(data)
-        except Exception:
-            pass
+    """Return all users who have a live (non-expired) location in the cache."""
+    active = frappe.cache.get_value(_INDEX_KEY) or []
+    out, still_active = [], []
+    for user in active:
+        data = frappe.cache.get_value(f"uloc_{user}")
+        if data:
+            out.append(data)
+            still_active.append(user)
+    # Prune users whose TTL has expired
+    if still_active != active:
+        frappe.cache.set_value(_INDEX_KEY, still_active)
     return out

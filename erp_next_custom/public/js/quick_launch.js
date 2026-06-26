@@ -622,20 +622,35 @@
             const color = _blipColor(ini);
             const delay = `${(i * 0.5) % 2}s`;
             const pos   = _latLngToRadar(b.lat, b.lng, locs);
-            return `<div class="tr-blip" style="top:${pos.top};left:${pos.left};background:${color};animation-delay:${delay};color:#fff;">${ini}<span class="tr-blip-tip">${b.full_name || b.user}</span></div>`;
+            const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
+            return `<div class="tr-blip" style="top:${pos.top};left:${pos.left};background:${color};animation-delay:${delay};color:#fff;">${ini}<span class="tr-blip-tip">${label}</span></div>`;
         }).join("");
     }
 
     // ── Location tracking (start after permission) ────────────────────────
+    let _lastCity = "";
     function _startLocationTracking() {
         if (!navigator.geolocation) return;
         navigator.geolocation.watchPosition(pos => {
             const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-            frappe.call({
+            // Reverse geocode for city name (once per significant move)
+            const _push = (city) => frappe.call({
                 method: "erp_next_custom.erp_next_custom.api.update_location",
-                args: { lat, lng, accuracy },
+                args: { lat, lng, accuracy, city },
                 error() {},
             });
+            if (!_lastCity) {
+                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`, { headers: { "Accept-Language": "en" } })
+                    .then(r => r.json())
+                    .then(d => {
+                        const a = d.address || {};
+                        _lastCity = a.city || a.town || a.village || a.suburb || a.county || "";
+                        _push(_lastCity);
+                    })
+                    .catch(() => _push(""));
+            } else {
+                _push(_lastCity);
+            }
         }, () => {}, { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 });
     }
 
