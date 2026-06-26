@@ -120,8 +120,8 @@ const _PROSPECT_CFG = {
     rows: [],
     editable: true,
     doctype: "Prospect",
-    searchPlaceholder: "Search Sales CRM…",
-    exportLabel: "Export Sales CRM",
+    searchPlaceholder: "Search Sales REP CRM…",
+    exportLabel: "Export Sales REP CRM",
 };
 
 // ── Listview hook ──────────────────────────────────────────────────
@@ -146,21 +146,35 @@ function _pl_hide_chrome(listview) {
     $p.find(".list-filters-area, .list-filter-area, .sort-filter-area, .tag-filters-area").hide();
     $p.find(".list-header-meta, .list-toolbar-wrapper, .list-toolbar").hide();
     $p.find("header.list-row-head, .list-row-head").hide();
+    $p.find(".list-paging-area").hide();
 }
+
+const _PL_LIMIT = 500;
+let _pl_allRows = [];   // accumulates rows across load-more calls
 
 // ── Render ─────────────────────────────────────────────────────────
 function _pl_render(listview) {
+    _pl_allRows = [];
+    _pl_fetch(listview, 0);
+}
+
+function _pl_fetch(listview, offset) {
     const host = GL.bootstrap(listview, { doctype: "Prospect" });
     if (!host) return;
     GL.hideNative(listview);
 
-    host.innerHTML = `<div class="pl-loading">Loading prospects…</div>`;
+    if (offset === 0) host.innerHTML = `<div class="pl-loading">Loading prospects…</div>`;
 
     frappe.call({
         method: "erp_next_custom.erp_next_custom.page.project_board.project_board.get_prospects",
+        args: { limit: _PL_LIMIT, offset },
         callback(r) {
             if (!host || !document.contains(host)) return;
-            const rows = r.message || [];
+            const newRows = r.message || [];
+            if (offset === 0) _pl_allRows = newRows;
+            else _pl_allRows = [..._pl_allRows, ...newRows];
+            const rows = _pl_allRows;
+            const hasMore = newRows.length === _PL_LIMIT;
 
             // ── Quick stats (computed here, rendered after PG.mount) ─────
             const _qs_total     = rows.length;
@@ -172,7 +186,7 @@ function _pl_render(listview) {
                 return rows.filter(d => { if (!d.creation) return false; const c = new Date(d.creation); return c.getMonth()===m && c.getFullYear()===y; }).length;
             })();
             const _qs_cards = [
-                { num: _qs_total,      label: "Total Sales CRM", sub: "all time",         colorCls: "pg-qs-c1",
+                { num: _qs_total,      label: "Total Sales REP CRM", sub: "all time",         colorCls: "pg-qs-c1",
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5"/><circle cx="12" cy="11" r="3"/><path d="M9 11h6"/></svg>` },
                 { num: _qs_leads,      label: "Active Leads",   sub: "prospect status",   colorCls: "pg-qs-c2",
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 4H14l-3.5 2.5 1.5 4L8 10.5 4 12.5l1.5-4L2 6h4.5z"/></svg>` },
@@ -188,6 +202,8 @@ function _pl_render(listview) {
             const cfg = Object.assign({}, _PROSPECT_CFG, {
                 rows: displayRows,
 
+                hasMore,
+                onLoadMore() { _pl_fetch(listview, _pl_allRows.length); },
                 onReload() { _pl_render(listview); },
 
                 onEdit(name, frappe_field, value) {
@@ -415,7 +431,8 @@ tr[data-row-name="__draft__"] td.pg-f-num-cell::after { content: " ✦"; font-si
 .page-container[data-page-route="List/Prospect/List"] .list-header-meta,
 .page-container[data-page-route="List/Prospect/List"] .list-toolbar-wrapper,
 .page-container[data-page-route="List/Prospect/List"] .list-toolbar,
-.page-container[data-page-route="List/Prospect/List"] .list-row-head { display: none !important; }
+.page-container[data-page-route="List/Prospect/List"] .list-row-head,
+.page-container[data-page-route="List/Prospect/List"] .list-paging-area { display: none !important; }
 `;
     document.head.appendChild(s);
 })();

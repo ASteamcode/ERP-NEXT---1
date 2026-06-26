@@ -349,6 +349,12 @@
 .pg-form-link{font-size:12px;font-weight:600;color:#1e3f85;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-decoration:none;}
 .pg-form-link:hover{color:#3a6fd8;text-decoration:underline;}
 
+/* load more */
+.pg-load-more-wrap{display:flex;justify-content:center;padding:20px 16px;}
+.pg-load-more-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 32px;border:2px solid #1e3f85;border-radius:99px;background:#fff;color:#1e3f85;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;}
+.pg-load-more-btn:hover{background:#1e3f85;color:#fff;}
+.pg-load-more-btn:disabled{opacity:.5;cursor:not-allowed;}
+
 /* ── Mobile card view ──────────────────────────────────────── */
 .pg-mob-cards{display:none;}
 
@@ -1786,6 +1792,21 @@
                 cell.style.width    = (f.width||120) + "px";
             });
         });
+
+        // ── Load More button ───────────────────────────────────────
+        const existingLM = el.querySelector(".pg-load-more-wrap");
+        if (existingLM) existingLM.remove();
+        if (cfg.hasMore && cfg.onLoadMore) {
+            const lmWrap = document.createElement("div");
+            lmWrap.className = "pg-load-more-wrap";
+            lmWrap.innerHTML = `<button class="pg-load-more-btn">Load More</button>`;
+            el.appendChild(lmWrap);
+            lmWrap.querySelector(".pg-load-more-btn").addEventListener("click", () => {
+                lmWrap.querySelector(".pg-load-more-btn").textContent = "Loading…";
+                lmWrap.querySelector(".pg-load-more-btn").disabled = true;
+                cfg.onLoadMore();
+            });
+        }
 
         _wire(el, cfg);
 

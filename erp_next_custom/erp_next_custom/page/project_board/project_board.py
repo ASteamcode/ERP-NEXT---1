@@ -159,12 +159,13 @@ def resolve_maps_url(url):
 
 
 @frappe.whitelist()
-def get_prospects():
-    """Return all Prospect records mapped to the prospect grid schema."""
+@frappe.whitelist()
+def get_prospects(limit=500, offset=0):
+    """Return Prospect records mapped to the prospect grid schema."""
     rows = frappe.get_all(
         "Prospect",
         fields=[
-            "name", "company_name", "industry", "website", "owner",
+            "name", "company_name", "industry", "website", "owner", "creation",
             "custom_salutation", "custom_first_name", "custom_last_name",
             "custom_prospect_status", "custom_stage", "custom_mobile", "custom_email",
             "custom_site_location", "custom_maps_url", "custom_description", "custom_position",
@@ -173,10 +174,14 @@ def get_prospects():
             "custom_floors", "custom_area", "custom_scaffold_type", "custom_project_type",
             "custom_architect", "custom_project_owner", "custom_site_engineer",
             "custom_workers_count", "custom_safety_officer", "custom_contract_value",
+            "custom_contact_person_4",
             "custom_telegram", "custom_linkedin", "custom_facebook", "custom_instagram",
-            "custom_scope_notes",
+            "custom_tiktok", "custom_x",
+            "custom_scope_notes", "custom_lead_source", "custom_company_activity_type",
         ],
         order_by="creation asc",
+        limit=int(limit),
+        limit_start=int(offset),
     )
 
     # Bulk-fetch owner full names
@@ -221,18 +226,23 @@ def get_prospects():
             "area":     r.custom_area or "",
             "scaffold": r.custom_scaffold_type or "",
             "ptype":    r.custom_project_type or "",
-            "architect":r.custom_architect or "",
-            "proj_owner": r.custom_project_owner or "",
-            "site_eng": r.custom_site_engineer or "",
-            "workers":  r.custom_workers_count or "",
-            "safety":   r.custom_safety_officer or "",
-            "contract": ("${:,.0f}".format(r.custom_contract_value) if r.custom_contract_value else ""),
+            "architect":  r.custom_architect or "",
+            "cp1":        r.custom_project_owner or "",
+            "cp2":        r.custom_site_engineer or "",
+            "cp3":        r.custom_safety_officer or "",
+            "cp4":        r.custom_contact_person_4 or "",
+            "workers":    r.custom_workers_count or "",
+            "contract":   ("${:,.0f}".format(r.custom_contract_value) if r.custom_contract_value else ""),
             "scope_notes": r.custom_scope_notes or "",
-            "instagram":r.custom_instagram or "",
-            "linkedin": r.custom_linkedin or "",
-            "facebook": r.custom_facebook or "",
-            "telegram": r.custom_telegram or "",
-            "website":  r.website or "",
+            "instagram":  r.custom_instagram or "",
+            "linkedin":   r.custom_linkedin or "",
+            "facebook":   r.custom_facebook or "",
+            "telegram":   r.custom_telegram or "",
+            "tiktok":     r.custom_tiktok or "",
+            "x":          r.custom_x or "",
+            "website":    r.website or "",
+            "source":     r.custom_lead_source or "",
+            "activity":   r.custom_company_activity_type or "",
         })
 
     return result
