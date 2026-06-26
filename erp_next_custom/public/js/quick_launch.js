@@ -404,11 +404,21 @@
         .tr-blip-name {
             margin-top: 3px;
             font-size: 8px; font-weight: 700; color: #cbd5e1;
-            white-space: nowrap; pointer-events: none;
+            white-space: nowrap; pointer-events: auto; cursor: default;
             text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,.9);
             max-width: 64px; overflow: hidden; text-overflow: ellipsis;
-            line-height: 1;
+            line-height: 1; position: relative;
         }
+        .tr-blip-name .tr-city-tip {
+            position: absolute; bottom: calc(100% + 5px); left: 50%;
+            transform: translateX(-50%);
+            background: #0f1e38; border: 1px solid rgba(96,165,250,.35);
+            border-radius: 6px; padding: 3px 8px;
+            font-size: 9.5px; font-weight: 600; color: #bfdbfe;
+            white-space: nowrap; pointer-events: none;
+            opacity: 0; transition: none;
+        }
+        .tr-blip-name:hover .tr-city-tip { opacity: 1; }
         .tr-blip.tr-dimmed { opacity: .18; }
         /* search bar */
         .tr-search-wrap { padding: 5px 10px 0; background: #07101f; }
@@ -668,14 +678,9 @@
         if (document.getElementById("gl-loc-banner")) return;
         const bar = document.createElement("div");
         bar.id = "gl-loc-banner";
-        bar.innerHTML = `<svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="flex-shrink:0"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>Administrators can see your current location while you are online`;
-        bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99998;display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 16px;background:#16a34a;color:#fff;font-size:11.5px;font-weight:500;letter-spacing:.01em;pointer-events:none;";
+        bar.innerHTML = `<svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="flex-shrink:0"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>Administrators can see your current location while you are online`;
+        bar.style.cssText = "position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99998;display:inline-flex;align-items:center;gap:5px;padding:0;background:none;color:#16a34a;font-size:11px;font-weight:600;letter-spacing:.01em;pointer-events:none;white-space:nowrap;text-shadow:0 0 8px rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.15);";
         document.body.appendChild(bar);
-        // Push page content down
-        const style = document.createElement("style");
-        style.id = "gl-loc-banner-style";
-        style.textContent = `body { padding-top: 28px !important; } #gl-loc-banner { height: 28px; }`;
-        document.head.appendChild(style);
     }
 
     const EXPAND_ICON = `<svg viewBox="0 0 12 12" fill="none"><path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -800,7 +805,8 @@
                 d.className = "tr-blip" + (q && !label.toLowerCase().includes(q) ? " tr-dimmed" : "");
                 d.dataset.name = label;
                 d.style.cssText = `top:${pos.top};left:${pos.left}`;
-                d.innerHTML = `<div class="tr-blip-dot" style="background:${color};color:${color};animation-delay:${(i*.55)%2}s">${ini}</div><div class="tr-blip-name">${name}</div>`;
+                const cityTip = b.city ? `<span class="tr-city-tip">${b.city}</span>` : "";
+                d.innerHTML = `<div class="tr-blip-dot" style="background:${color};color:${color};animation-delay:${(i*.55)%2}s">${ini}</div><div class="tr-blip-name">${name}${cityTip}</div>`;
                 canvasEl.appendChild(d);
             });
         }
