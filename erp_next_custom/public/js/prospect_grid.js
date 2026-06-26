@@ -2171,7 +2171,7 @@
             };
 
             const _renderDrop = (contacts, q) => {
-                _acNames = contacts.map(c => c.full_name || c.name);
+                _acNames = contacts.map(c => [c.salutation, c.full_name || c.name].filter(Boolean).join(" "));
                 drop.innerHTML = "";
                 _acIdx = -1;
                 _acNames.forEach((name, i) => {
@@ -2199,7 +2199,7 @@
                 if (!q) { drop.style.display = "none"; return; }
                 frappe.call({
                     method: "frappe.client.get_list",
-                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name"], order_by: "full_name asc", limit: 8 },
+                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name", "salutation"], order_by: "full_name asc", limit: 8 },
                     callback(r) { _renderDrop(r.message || [], q); },
                 });
             };
@@ -2539,9 +2539,9 @@
                 callback(r) {
                     close();
                     if (r.message) {
-                        const fullName = r.message.full_name
-                            || [r.message.salutation, r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
-                            || [doc.salutation, doc.first_name, doc.last_name].filter(Boolean).join(" ");
+                        const fullName = [r.message.salutation, r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
+                            || [doc.salutation, doc.first_name, doc.last_name].filter(Boolean).join(" ")
+                            || r.message.full_name;
                         // Update cell immediately with avatar rendering
                         const col = _colCfgForTd(root, td);
                         td.dataset.val = fullName;

@@ -434,6 +434,34 @@ function _pl_fetch(listview, offset) {
             });
             PG.mount(host, cfg);
             PG.renderStats(host, _qs_cards);
+
+            // ── Patch existing contact cells to show salutation ──────
+            const _SAL_PREFIXES = new Set(["Mr","Ms","Mrs","Dr","Arch","Eng","Prof"]);
+            const _needsPatch = n => n && !_SAL_PREFIXES.has(n.split(" ")[0]);
+            const _spans = Array.from(host.querySelectorAll(".pg-cl-name")).filter(s => _needsPatch(s.dataset.contactName));
+            const _names = [...new Set(_spans.map(s => s.dataset.contactName).filter(Boolean))];
+            if (_names.length) {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Contact", filters: [["full_name", "in", _names]], fields: ["full_name", "salutation"], limit: _names.length + 10 },
+                    callback(r) {
+                        const salMap = {};
+                        (r.message || []).forEach(c => { if (c.salutation) salMap[c.full_name] = c.salutation; });
+                        _spans.forEach(span => {
+                            const raw = span.dataset.contactName;
+                            const sal = salMap[raw];
+                            if (sal) {
+                                const display = `${sal} ${raw}`;
+                                span.textContent = display;
+                                span.dataset.contactName = display;
+                                // also update the td's data-val so edits start from correct value
+                                const td = span.closest("td");
+                                if (td) td.dataset.val = display;
+                            }
+                        });
+                    },
+                });
+            }
         },
     });
 }
