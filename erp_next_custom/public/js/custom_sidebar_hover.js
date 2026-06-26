@@ -367,56 +367,66 @@ select.form-control:focus {
   // ─── Inbox panel ─────────────────────────────────────────────────────────
 
   function injectInboxIcon() {
-    if (document.getElementById("cst-inbox-btn")) return;
-    const bottom = document.querySelector(".body-sidebar .body-sidebar-bottom");
+    if (document.getElementById("cst-inbox-item")) return;
+    // Find the sidebar items list — insert before the bottom account section
+    const sidebar = document.querySelector(".body-sidebar");
+    if (!sidebar) return;
+    const itemsList = sidebar.querySelector(".sidebar-items, .list-unstyled.sidebar-items, ul.list-unstyled");
+    const bottom    = sidebar.querySelector(".body-sidebar-bottom");
     if (!bottom) return;
 
-    // Inject styles
     if (!document.getElementById("cst-inbox-styles")) {
       const s = document.createElement("style");
       s.id = "cst-inbox-styles";
       s.textContent = `
-        #cst-inbox-btn {
-          display: flex; align-items: center; justify-content: center;
-          gap: 10px; padding: 8px 12px; margin: 0 8px 6px;
-          border-radius: 10px; cursor: pointer;
-          border: none; background: linear-gradient(135deg,#2563eb,#1d4ed8);
-          color: #fff; width: calc(100% - 16px); box-sizing: border-box;
-          transition: opacity .15s, box-shadow .15s;
-          box-shadow: 0 2px 10px rgba(37,99,235,.45);
-          position: relative; overflow: hidden;
+        #cst-inbox-item { list-style: none; }
+        #cst-inbox-item .item-anchor {
+          display: flex; align-items: center; gap: 8px;
+          padding: 6px 12px; border-radius: 6px; cursor: pointer;
+          text-decoration: none; color: rgba(255,255,255,.82);
+          transition: background .12s;
         }
-        #cst-inbox-btn:hover { opacity: .92; box-shadow: 0 4px 16px rgba(37,99,235,.6); }
-        #cst-inbox-btn .cst-ib-icon { flex-shrink: 0; width: 20px; height: 20px; display:flex; align-items:center; justify-content:center; }
-        #cst-inbox-btn .cst-ib-label { font-size: 12.5px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; overflow: hidden; max-width: 100px; transition: max-width .18s, opacity .18s; }
-        #cst-inbox-btn .cst-ib-badge {
-          background: rgba(255,255,255,.25); border-radius: 99px;
-          font-size: 10px; font-weight: 800; padding: 1px 6px; flex-shrink: 0;
-          white-space: nowrap; overflow: hidden; max-width: 40px; transition: max-width .18s, opacity .18s;
+        #cst-inbox-item .item-anchor:hover { background: rgba(255,255,255,.10); color: #fff; }
+        #cst-inbox-item .sidebar-item-icon {
+          width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          background: linear-gradient(135deg,#3b82f6,#1d4ed8);
+          border-radius: 7px;
+          box-shadow: 0 2px 8px rgba(37,99,235,.5);
         }
-        /* collapsed sidebar — hide label and badge, centre the icon */
-        .body-sidebar-container:not(.expanded) #cst-inbox-btn .cst-ib-label,
-        .body-sidebar-container:not(.expanded) #cst-inbox-btn .cst-ib-badge {
-          max-width: 0; opacity: 0; padding: 0; margin: 0;
+        #cst-inbox-item .sidebar-item-icon svg { filter: none !important; opacity: 1 !important; }
+        #cst-inbox-item .sidebar-item-label { font-size: 13px; font-weight: 600; white-space: nowrap; }
+        #cst-inbox-item .cst-ib-dot {
+          margin-left: auto; width: 7px; height: 7px; border-radius: 50%;
+          background: #60a5fa; box-shadow: 0 0 6px 2px rgba(96,165,250,.6);
+          flex-shrink: 0;
         }
-        .body-sidebar-container:not(.expanded) #cst-inbox-btn { padding: 8px; justify-content: center; }
-
       `;
       document.head.appendChild(s);
     }
 
-    // Button
-    const btn = document.createElement("button");
-    btn.id = "cst-inbox-btn";
-    btn.innerHTML = `
-      <span class="cst-ib-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
-      <span class="cst-ib-label">Inbox</span>
-      <span class="cst-ib-badge">3</span>
-    `;
-    bottom.insertAdjacentElement("beforebegin", btn);
+    const li = document.createElement("li");
+    li.id = "cst-inbox-item";
+    li.className = "standard-sidebar-item";
+    li.innerHTML = `
+      <a class="item-anchor" href="#" title="Inbox">
+        <span class="sidebar-item-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
+        </span>
+        <span class="sidebar-item-label">Inbox</span>
+        <span class="cst-ib-dot"></span>
+      </a>`;
 
-    // Panel
-    btn.addEventListener("click", () => frappe.set_route("inbox"));
+    // Insert just above the bottom account bar
+    bottom.insertAdjacentElement("beforebegin", li);
+
+    li.querySelector(".item-anchor").addEventListener("click", e => {
+      e.preventDefault();
+      frappe.set_route("inbox");
+    });
   }
 
   // ─── Bootstrap ────────────────────────────────────────────────────────────
@@ -441,7 +451,6 @@ select.form-control:focus {
       simplifyAddButton();
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    // also retry inbox icon injection when sidebar is rebuilt
     const _ibObs = new MutationObserver(() => injectInboxIcon());
     _ibObs.observe(document.body, { childList: true, subtree: true });
   }
