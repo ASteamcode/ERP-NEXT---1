@@ -690,6 +690,8 @@
                 return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
                          : `<span class="pg-mt">—</span>`;
             }
+            case "locautocomplete":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
         }
@@ -1947,6 +1949,104 @@
                 }
             }, true);
             el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 180); });
+        } else if (ctype === "locautocomplete") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.setAttribute("autocomplete", "off");
+            _eFl.style.overflow = "visible";
+
+            const _locField = col.locField || "city"; // city | district | country | street
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const _tdR = td.getBoundingClientRect();
+            drop.style.cssText = `top:${_tdR.bottom + 2}px;left:${_tdR.left}px;min-width:${Math.max(_tdR.width, 240)}px;max-width:320px;`;
+            document.body.appendChild(drop);
+
+            let _locTimer = null;
+
+            // Build Nominatim query scoped to the field type
+            const _buildQuery = (q) => {
+                const rowObj = (cfg.rows || []).find(r => r.name === td.dataset.rowName) || {};
+                if (_locField === "street") return `${q}${rowObj.site_city ? ", " + rowObj.site_city : ""}`;
+                if (_locField === "district") return `${q}${rowObj.site_country ? ", " + rowObj.site_country : ""}`;
+                return q;
+            };
+
+            const _extractFromAddr = (a, locField) => {
+                if (locField === "city")     return a.city || a.town || a.village || a.suburb || a.municipality;
+                if (locField === "district") return a.state || a.state_district || a.county;
+                if (locField === "country")  return a.country;
+                if (locField === "street")   return a.road || a.pedestrian || a.footway;
+                return null;
+            };
+
+            const _renderLocDrop = (results) => {
+                drop.innerHTML = "";
+                results.forEach(hit => {
+                    const a = hit.address || {};
+                    const primary = _extractFromAddr(a, _locField) || hit.display_name.split(",")[0];
+                    const city    = a.city || a.town || a.village || a.suburb || "";
+                    const district = a.state || a.state_district || a.county || "";
+                    const country  = a.country || "";
+                    // Build label e.g. "Zalka, Metn, Lebanon"
+                    const parts = [primary, _locField !== "district" ? district : "", _locField !== "country" ? country : ""].filter((p, i) => p && (i === 0 || p !== primary));
+                    const label = [...new Set(parts)].filter(Boolean).join(", ");
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item";
+                    d.textContent = label;
+                    d.addEventListener("mousedown", ev => {
+                        ev.preventDefault();
+                        el.value = primary;
+                        drop.remove();
+                        // Multi-fill: update related fields via cfg.onLocFill callback
+                        if (cfg.onLocFill) {
+                            cfg.onLocFill(td.dataset.rowName, {
+                                custom_site_country:  a.country,
+                                custom_site_district: a.state || a.state_district || a.county,
+                                custom_site_city:     a.city || a.town || a.village || a.suburb,
+                                custom_site_street:   _locField === "street" ? (a.road || a.pedestrian || a.footway) : undefined,
+                            }, _locField);
+                        }
+                        _closeEdit(true);
+                    });
+                    drop.appendChild(d);
+                });
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _searchLoc = (q) => {
+                if (!q || q.length < 2) { drop.style.display = "none"; return; }
+                const query = _buildQuery(q);
+                fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`, {
+                    headers: { "Accept-Language": "en" },
+                })
+                .then(r => r.json())
+                .then(data => _renderLocDrop(data || []))
+                .catch(() => { drop.style.display = "none"; });
+            };
+
+            el.addEventListener("input", () => { clearTimeout(_locTimer); _locTimer = setTimeout(() => _searchLoc(el.value.trim()), 280); });
+            el.addEventListener("keydown", ev => {
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    drop.remove(); _closeEdit(true);
+                }
+                if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+                    ev.preventDefault();
+                    const items = Array.from(drop.querySelectorAll(".pg-ac-item"));
+                    const cur = drop.querySelector(".pg-ac-active");
+                    const idx = cur ? items.indexOf(cur) : -1;
+                    const next = ev.key === "ArrowDown" ? items[idx + 1] || items[0] : items[idx - 1] || items[items.length - 1];
+                    if (cur) cur.classList.remove("pg-ac-active");
+                    if (next) { next.classList.add("pg-ac-active"); el.value = next.textContent.split(",")[0].trim(); }
+                }
+            }, true);
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 200); });
         } else if (ctype === "company") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -2200,6 +2300,71 @@
                 _navCell(root, td, e.key === "ArrowRight" ? "right" : "left");
             }
         });
+    }
+
+    function _openMapsLocationPopup(root, td) {
+        const existing = document.getElementById("pg-loc-popup");
+        if (existing) existing.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "pg-loc-popup";
+        overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);";
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:16px;width:340px;box-shadow:0 8px 40px rgba(0,0,0,.22);overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#1e3f85,#2563eb);padding:18px 20px 14px;color:#fff;">
+                    <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Set Map Location</div>
+                    <div style="font-size:11.5px;opacity:.8;">Use your current GPS position or paste a link</div>
+                </div>
+                <div style="padding:18px 20px;">
+                    <button id="pg-loc-use-gps" style="width:100%;height:40px;border:none;border-radius:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
+                        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>
+                        Use My Current Location
+                    </button>
+                    <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:10px;">— or paste link manually —</div>
+                    <input id="pg-loc-manual" type="text" placeholder="https://maps.google.com/…" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:12px;outline:none;">
+                </div>
+                <div style="padding:0 20px 18px;display:flex;gap:8px;">
+                    <button id="pg-loc-cancel" style="flex:1;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;color:#374151;font-size:12px;cursor:pointer;">Cancel</button>
+                    <button id="pg-loc-save" style="flex:2;height:36px;border:none;border-radius:8px;background:#1e3f85;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Save Link</button>
+                </div>
+                <div id="pg-loc-status" style="padding:0 20px 14px;font-size:11.5px;color:#6b7280;min-height:18px;"></div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+        const statusEl = overlay.querySelector("#pg-loc-status");
+
+        const _commit = (url) => {
+            overlay.remove();
+            const col = _colCfgForTd(root, td);
+            td.dataset.val = url;
+            const fakeRow = { [col ? col.key : "maps"]: url };
+            if (col) td.innerHTML = renderCell(col, fakeRow);
+            if (col && col.frappe_field) {
+                frappe.db.set_value(cfg.doctype || "Prospect", td.dataset.rowName, col.frappe_field, url);
+            }
+            if (cfg.onEdit && td.dataset.rowName && col && col.frappe_field) {
+                cfg.onEdit(td.dataset.rowName, col.frappe_field, url);
+            }
+        };
+
+        overlay.querySelector("#pg-loc-use-gps").addEventListener("click", () => {
+            if (!navigator.geolocation) { statusEl.textContent = "Geolocation not supported on this device."; return; }
+            statusEl.textContent = "Getting your location…";
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                overlay.querySelector("#pg-loc-manual").value = url;
+                statusEl.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }, () => { statusEl.textContent = "Could not get location. Please enable GPS."; });
+        });
+
+        overlay.querySelector("#pg-loc-save").addEventListener("click", () => {
+            const url = overlay.querySelector("#pg-loc-manual").value.trim();
+            if (!url) { statusEl.textContent = "Please enter a Maps URL or use GPS."; return; }
+            _commit(url);
+        });
+        overlay.querySelector("#pg-loc-cancel").addEventListener("click", () => overlay.remove());
+        overlay.addEventListener("mousedown", e => { if (e.target === overlay) overlay.remove(); });
     }
 
     function _openContactModal(root, td, prefill, defaultPre) {
@@ -2704,6 +2869,11 @@
                 if (e.target.closest(".pg-social-lnk"))  return;
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
+                // Empty maps cell → offer current location
+                if (td.dataset.ctype === "maps" && !td.dataset.val) {
+                    _openMapsLocationPopup(root, td);
+                    return;
+                }
                 _openEdit(root, td);
             });
 
@@ -2788,6 +2958,15 @@
             const td      = btn.closest("td");
             const rowName = td && td.dataset.rowName;
             _openWaCompose(btn.dataset.phone, rowName || "", cfg);
+        });
+
+        // ── Maps edit button (opens text edit, not location popup) ──
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-map-edit");
+            if (!btn) return;
+            e.stopPropagation();
+            const td = btn.closest("td.pg-ed");
+            if (td) _openEdit(root, td);
         });
 
         // ── Maps hover popup ─────────────────────────────────────

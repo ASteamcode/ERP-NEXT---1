@@ -65,24 +65,47 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const STORAGE_KEY = "loc_permission_shown"
+const STORAGE_KEY = "loc_permission_granted"
 
 const visible = ref(false)
 
 onMounted(() => {
-  if (!localStorage.getItem(STORAGE_KEY)) {
+  if (localStorage.getItem(STORAGE_KEY) === "1") {
+    startTracking()
+  } else if (!localStorage.getItem("loc_permission_shown")) {
     visible.value = true
   }
 })
 
 function dismiss() {
-  localStorage.setItem(STORAGE_KEY, "1")
+  localStorage.setItem("loc_permission_shown", "1")
   visible.value = false
 }
 
 function allow() {
+  localStorage.setItem("loc_permission_shown", "1")
   localStorage.setItem(STORAGE_KEY, "1")
   visible.value = false
+  startTracking()
+}
+
+function startTracking() {
+  if (!navigator.geolocation) return
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords
+      fetch("/api/method/erp_next_custom.erp_next_custom.api.update_location", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Frappe-CSRF-Token": window.csrf_token || "",
+        },
+        body: JSON.stringify({ lat, lng, accuracy }),
+      }).catch(() => {})
+    },
+    () => {},
+    { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 }
+  )
 }
 </script>
 

@@ -478,19 +478,32 @@
         }
     `;
 
-    // Static placeholder blips — real positions will come from the location backend
-    const DEMO_BLIPS = [
-        { initials: "AK", color: "#2563eb", top: "38%", left: "58%", name: "Anthony Karam",    delay: "0s"   },
-        { initials: "PA", color: "#0891b2", top: "60%", left: "36%", name: "Pascale Al Khouri", delay: "0.8s" },
-        { initials: "GK", color: "#7c3aed", top: "28%", left: "40%", name: "Grece Khoury",     delay: "1.5s" },
-    ];
+    // ── User color palette (consistent per initials) ──────────────────────
+    const _BLIP_COLORS = ["#2563eb","#0891b2","#7c3aed","#059669","#d97706","#dc2626","#db2777"];
+    function _blipColor(ini) {
+        let h = 0; for (let i = 0; i < ini.length; i++) h = (h * 31 + ini.charCodeAt(i)) & 0xffff;
+        return _BLIP_COLORS[h % _BLIP_COLORS.length];
+    }
 
-    function initials(name) {
+    function _initials(name) {
         if (!name) return "?";
         const parts = name.trim().split(/\s+/);
-        return parts.length === 1
-            ? parts[0][0].toUpperCase()
+        return parts.length === 1 ? parts[0][0].toUpperCase()
             : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    // Map from lat/lng bounding box to radar % positions
+    // We use a simple Mercator-ish normalisation over whatever bounding box we have
+    function _latLngToRadar(lat, lng, allLocs) {
+        if (allLocs.length === 1) return { top: "50%", left: "50%" };
+        const lats = allLocs.map(l => l.lat), lngs = allLocs.map(l => l.lng);
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+        const pad = 0.1;
+        const rLat = maxLat - minLat || 1, rLng = maxLng - minLng || 1;
+        const top  = (1 - (lat - minLat) / rLat) * (1 - 2 * pad) + pad;
+        const left = (lng - minLng) / rLng * (1 - 2 * pad) + pad;
+        return { top: `${(top * 100).toFixed(1)}%`, left: `${(left * 100).toFixed(1)}%` };
     }
 
     const RADAR_ICON = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -507,14 +520,42 @@
         <line x1="11" y1="1" x2="1"  y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
 
-    function buildBlips() {
-        return DEMO_BLIPS.map(b => `
-            <div class="tr-blip"
-                 style="top:${b.top};left:${b.left};background:${b.color};animation-delay:${b.delay};color:#fff;">
-                ${b.initials}
-                <span class="tr-blip-tip">${b.name}</span>
-            </div>
-        `).join("");
+    function _buildBlipsHTML(locs) {
+        return locs.map((b, i) => {
+            const ini   = _initials(b.full_name || b.user);
+            const color = _blipColor(ini);
+            const delay = `${(i * 0.5) % 2}s`;
+            const pos   = _latLngToRadar(b.lat, b.lng, locs);
+            return `<div class="tr-blip" style="top:${pos.top};left:${pos.left};background:${color};animation-delay:${delay};color:#fff;">${ini}<span class="tr-blip-tip">${b.full_name || b.user}</span></div>`;
+        }).join("");
+    }
+
+    // ── Location tracking (start after permission) ────────────────────────
+    function _startLocationTracking() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.watchPosition(pos => {
+            const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+            frappe.call({
+                method: "erp_next_custom.erp_next_custom.api.update_location",
+                args: { lat, lng, accuracy },
+                error() {},
+            });
+        }, () => {}, { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 });
+    }
+
+    // ── Green top banner (visible to all when location tracking active) ──
+    function _injectLocationBanner() {
+        if (document.getElementById("gl-loc-banner")) return;
+        const bar = document.createElement("div");
+        bar.id = "gl-loc-banner";
+        bar.innerHTML = `<svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="flex-shrink:0"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>Administrators can see your current location while you are online`;
+        bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99998;display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 16px;background:#16a34a;color:#fff;font-size:11.5px;font-weight:500;letter-spacing:.01em;pointer-events:none;";
+        document.body.appendChild(bar);
+        // Push page content down
+        const style = document.createElement("style");
+        style.id = "gl-loc-banner-style";
+        style.textContent = `body { padding-top: 28px !important; } #gl-loc-banner { height: 28px; }`;
+        document.head.appendChild(style);
     }
 
     function injectRadar() {
@@ -533,19 +574,18 @@
                     <span class="tr-head-label">Team Radar</span>
                     <button class="tr-close-btn" id="tr-close">${CLOSE_ICON}</button>
                 </div>
-                <div class="tr-radar">
+                <div class="tr-radar" id="tr-radar-body">
                     <div class="tr-ring tr-ring-1"></div>
                     <div class="tr-ring tr-ring-2"></div>
                     <div class="tr-ring tr-ring-3"></div>
                     <div class="tr-sweep"></div>
                     <div class="tr-origin"></div>
-                    ${buildBlips()}
                 </div>
                 <div class="tr-foot">
                     <span class="tr-status-text">
                         <span class="tr-status-dot"></span>Live
                     </span>
-                    <span class="tr-count-badge">${DEMO_BLIPS.length} online</span>
+                    <span class="tr-count-badge" id="tr-count">0 online</span>
                 </div>
             </div>
             <button id="tr-trigger" title="Team Radar">${RADAR_ICON}</button>
@@ -553,23 +593,42 @@
 
         document.body.appendChild(wrap);
 
-        const panel   = document.getElementById("tr-panel");
-        const trigger = document.getElementById("tr-trigger");
+        const panel    = document.getElementById("tr-panel");
+        const trigger  = document.getElementById("tr-trigger");
         const closeBtn = document.getElementById("tr-close");
+        const radarBody = document.getElementById("tr-radar-body");
+        const countEl  = document.getElementById("tr-count");
 
         let open = false;
-
-        function togglePanel() {
-            open = !open;
-            panel.classList.toggle("tr-open", open);
-        }
-
+        function togglePanel() { open = !open; panel.classList.toggle("tr-open", open); if (open) _refreshRadar(); }
         trigger.addEventListener("click", (e) => { e.stopPropagation(); togglePanel(); });
         closeBtn.addEventListener("click", (e) => { e.stopPropagation(); open = true; togglePanel(); });
+        document.addEventListener("click", (e) => { if (open && !wrap.contains(e.target)) { open = true; togglePanel(); } });
 
-        document.addEventListener("click", (e) => {
-            if (open && !wrap.contains(e.target)) { open = true; togglePanel(); }
-        });
+        // ── Poll live locations every 30s ─────────────────────────
+        function _refreshRadar() {
+            frappe.call({
+                method: "erp_next_custom.erp_next_custom.api.get_locations",
+                callback(r) {
+                    const locs = r.message || [];
+                    // Remove old blips
+                    radarBody.querySelectorAll(".tr-blip").forEach(el => el.remove());
+                    if (locs.length) {
+                        radarBody.insertAdjacentHTML("beforeend", _buildBlipsHTML(locs));
+                    }
+                    countEl.textContent = `${locs.length} online`;
+                },
+                error() {},
+            });
+        }
+        _refreshRadar();
+        setInterval(_refreshRadar, 30000);
+
+        // ── Start location tracking if permission granted ──────────
+        if (localStorage.getItem("loc_permission_granted") === "1") {
+            _startLocationTracking();
+            _injectLocationBanner();
+        }
     }
 
     $(document).on("page-change.tr-boot", function () {
@@ -581,6 +640,9 @@
     $(document).on("page-change", () => {
         if (frappe.session?.user && frappe.session.user !== "Guest") {
             if (!document.getElementById("tr-wrap")) injectRadar();
+            if (localStorage.getItem("loc_permission_granted") === "1") {
+                if (!document.getElementById("gl-loc-banner")) _injectLocationBanner();
+            }
         }
     });
 })();

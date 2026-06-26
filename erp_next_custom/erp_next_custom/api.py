@@ -111,3 +111,44 @@ def send_whatsapp_message(to, message, prospect_name=None):
             pass
 
     return {"status": "sent", "to": to}
+
+
+# ── User Location Tracking ─────────────────────────────────────────────────
+_LOC_TTL = 300  # 5 minutes — location expires if user goes idle
+
+@frappe.whitelist()
+def update_location(lat, lng, accuracy=None):
+    """Called by the frontend watchPosition handler to push the user's GPS position."""
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return
+    payload = {
+        "user":     user,
+        "lat":      float(lat),
+        "lng":      float(lng),
+        "accuracy": float(accuracy) if accuracy else None,
+        "ts":       frappe.utils.now(),
+        "full_name": frappe.db.get_value("User", user, "full_name") or user,
+    }
+    frappe.cache.set_value(f"user_loc:{user}", payload, expires_in_sec=_LOC_TTL)
+    return {"ok": True}
+
+
+@frappe.whitelist()
+def get_locations():
+    """Return all users who have a live location in the cache."""
+    # Find all keys matching user_loc:*
+    pattern = "user_loc:*"
+    try:
+        keys = frappe.cache.get_keys(pattern)
+    except Exception:
+        keys = []
+    out = []
+    for key in keys:
+        try:
+            data = frappe.cache.get_value(key.decode() if isinstance(key, bytes) else key)
+            if data:
+                out.append(data)
+        except Exception:
+            pass
+    return out

@@ -31,23 +31,23 @@ function _extractMapsCoords(url) {
     return null;
 }
 
-function _fillLocationCells(name, row, country, district, city, street) {
-    const updates = {
-        custom_site_country:  country  || "",
-        custom_site_district: district || "",
-        custom_site_city:     city     || "",
-        custom_site_street:   street   || "",
-    };
+// Fill multiple location cells in one server call (avoids deadlock from parallel set_value)
+function _fillLocationCells(name, row, fields) {
     const keyMap = { custom_site_country: "site_country", custom_site_district: "site_district", custom_site_city: "site_city", custom_site_street: "site_street" };
+    const toSave = {};
     const tr = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"]`);
-    for (const [ff, val] of Object.entries(updates)) {
+    for (const [ff, val] of Object.entries(fields)) {
         if (!val) continue;
-        frappe.db.set_value("Prospect", name, ff, val);
+        toSave[ff] = val;
         if (row) row[keyMap[ff]] = val;
         if (tr) {
             const td = tr.querySelector(`td[data-ff="${ff}"]`);
             if (td) { td.dataset.val = val; td.innerHTML = `<span>${val}</span>`; }
         }
+    }
+    if (Object.keys(toSave).length) {
+        frappe.db.set_value("Prospect", name, toSave)
+            .catch(() => {});
     }
 }
 
@@ -60,31 +60,12 @@ function _geocodeAndFillLocation(name, url, row) {
     .then(r => r.json())
     .then(data => {
         const a = data.address || {};
-        _fillLocationCells(name, row,
-            a.country,
-            a.state || a.state_district || a.county,
-            a.city  || a.town || a.village || a.suburb,
-            a.road  || a.pedestrian || a.neighbourhood,
-        );
-    })
-    .catch(() => {});
-}
-
-function _geocodeByCityName(name, cityVal, row) {
-    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityVal)}&format=json&addressdetails=1&limit=1`, {
-        headers: { "Accept-Language": "en" }
-    })
-    .then(r => r.json())
-    .then(data => {
-        const hit = (data || [])[0];
-        if (!hit) return;
-        const a = hit.address || {};
-        _fillLocationCells(name, row,
-            a.country,
-            a.state || a.state_district || a.county,
-            a.city  || a.town || a.village || a.suburb || cityVal,
-            row.site_street || "",
-        );
+        _fillLocationCells(name, row, {
+            custom_site_country:  a.country,
+            custom_site_district: a.state || a.state_district || a.county,
+            custom_site_city:     a.city  || a.town || a.village || a.suburb,
+            custom_site_street:   a.road  || a.pedestrian || a.neighbourhood,
+        });
     })
     .catch(() => {});
 }
@@ -121,10 +102,10 @@ const _PROSPECT_CFG = {
           } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
-        { tab: 1, key: "site_country",  label: "Country",  type: "text", frappe_field: "custom_site_country",  width: 90  },
-        { tab: 1, key: "site_district", label: "District", type: "text", frappe_field: "custom_site_district", width: 110 },
-        { tab: 1, key: "site_city",     label: "City",     type: "text", frappe_field: "custom_site_city",     width: 90  },
-        { tab: 1, key: "site_street",   label: "Street",   type: "text", frappe_field: "custom_site_street",   width: 130 },
+        { tab: 1, key: "site_country",  label: "Country",  type: "locautocomplete", frappe_field: "custom_site_country",  locField: "country",  width: 90  },
+        { tab: 1, key: "site_district", label: "District", type: "locautocomplete", frappe_field: "custom_site_district", locField: "district", width: 110 },
+        { tab: 1, key: "site_city",     label: "City",     type: "locautocomplete", frappe_field: "custom_site_city",     locField: "city",     width: 90  },
+        { tab: 1, key: "site_street",   label: "Street",   type: "locautocomplete", frappe_field: "custom_site_street",   locField: "street",   width: 130 },
         { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url",   width: 130 },
         { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 1, key: "files",       label: "Files",          type: "files"                                      },
@@ -288,11 +269,23 @@ function _pl_fetch(listview, offset) {
                         const row = rows.find(r => r.name === name);
                         if (row && !row.site_country) _geocodeAndFillLocation(name, value, row);
                     }
-                    // ── City → auto-fill Country + District if empty ────
-                    if (frappe_field === "custom_site_city" && value) {
-                        const row = rows.find(r => r.name === name);
-                        if (row && !row.site_country) _geocodeByCityName(name, value, row);
+                },
+
+                onLocFill(name, geoFields, changedLocField) {
+                    const row = rows.find(r => r.name === name);
+                    // Only set fields that aren't already filled (except the one the user just typed)
+                    const toFill = {};
+                    const keyMap = { custom_site_country: "site_country", custom_site_district: "site_district", custom_site_city: "site_city", custom_site_street: "site_street" };
+                    const ffToLocField = { custom_site_country: "country", custom_site_district: "district", custom_site_city: "city", custom_site_street: "street" };
+                    for (const [ff, val] of Object.entries(geoFields)) {
+                        if (!val) continue;
+                        const lf = ffToLocField[ff];
+                        // Always set the field the user picked; only auto-set others if empty
+                        if (lf === changedLocField || !(row && row[keyMap[ff]])) {
+                            toFill[ff] = val;
+                        }
                     }
+                    if (Object.keys(toFill).length) _fillLocationCells(name, row, toFill);
                 },
 
                 onAddRow(reload) {
