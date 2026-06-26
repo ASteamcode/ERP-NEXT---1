@@ -31,29 +31,41 @@ function _extractMapsCoords(url) {
     return null;
 }
 
-function _geocodeAndFillLocation(name, url, row, rows) {
+// Fill multiple location cells in one server call (avoids deadlock from parallel set_value)
+function _fillLocationCells(name, row, fields) {
+    const keyMap = { custom_site_country: "site_country", custom_site_district: "site_district", custom_site_city: "site_city", custom_site_street: "site_street" };
+    const toSave = {};
+    const tr = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"]`);
+    for (const [ff, val] of Object.entries(fields)) {
+        if (!val) continue;
+        toSave[ff] = val;
+        if (row) row[keyMap[ff]] = val;
+        if (tr) {
+            const td = tr.querySelector(`td[data-ff="${ff}"]`);
+            if (td) { td.dataset.val = val; td.innerHTML = `<span>${val}</span>`; }
+        }
+    }
+    if (Object.keys(toSave).length) {
+        frappe.db.set_value("Prospect", name, toSave)
+            .catch(() => {});
+    }
+}
+
+function _geocodeAndFillLocation(name, url, row) {
     const coords = _extractMapsCoords(url);
     if (!coords) return;
-
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json&addressdetails=1`, {
         headers: { "Accept-Language": "en" }
     })
     .then(r => r.json())
     .then(data => {
         const a = data.address || {};
-        // Build: Country, District, City, Street
-        const parts = [
-            a.country,
-            a.state || a.state_district || a.county,
-            a.city  || a.town || a.village || a.suburb,
-            a.road  || a.pedestrian || a.neighbourhood,
-        ].filter(Boolean);
-        if (!parts.length) return;
-        const loc = parts.join(", ");
-        frappe.db.set_value("Prospect", name, "custom_site_location", loc);
-        row.city = loc;
-        const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
-        if (td) { td.dataset.val = loc; td.textContent = loc; }
+        _fillLocationCells(name, row, {
+            custom_site_country:  a.country,
+            custom_site_district: a.state || a.state_district || a.county,
+            custom_site_city:     a.city  || a.town || a.village || a.suburb,
+            custom_site_street:   a.road  || a.pedestrian || a.neighbourhood,
+        });
     })
     .catch(() => {});
 }
@@ -69,7 +81,9 @@ const _PROSPECT_CFG = {
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
-        { tab: 0, key: "activity", label: "Activity Type",   type: "text",   frappe_field: "custom_company_activity_type" },
+        { tab: 0, key: "activity", label: "Activity Type",   type: "dynselect", frappe_field: "custom_company_activity_type",
+          dynKey: "pg_acttype",
+          options: ["Construction", "Real Estate Development", "Architecture", "Engineering", "General Contracting", "Interior Design", "Infrastructure", "Government / Public Works", "Industrial", "Commercial Development", "Residential Development"] },
         { tab: 0, key: "source",   label: "Source",         type: "select", frappe_field: "custom_lead_source",
           options: ["", "Referral", "Cold Call", "Walk-in", "Website", "Exhibition", "Social Media", "Digital"] },
         { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
@@ -88,25 +102,29 @@ const _PROSPECT_CFG = {
           } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
-        { tab: 1, key: "city",     label: "Site Location",  type: "text",   frappe_field: "custom_site_location"  },
+        { tab: 1, key: "site_country",  label: "Country",  type: "locautocomplete", frappe_field: "custom_site_country",  locField: "country",  width: 90  },
+        { tab: 1, key: "site_district", label: "District", type: "locautocomplete", frappe_field: "custom_site_district", locField: "district", width: 110 },
+        { tab: 1, key: "site_city",     label: "City",     type: "locautocomplete", frappe_field: "custom_site_city",     locField: "city",     width: 90  },
+        { tab: 1, key: "site_street",   label: "Street",   type: "locautocomplete", frappe_field: "custom_site_street",   locField: "street",   width: 130 },
         { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url",   width: 130 },
         { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 1, key: "files",       label: "Files",          type: "files"                                      },
         { tab: 1, key: "drawing",  label: "Drawing",        type: "drawing"                                       },
-        { tab: 2, key: "pstatus",  label: "Project Status", type: "select", frappe_field: "custom_project_status",
-          options: ["", "Commercial", "Residential", "Industrial", "Religious", "Building – New Construction", "Building – Renovation / Façade", "High-Rise / Tower", "Industrial / Plant", "Bridge / Infrastructure", "Heritage / Restoration", "Shoring / Propping", "Event / Temporary Structure", "Other"] },
+        { tab: 2, key: "pstatus",  label: "Project Status", type: "status", frappe_field: "custom_project_status",
+          map: { "Empty lot": "pg-badge-gray", "Excavation": "pg-badge-amber", "Concrete structure": "pg-badge-orange", "Topped out": "pg-badge-yellow", "Finishing": "pg-badge-lime", "MEP": "pg-badge-blue", "Completed": "pg-badge-green" } },
         { tab: 2, key: "pstart",   label: "Start Date",     type: "date",   frappe_field: "custom_project_start" },
         { tab: 2, key: "floors",   label: "Floors",         type: "num",    frappe_field: "custom_floors"        },
-        { tab: 2, key: "ptype",    label: "Project Type",   type: "text",   frappe_field: "custom_project_type"  },
+        { tab: 2, key: "ptype",    label: "Project Type",   type: "select", frappe_field: "custom_project_type",
+          options: ["", "Commercial", "Residential", "Industrial", "Religious", "Building – New Construction", "Building – Renovation / Façade", "High-Rise / Tower", "Industrial / Plant", "Bridge / Infrastructure", "Heritage / Restoration", "Shoring / Propping", "Event / Temporary Structure", "Other"] },
         { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "select", frappe_field: "custom_scaffold_type",
           options: ["", "External Scaffolding", "Propping Scaffolding", "Adjustable Props", "Rental per Piece", "Sales per Piece", "Sales Used", "Mobile Scaffolding"] },
         { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
         { tab: 2, key: "scope_notes", label: "Notes",       type: "notes",  frappe_field: "custom_scope_notes", width: 200 },
-        { tab: 3, key: "architect",  label: "Architect",         type: "contact-link", frappe_field: "custom_architect"          },
-        { tab: 3, key: "cp1",        label: "Contact Person #1", type: "contact-link", frappe_field: "custom_project_owner",     contactPre: "" },
-        { tab: 3, key: "cp2",        label: "Contact Person #2", type: "contact-link", frappe_field: "custom_site_engineer",     contactPre: "" },
-        { tab: 3, key: "cp3",        label: "Contact Person #3", type: "contact-link", frappe_field: "custom_safety_officer",    contactPre: "" },
-        { tab: 3, key: "cp4",        label: "Contact Person #4", type: "contact-link", frappe_field: "custom_contact_person_4",  contactPre: "" },
+        { tab: 3, key: "architect",  label: "Contact Person #1", type: "contact-link", frappe_field: "custom_architect",         contactPre: "", noAvatar: true },
+        { tab: 3, key: "cp1",        label: "Contact Person #2", type: "contact-link", frappe_field: "custom_project_owner",     contactPre: "", noAvatar: true },
+        { tab: 3, key: "cp2",        label: "Contact Person #3", type: "contact-link", frappe_field: "custom_site_engineer",     contactPre: "", noAvatar: true },
+        { tab: 3, key: "cp3",        label: "Contact Person #4", type: "contact-link", frappe_field: "custom_safety_officer",    contactPre: "", noAvatar: true },
+        { tab: 3, key: "cp4",        label: "Contact Person #5", type: "contact-link", frappe_field: "custom_contact_person_4",  contactPre: "", noAvatar: true },
         { tab: 3, key: "workers",    label: "Workers on Site",   type: "num",    frappe_field: "custom_workers_count" },
         { tab: 3, key: "contract",   label: "Contract Value",    type: "text",   frappe_field: "custom_contract_value"},
         { tab: 4, key: "instagram",label: "Instagram",      type: "link",   frappe_field: "custom_instagram"    },
@@ -246,11 +264,28 @@ function _pl_fetch(listview, offset) {
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
 
-                    // ── Maps → auto-fill Site Location if empty ─────────
+                    // ── Maps → auto-fill location fields if empty ───────
                     if (frappe_field === "custom_maps_url" && value) {
                         const row = rows.find(r => r.name === name);
-                        if (row && !row.city) _geocodeAndFillLocation(name, value, row, rows);
+                        if (row && !row.site_country) _geocodeAndFillLocation(name, value, row);
                     }
+                },
+
+                onLocFill(name, geoFields, changedLocField) {
+                    const row = rows.find(r => r.name === name);
+                    // Only set fields that aren't already filled (except the one the user just typed)
+                    const toFill = {};
+                    const keyMap = { custom_site_country: "site_country", custom_site_district: "site_district", custom_site_city: "site_city", custom_site_street: "site_street" };
+                    const ffToLocField = { custom_site_country: "country", custom_site_district: "district", custom_site_city: "city", custom_site_street: "street" };
+                    for (const [ff, val] of Object.entries(geoFields)) {
+                        if (!val) continue;
+                        const lf = ffToLocField[ff];
+                        // Always set the field the user picked; only auto-set others if empty
+                        if (lf === changedLocField || !(row && row[keyMap[ff]])) {
+                            toFill[ff] = val;
+                        }
+                    }
+                    if (Object.keys(toFill).length) _fillLocationCells(name, row, toFill);
                 },
 
                 onAddRow(reload) {
@@ -399,6 +434,34 @@ function _pl_fetch(listview, offset) {
             });
             PG.mount(host, cfg);
             PG.renderStats(host, _qs_cards);
+
+            // ── Patch existing contact cells to show salutation ──────
+            const _SAL_PREFIXES = new Set(["Mr","Ms","Mrs","Dr","Arch","Eng","Prof"]);
+            const _needsPatch = n => n && !_SAL_PREFIXES.has(n.split(" ")[0]);
+            const _spans = Array.from(host.querySelectorAll(".pg-cl-name")).filter(s => _needsPatch(s.dataset.contactName));
+            const _names = [...new Set(_spans.map(s => s.dataset.contactName).filter(Boolean))];
+            if (_names.length) {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: { doctype: "Contact", filters: [["full_name", "in", _names]], fields: ["full_name", "salutation"], limit: _names.length + 10 },
+                    callback(r) {
+                        const salMap = {};
+                        (r.message || []).forEach(c => { if (c.salutation) salMap[c.full_name] = c.salutation; });
+                        _spans.forEach(span => {
+                            const raw = span.dataset.contactName;
+                            const sal = salMap[raw];
+                            if (sal) {
+                                const display = `${sal} ${raw}`;
+                                span.textContent = display;
+                                span.dataset.contactName = display;
+                                // also update the td's data-val so edits start from correct value
+                                const td = span.closest("td");
+                                if (td) td.dataset.val = display;
+                            }
+                        });
+                    },
+                });
+            }
         },
     });
 }

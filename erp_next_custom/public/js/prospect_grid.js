@@ -307,6 +307,7 @@
 .pg-owner-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
 .pg-contact-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .pg-contact-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
+.pg-cl-name{font-size:12px;color:#1e293b;cursor:pointer;}
 /* owner popup */
 .pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 40px rgba(0,0,0,.14);padding:14px 14px 0;width:230px;opacity:0;transition:opacity .15s;pointer-events:none;overflow:hidden;}
 .pg-owner-popup .pg-owner-popup-rows{padding-bottom:12px;}
@@ -662,9 +663,20 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
+            case "dynselect": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const _pal2 = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
+                const _baseOpts = col.options || [];
+                const _extra = (() => { try { return JSON.parse(localStorage.getItem(col.dynKey || "pg_dynselect") || "[]"); } catch(e) { return []; } })();
+                const _allOpts = [...new Set([..._baseOpts, ..._extra])].filter(Boolean);
+                const _idx2  = _allOpts.indexOf(String(v));
+                const _cls2  = _idx2 >= 0 ? _pal2[_idx2 % _pal2.length] : "pg-badge-gray";
+                return `<span class="pg-badge ${_cls2}">${_e(v)}</span>`;
+            }
             case "contact-link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const name = String(v);
+                if (col.noAvatar) return `<span class="pg-cl-name" data-contact-name="${_e(name)}" data-row-owner="${_e(row.owner||"")}">${_e(name)}</span>`;
                 const words = name.trim().split(/\s+/);
                 const ini = words.length === 1
                     ? words[0][0].toUpperCase()
@@ -678,6 +690,8 @@
                 return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
                          : `<span class="pg-mt">—</span>`;
             }
+            case "locautocomplete":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             default:
                 return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
         }
@@ -1875,6 +1889,164 @@
                 if (o === val) opt.selected = true;
                 el.appendChild(opt);
             });
+        } else if (ctype === "dynselect") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.setAttribute("autocomplete", "off");
+            _eFl.style.overflow = "visible";
+
+            const _dynKey = col.dynKey || "pg_dynselect";
+            const _getOpts = () => {
+                const base = col.options || [];
+                try { return [...new Set([...base, ...JSON.parse(localStorage.getItem(_dynKey) || "[]")])].filter(Boolean); } catch(e) { return base; }
+            };
+            const _saveOpt = (v) => {
+                const cur = _getOpts();
+                if (!cur.includes(v)) { localStorage.setItem(_dynKey, JSON.stringify([...cur.filter(o => !(col.options||[]).includes(o)), v])); }
+            };
+
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const tdRect2 = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect2.bottom + 2}px;left:${tdRect2.left}px;min-width:${Math.max(tdRect2.width, 220)}px;`;
+            document.body.appendChild(drop);
+
+            const _renderDynDrop = (q) => {
+                const opts = _getOpts();
+                const filtered = q ? opts.filter(o => o.toLowerCase().includes(q.toLowerCase())) : opts;
+                drop.innerHTML = "";
+                filtered.forEach(o => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item" + (o === val ? " pg-ac-active" : "");
+                    d.textContent = o;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = o; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                });
+                const exact = opts.some(o => o.toLowerCase() === (q || "").toLowerCase());
+                if (q && !exact) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add "<strong>${_e(q)}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); _saveOpt(q); el.value = q; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            el.addEventListener("focus", () => _renderDynDrop(""));
+            el.addEventListener("input", () => _renderDynDrop(el.value.trim()));
+            el.addEventListener("keydown", ev => {
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (q) _saveOpt(q);
+                    drop.remove(); _closeEdit(true);
+                }
+            }, true);
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 180); });
+        } else if (ctype === "locautocomplete") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.setAttribute("autocomplete", "off");
+            _eFl.style.overflow = "visible";
+
+            const _locField = col.locField || "city"; // city | district | country | street
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const _tdR = td.getBoundingClientRect();
+            drop.style.cssText = `top:${_tdR.bottom + 2}px;left:${_tdR.left}px;min-width:${Math.max(_tdR.width, 240)}px;max-width:320px;`;
+            document.body.appendChild(drop);
+
+            let _locTimer = null;
+
+            // Build Nominatim query scoped to the field type
+            const _buildQuery = (q) => {
+                const rowObj = (cfg.rows || []).find(r => r.name === td.dataset.rowName) || {};
+                if (_locField === "street") return `${q}${rowObj.site_city ? ", " + rowObj.site_city : ""}`;
+                if (_locField === "district") return `${q}${rowObj.site_country ? ", " + rowObj.site_country : ""}`;
+                return q;
+            };
+
+            const _extractFromAddr = (a, locField) => {
+                if (locField === "city")     return a.city || a.town || a.village || a.suburb || a.municipality;
+                if (locField === "district") return a.state || a.state_district || a.county;
+                if (locField === "country")  return a.country;
+                if (locField === "street")   return a.road || a.pedestrian || a.footway;
+                return null;
+            };
+
+            const _renderLocDrop = (results) => {
+                drop.innerHTML = "";
+                results.forEach(hit => {
+                    const a = hit.address || {};
+                    const primary = _extractFromAddr(a, _locField) || hit.display_name.split(",")[0];
+                    const city    = a.city || a.town || a.village || a.suburb || "";
+                    const district = a.state || a.state_district || a.county || "";
+                    const country  = a.country || "";
+                    // Build label e.g. "Zalka, Metn, Lebanon"
+                    const parts = [primary, _locField !== "district" ? district : "", _locField !== "country" ? country : ""].filter((p, i) => p && (i === 0 || p !== primary));
+                    const label = [...new Set(parts)].filter(Boolean).join(", ");
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item";
+                    d.textContent = label;
+                    d.addEventListener("mousedown", ev => {
+                        ev.preventDefault();
+                        el.value = primary;
+                        drop.remove();
+                        // Multi-fill: update related fields via cfg.onLocFill callback
+                        if (cfg.onLocFill) {
+                            cfg.onLocFill(td.dataset.rowName, {
+                                custom_site_country:  a.country,
+                                custom_site_district: a.state || a.state_district || a.county,
+                                custom_site_city:     a.city || a.town || a.village || a.suburb,
+                                custom_site_street:   _locField === "street" ? (a.road || a.pedestrian || a.footway) : undefined,
+                            }, _locField);
+                        }
+                        _closeEdit(true);
+                    });
+                    drop.appendChild(d);
+                });
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            const _searchLoc = (q) => {
+                if (!q || q.length < 2) { drop.style.display = "none"; return; }
+                const query = _buildQuery(q);
+                fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`, {
+                    headers: { "Accept-Language": "en" },
+                })
+                .then(r => r.json())
+                .then(data => _renderLocDrop(data || []))
+                .catch(() => { drop.style.display = "none"; });
+            };
+
+            el.addEventListener("input", () => { clearTimeout(_locTimer); _locTimer = setTimeout(() => _searchLoc(el.value.trim()), 280); });
+            el.addEventListener("keydown", ev => {
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    drop.remove(); _closeEdit(true);
+                }
+                if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+                    ev.preventDefault();
+                    const items = Array.from(drop.querySelectorAll(".pg-ac-item"));
+                    const cur = drop.querySelector(".pg-ac-active");
+                    const idx = cur ? items.indexOf(cur) : -1;
+                    const next = ev.key === "ArrowDown" ? items[idx + 1] || items[0] : items[idx - 1] || items[items.length - 1];
+                    if (cur) cur.classList.remove("pg-ac-active");
+                    if (next) { next.classList.add("pg-ac-active"); el.value = next.textContent.split(",")[0].trim(); }
+                }
+            }, true);
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 200); });
         } else if (ctype === "company") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -1999,7 +2171,7 @@
             };
 
             const _renderDrop = (contacts, q) => {
-                _acNames = contacts.map(c => c.full_name || c.name);
+                _acNames = contacts.map(c => [c.salutation, c.full_name || c.name].filter(Boolean).join(" "));
                 drop.innerHTML = "";
                 _acIdx = -1;
                 _acNames.forEach((name, i) => {
@@ -2027,7 +2199,7 @@
                 if (!q) { drop.style.display = "none"; return; }
                 frappe.call({
                     method: "frappe.client.get_list",
-                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name"], order_by: "full_name asc", limit: 8 },
+                    args: { doctype: "Contact", filters: [["full_name", "like", q + "%"]], fields: ["name", "full_name", "salutation"], order_by: "full_name asc", limit: 8 },
                     callback(r) { _renderDrop(r.message || [], q); },
                 });
             };
@@ -2128,6 +2300,71 @@
                 _navCell(root, td, e.key === "ArrowRight" ? "right" : "left");
             }
         });
+    }
+
+    function _openMapsLocationPopup(root, td) {
+        const existing = document.getElementById("pg-loc-popup");
+        if (existing) existing.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "pg-loc-popup";
+        overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);";
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:16px;width:340px;box-shadow:0 8px 40px rgba(0,0,0,.22);overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#1e3f85,#2563eb);padding:18px 20px 14px;color:#fff;">
+                    <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Set Map Location</div>
+                    <div style="font-size:11.5px;opacity:.8;">Use your current GPS position or paste a link</div>
+                </div>
+                <div style="padding:18px 20px;">
+                    <button id="pg-loc-use-gps" style="width:100%;height:40px;border:none;border-radius:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
+                        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>
+                        Use My Current Location
+                    </button>
+                    <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:10px;">— or paste link manually —</div>
+                    <input id="pg-loc-manual" type="text" placeholder="https://maps.google.com/…" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:12px;outline:none;">
+                </div>
+                <div style="padding:0 20px 18px;display:flex;gap:8px;">
+                    <button id="pg-loc-cancel" style="flex:1;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;color:#374151;font-size:12px;cursor:pointer;">Cancel</button>
+                    <button id="pg-loc-save" style="flex:2;height:36px;border:none;border-radius:8px;background:#1e3f85;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Save Link</button>
+                </div>
+                <div id="pg-loc-status" style="padding:0 20px 14px;font-size:11.5px;color:#6b7280;min-height:18px;"></div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+        const statusEl = overlay.querySelector("#pg-loc-status");
+
+        const _commit = (url) => {
+            overlay.remove();
+            const col = _colCfgForTd(root, td);
+            td.dataset.val = url;
+            const fakeRow = { [col ? col.key : "maps"]: url };
+            if (col) td.innerHTML = renderCell(col, fakeRow);
+            if (col && col.frappe_field) {
+                frappe.db.set_value(cfg.doctype || "Prospect", td.dataset.rowName, col.frappe_field, url);
+            }
+            if (cfg.onEdit && td.dataset.rowName && col && col.frappe_field) {
+                cfg.onEdit(td.dataset.rowName, col.frappe_field, url);
+            }
+        };
+
+        overlay.querySelector("#pg-loc-use-gps").addEventListener("click", () => {
+            if (!navigator.geolocation) { statusEl.textContent = "Geolocation not supported on this device."; return; }
+            statusEl.textContent = "Getting your location…";
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                overlay.querySelector("#pg-loc-manual").value = url;
+                statusEl.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }, () => { statusEl.textContent = "Could not get location. Please enable GPS."; });
+        });
+
+        overlay.querySelector("#pg-loc-save").addEventListener("click", () => {
+            const url = overlay.querySelector("#pg-loc-manual").value.trim();
+            if (!url) { statusEl.textContent = "Please enter a Maps URL or use GPS."; return; }
+            _commit(url);
+        });
+        overlay.querySelector("#pg-loc-cancel").addEventListener("click", () => overlay.remove());
+        overlay.addEventListener("mousedown", e => { if (e.target === overlay) overlay.remove(); });
     }
 
     function _openContactModal(root, td, prefill, defaultPre) {
@@ -2302,9 +2539,9 @@
                 callback(r) {
                     close();
                     if (r.message) {
-                        const fullName = r.message.full_name
-                            || [r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
-                            || [doc.first_name, doc.last_name].filter(Boolean).join(" ");
+                        const fullName = [r.message.salutation, r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
+                            || [doc.salutation, doc.first_name, doc.last_name].filter(Boolean).join(" ")
+                            || r.message.full_name;
                         // Update cell immediately with avatar rendering
                         const col = _colCfgForTd(root, td);
                         td.dataset.val = fullName;
@@ -2632,6 +2869,11 @@
                 if (e.target.closest(".pg-social-lnk"))  return;
                 const td = e.target.closest("td.pg-ed");
                 if (!td) return;
+                // Empty maps cell → offer current location
+                if (td.dataset.ctype === "maps" && !td.dataset.val) {
+                    _openMapsLocationPopup(root, td);
+                    return;
+                }
                 _openEdit(root, td);
             });
 
@@ -2718,6 +2960,15 @@
             _openWaCompose(btn.dataset.phone, rowName || "", cfg);
         });
 
+        // ── Maps edit button (opens text edit, not location popup) ──
+        root.addEventListener("click", e => {
+            const btn = e.target.closest(".pg-map-edit");
+            if (!btn) return;
+            e.stopPropagation();
+            const td = btn.closest("td.pg-ed");
+            if (td) _openEdit(root, td);
+        });
+
         // ── Maps hover popup ─────────────────────────────────────
         root.addEventListener("mouseenter", e => {
             const btn = e.target.closest(".pg-maps-btn");
@@ -2770,10 +3021,10 @@
 
         // ── Contact avatar hover popup ───────────────────────────
         root.addEventListener("mouseenter", e => {
-            const av = e.target.closest(".pg-contact-av");
+            const av = e.target.closest(".pg-contact-av, .pg-cl-name");
             if (!av) return;
             const contactName = av.dataset.contactName || "";
-            const ini         = av.dataset.ini          || "?";
+            const ini         = av.dataset.ini          || contactName.split(/\s+/).map(w=>w[0]||"").join("").toUpperCase().slice(0,2) || "?";
             const color       = av.dataset.color        || "#6b7280";
             const rowOwner    = av.dataset.rowOwner     || "";
             clearTimeout(_contactTimer);
@@ -2781,7 +3032,7 @@
         }, true);
 
         root.addEventListener("mouseleave", e => {
-            if (!e.target.closest(".pg-contact-av")) return;
+            if (!e.target.closest(".pg-contact-av, .pg-cl-name")) return;
             clearTimeout(_contactTimer);
             _contactTimer = setTimeout(_hideContactPopup, 120);
         }, true);
