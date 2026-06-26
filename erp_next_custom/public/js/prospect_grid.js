@@ -69,13 +69,12 @@
 .pg-f{position:sticky;z-index:2;}
 .pg-tbl td.pg-f{background:#fff;}
 .pg-tr-alt td.pg-f{background:#f8faff;}
-.pg-tbl th.pg-f{z-index:3;background:transparent;}
+.pg-tbl th.pg-f{z-index:3;background:#1e3f85;}
 .pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.10);}
 .pg-tbl th.pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.08);}
 
-/* variable cols */
-.pg-v{display:none;min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
-@keyframes pg-col-in{from{opacity:0;transform:translateX(var(--pg-dir,22px))}to{opacity:1;transform:none}}
+/* variable cols — all always visible; tabs scroll into view */
+.pg-v{min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
 
 /* row hover — obvious for non-technical users */
 .pg-tbl tbody tr:hover td{background:#e8f4fd !important;}
@@ -319,6 +318,8 @@
 .pg-owner-popup-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;}
 .pg-owner-popup-icon{width:14px;height:14px;color:#9ca3af;flex-shrink:0;}
 .pg-owner-popup-loc{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f5;}
+.pg-cp-ref-row{border-top:1px solid #f0f0f5;margin-top:6px;padding-top:6px;}
+.pg-cp-ref-sel{flex:1;border:none;outline:none;font-size:11.5px;color:#374151;font-family:inherit;background:transparent;cursor:pointer;min-width:0;}
 
 /* search — ghost on gradient nav bar */
 .pg-search-wrap{position:relative;display:flex;align-items:center;}
@@ -341,8 +342,7 @@
 .pg-tb-del.pg-tb-del-on{opacity:1;pointer-events:all;max-width:180px;padding:7px 14px;border-width:1.5px;}
 .pg-tb-del:hover{background:rgba(239,68,68,.22);border-color:#fca5a5;color:#fff;}
 .pg-tb-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:0 4px;}
-.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}
-.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:300px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity .12s;}
+.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
@@ -484,6 +484,55 @@
     transition:background .15s;
   }
   .pg-mob-view-btn:hover{background:#1d4ed8;}
+
+  /* ── Frappe dialog overrides on mobile ── */
+  .modal-dialog{max-width:420px!important;margin:18px auto!important;}
+  .modal-content{
+    border-radius:24px!important;border:none!important;overflow:hidden;
+    box-shadow:0 18px 45px rgba(37,99,235,.22)!important;
+  }
+  .modal-header{
+    background:linear-gradient(135deg,#2563eb,#7c3aed)!important;
+    color:#fff!important;border:none!important;padding:18px!important;
+  }
+  .modal-title{color:#fff!important;font-weight:800!important;}
+  .modal-header .btn-modal-close,.modal-header .close{color:rgba(255,255,255,.8)!important;opacity:1!important;}
+  .modal-body{background:#fff!important;padding:20px!important;}
+  .modal-footer{background:#fff!important;border-top:1px solid #e8edf8!important;padding:12px 20px!important;}
+  .control-label,.frappe-control .control-label{
+    color:#2563eb!important;font-size:11px!important;font-weight:800!important;
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px!important;
+  }
+  .form-control,input.form-control,select.form-control,textarea.form-control{
+    border:1.5px solid #dbeafe!important;border-radius:12px!important;
+    min-height:38px!important;background:#fff!important;
+    padding:8px 12px!important;font-size:13px!important;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .form-control:focus,input.form-control:focus,select.form-control:focus,textarea.form-control:focus{
+    border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.12)!important;
+  }
+  .btn.btn-primary{
+    background:linear-gradient(135deg,#2563eb,#7c3aed)!important;
+    border:none!important;border-radius:14px!important;
+    min-height:42px!important;font-weight:800!important;font-size:14px!important;
+    box-shadow:0 4px 14px rgba(37,99,235,.35)!important;
+    transition:opacity .15s!important;
+  }
+  .btn.btn-primary:hover{opacity:.9!important;}
+  .btn.btn-secondary,.btn.btn-default{
+    border-radius:14px!important;min-height:42px!important;
+    font-weight:700!important;border:1.5px solid #dbeafe!important;
+    background:#f8fbff!important;color:#2563eb!important;
+  }
+  /* Section picker buttons inside our edit menu */
+  .pg-mob-section-btn{
+    display:block;width:100%;margin-bottom:10px;padding:14px 16px;
+    border:none;border-radius:14px;background:#eff6ff;color:#2563eb;
+    font-weight:800;font-size:14px;text-align:left;cursor:pointer;
+    transition:background .15s;
+  }
+  .pg-mob-section-btn:hover{background:#dbeafe;}
 }
 `;
 
@@ -533,10 +582,17 @@
         const empty = v == null || v === "" || v === "—";
         switch (col.type) {
             case "text":
-            case "select":
                 if (empty) return `<span class="pg-mt">—</span>`;
                 if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
                 return `<span>${_e(v)}</span>`;
+            case "select": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const _pal = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
+                const _opts = (col.options || []).filter(o => o);
+                const _idx  = _opts.indexOf(String(v));
+                const _cls  = _idx >= 0 ? _pal[_idx % _pal.length] : "pg-badge-gray";
+                return `<span class="pg-badge ${_cls}">${_e(v)}</span>`;
+            }
             case "link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const val = String(v);
@@ -549,6 +605,8 @@
                 if (!/^https?:\/\//i.test(href)) {
                     if (col.key === "instagram" && href.startsWith("@")) href = "https://instagram.com/" + href.slice(1);
                     else if (col.key === "telegram" && href.startsWith("@"))  href = "https://t.me/" + href.slice(1);
+                    else if (col.key === "tiktok"   && href.startsWith("@"))  href = "https://tiktok.com/@" + href.slice(1);
+                    else if (col.key === "x"        && href.startsWith("@"))  href = "https://x.com/" + href.slice(1);
                     else href = "https://" + href;
                 }
                 return `<a class="pg-social-lnk" href="${_e(href)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${_e(val)}${SVG.extlnk}</a>`;
@@ -606,7 +664,8 @@
                     ? words[0][0].toUpperCase()
                     : (words[0][0] + words[words.length - 1][0]).toUpperCase();
                 const color = _ownerColor(ini);
-                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}">${_e(ini)}</span>`;
+                const rowOwner = row.owner || "";
+                return `<span class="pg-contact-av" style="background:${color}" data-contact-name="${_e(name)}" data-ini="${_e(ini)}" data-color="${_e(color)}" data-row-owner="${_e(rowOwner)}">${_e(ini)}</span>`;
             }
             case "form-link": {
                 const dt = col.link_doctype || cfg.doctype || "";
@@ -630,7 +689,7 @@
             `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}">${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -655,7 +714,7 @@
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
     }
@@ -683,14 +742,17 @@
         if (_contactPopup) _contactPopup.classList.remove("pg-popup-vis");
     }
 
-    function _renderContactPopup(c, ini, color, root) {
+    function _renderContactPopup(c, ini, color, root, rowOwner) {
         const name    = c.full_name || ini;
         const mobile  = c.mobile_no || "";
         const email   = c.email_id || "";
         const company = c.company_name || "";
         const rowName = c.name || "";
+        const ref     = c.custom_reference_user || rowOwner || "";
+        const refLabel = c.custom_reference_full_name || ref.split("@")[0] || ref;
         const bldgSvg  = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 15V6l6-5 6 5v9"/><path d="M6 15v-4h4v4"/></svg>`;
         const phoneSvg = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 2h3l1.5 3.5-1.5 1a8 8 0 003.5 3.5l1-1.5L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>`;
+        const refSvg   = `<svg class="pg-owner-popup-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>`;
         const digits   = mobile.replace(/\D/g, "");
         _contactPopup.innerHTML =
             `<div class="pg-owner-popup-top">` +
@@ -701,12 +763,43 @@
             (company ? `<div class="pg-owner-popup-row">${bldgSvg}<span>${_e(company)}</span></div>` : "") +
             (email   ? `<div class="pg-owner-popup-row">${SVG.mail}<span>${_e(email)}</span></div>` : "") +
             (mobile  ? `<div class="pg-owner-popup-row">${phoneSvg}<span>${_e(mobile)}</span></div>` : "") +
+            `<div class="pg-owner-popup-row pg-cp-ref-row">` +
+                refSvg +
+                `<select class="pg-cp-ref-sel" data-contact-name="${_e(rowName)}" data-current="${_e(ref)}" title="Reference person">` +
+                    `<option value="${_e(ref)}">${_e(refLabel || "Set reference…")}</option>` +
+                `</select>` +
+            `</div>` +
             `</div>` +
             ((mobile || email) ?
             `<div class="pg-cp-actions">` +
             (mobile ? `<a class="pg-cp-act pg-cp-act-wa" href="https://wa.me/${_e(digits)}" target="_blank" rel="noopener" title="WhatsApp">${SVG.wa}</a>` : "") +
             (email  ? `<button class="pg-cp-act pg-cp-act-mail pg-cp-mail" data-email="${_e(email)}" data-rowname="${_e(rowName)}" title="Send email">${SVG.mail}</button>` : "") +
             `</div>` : "");
+
+        // Populate reference dropdown with User list
+        const refSel = _contactPopup.querySelector(".pg-cp-ref-sel");
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "User", filters: [["enabled", "=", 1], ["user_type", "=", "System User"]], fields: ["name", "full_name"], limit: 50 },
+            callback(r) {
+                if (!refSel.isConnected) return;
+                const users = r.message || [];
+                refSel.innerHTML = `<option value="">— No reference —</option>` +
+                    users.map(u => `<option value="${_e(u.name)}"${u.name === ref ? " selected" : ""}>${_e(u.full_name || u.name)}</option>`).join("");
+                if (ref && !users.find(u => u.name === ref)) {
+                    refSel.innerHTML += `<option value="${_e(ref)}" selected>${_e(refLabel)}</option>`;
+                }
+            },
+        });
+
+        refSel.addEventListener("change", () => {
+            const newRef = refSel.value;
+            const cName  = refSel.dataset.contactName;
+            if (!cName) return;
+            frappe.db.set_value("Contact", cName, "custom_reference_user", newRef);
+            if (_contactCache[name]) _contactCache[name].custom_reference_user = newRef;
+        });
+
         // wire mail button
         const mailBtn = _contactPopup.querySelector(".pg-cp-mail");
         if (mailBtn) {
@@ -717,11 +810,11 @@
         }
     }
 
-    function _showContactPopup(anchor, contactName, ini, color, root) {
+    function _showContactPopup(anchor, contactName, ini, color, root, rowOwner) {
         _ensureContactPopup();
         _contactPopup.classList.add("pg-popup-vis");
         if (_contactCache[contactName]) {
-            _renderContactPopup(_contactCache[contactName], ini, color, root);
+            _renderContactPopup(_contactCache[contactName], ini, color, root, rowOwner);
             _positionPopup(_contactPopup, anchor);
             return;
         }
@@ -729,12 +822,12 @@
         _positionPopup(_contactPopup, anchor);
         frappe.call({
             method: "frappe.client.get_list",
-            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id"], limit: 1 },
+            args: { doctype: "Contact", filters: [["full_name", "=", contactName]], fields: ["name", "full_name", "company_name", "mobile_no", "email_id", "custom_reference_user"], limit: 1 },
             callback(r) {
                 const c = (r.message || [])[0] || { full_name: contactName };
                 _contactCache[contactName] = c;
                 if (_contactPopup.classList.contains("pg-popup-vis")) {
-                    _renderContactPopup(c, ini, color, root);
+                    _renderContactPopup(c, ini, color, root, rowOwner);
                     _positionPopup(_contactPopup, anchor);
                 }
             },
@@ -1587,7 +1680,7 @@
     const _CHEVRON_SVG = `<svg class="pg-mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
     const _PHONE_SVG   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.8a19.79 19.79 0 01-3-8.57A2 2 0 012.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.16 6.16l1.27-.45a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`;
     const _PIN_SVG     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-    const _EDIT_SVG    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const _EDIT_SVG    = `<i class="fa fa-pencil" style="font-size:14px"></i>`;
 
     function _buildMobileCards(rows) {
         return rows.map(r => {
@@ -1644,13 +1737,6 @@
         el._pgCfg = cfg;
 
         const n = cfg.tabs.length;
-        const dynId = "pg-tabs-" + n;
-        if (!document.getElementById(dynId)) {
-            const s = document.createElement("style");
-            s.id = dynId;
-            s.textContent = buildTabRevealCSS(n);
-            document.head.appendChild(s);
-        }
 
         let left = 0;
         cfg.fixed.forEach(f => { f._left = left; left += (f.width || 120); });
@@ -1723,6 +1809,8 @@
     let _eIn = null;
     let _eTd = null;
     let _eRoot = null;
+    let _hoverEdit = false;   // true when edit was opened by hover (not click)
+    let _hoverCloseTimer = null;
 
     function _ensureFloat() {
         if (_eFl) return;
@@ -1970,11 +2058,12 @@
             el.value = val;
             el.placeholder = "Paste Google Maps URL…";
         } else if (ctype === "notes") {
+            const H = 160;
+            _eFl.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${Math.max(rect.width, 260)}px;height:${H}px;z-index:99999;pointer-events:none;`;
             el = document.createElement("textarea");
             el.className = "pg-float-input";
-            el.style.padding = "4px 8px";
+            el.style.padding = "6px 12px";
             el.style.resize = "none";
-            el.style.overflow = "hidden";
             el.value = val;
         } else {
             el = document.createElement("input");
@@ -1992,11 +2081,13 @@
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
         if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
 
+        el.addEventListener("focus",   () => { clearTimeout(_hoverCloseTimer); _hoverEdit = false; }); // click-in → no longer hover-managed
         el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
             if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
-            if (e.key === "Enter" && el.tagName === "TEXTAREA" && e.shiftKey) return;
+            // Notes (textarea): Enter = newline, Escape already handled above
+            if (e.key === "Enter" && el.tagName === "TEXTAREA") return;
             if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); _navCell(root, td, "right"); return; }
 
             const isText = el.tagName === "INPUT" && (el.type === "text" || el.type === "url" || el.type === "");
@@ -2068,6 +2159,12 @@
                         <label class="pg-cm-label">Company</label>
                         <input class="pg-cm-inp" id="pg-cm-company" type="text" autocomplete="organization">
                     </div>
+                    <div class="pg-cm-row">
+                        <label class="pg-cm-label">Reference</label>
+                        <select class="pg-cm-inp" id="pg-cm-ref">
+                            <option value="${_e(frappe.session.user)}">${_e(frappe.session.user)}</option>
+                        </select>
+                    </div>
                     <div class="pg-cm-err" id="pg-cm-err" style="display:none;"></div>
                 </div>
                 <div class="pg-cm-footer">
@@ -2085,10 +2182,23 @@
         const inpMob   = overlay.querySelector("#pg-cm-mobile");
         const inpEmail = overlay.querySelector("#pg-cm-email");
         const inpComp  = overlay.querySelector("#pg-cm-company");
+        const selRef   = overlay.querySelector("#pg-cm-ref");
         const errEl    = overlay.querySelector("#pg-cm-err");
         const btnSave  = overlay.querySelector(".pg-cm-btn-save");
         const btnCxl   = overlay.querySelector(".pg-cm-btn-cancel");
         const btnClose = overlay.querySelector(".pg-cm-close");
+
+        // Populate reference dropdown with system users
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { doctype: "User", filters: [["enabled", "=", 1], ["user_type", "=", "System User"]], fields: ["name", "full_name"], limit: 50 },
+            callback(r) {
+                const users = r.message || [];
+                selRef.innerHTML = users.map(u =>
+                    `<option value="${_e(u.name)}"${u.name === frappe.session.user ? " selected" : ""}>${_e(u.full_name || u.name)}</option>`
+                ).join("");
+            },
+        });
 
         // Default Pre per column config (falls back to "Arch" for architect column)
         selPre.value = (defaultPre !== undefined ? defaultPre : "Arch");
@@ -2098,7 +2208,7 @@
             'input, select, button:not([disabled])'
         )).filter(el => !el.closest("[disabled]"));
 
-        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp];
+        const fields = [selPre, inpFirst, inpLast, inpMob, inpEmail, inpComp, selRef];
 
         setTimeout(() => inpFirst.focus(), 60);
 
@@ -2156,6 +2266,7 @@
                 first_name: fn,
                 last_name: inpLast.value.trim() || undefined,
                 company_name: inpComp.value.trim() || undefined,
+                custom_reference_user: selRef.value || frappe.session.user,
             };
             if (inpMob.value.trim()) {
                 doc.phone_nos = [{ phone: inpMob.value.trim(), is_primary_mobile_no: 1 }];
@@ -2209,6 +2320,8 @@
 
     function _closeEdit(save) {
         if (!_eIn || !_eTd) return;
+        clearTimeout(_hoverCloseTimer);
+        _hoverEdit = false;
         const newVal = _eIn.value;
         const td = _eTd, root = _eRoot;
         _eTd = null; _eIn = null; _eRoot = null;
@@ -2246,10 +2359,8 @@
     }
 
     function _navCell(root, fromTd, direction) {
-        const tbl      = root.querySelector(".pg-tbl");
-        const tabN     = parseInt(tbl.getAttribute("data-tab") || 0);
-        const tabCount = (root._pgCfg.tabs || []).length;
-        const rowName  = fromTd.dataset.rowName;
+        const tbl     = root.querySelector(".pg-tbl");
+        const rowName = fromTd.dataset.rowName;
 
         if (direction === "up" || direction === "down") {
             const colIdx  = fromTd.cellIndex;
@@ -2264,47 +2375,27 @@
         }
 
         const hDir  = direction === "right" ? 1 : -1;
-        const rowEd = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-            td.dataset.rowName === rowName &&
-            (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${t}`))
+        // All columns always visible — navigate across the full row
+        const allEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+            td.dataset.rowName === rowName
         );
-        const allEd = rowEd(tabN);
-        const idx   = allEd.indexOf(fromTd);
+        const idx  = allEd.indexOf(fromTd);
         if (idx === -1) return;
-        const next  = allEd[idx + hDir];
+        const next = allEd[idx + hDir];
         if (next) { _openEdit(root, next); return; }
 
-        const nextTab = tabN + hDir;
-        if (nextTab >= 0 && nextTab < tabCount) {
-            root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
-            requestAnimationFrame(() => {
-                const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-                    td.dataset.rowName === rowName && td.classList.contains(`pg-v-${nextTab}`)
-                );
-                const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
-                if (target) _openEdit(root, target);
-            });
-            return;
-        }
-
-        // Past end of last tab going right → jump to first cell of next row
-        // Past start of first tab going left → jump to last cell of prev row
-        const rows = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
+        // Past end/start of row → jump to first/last cell of next/prev row
+        const rows    = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
         const curRow  = fromTd.closest("tr");
         const rowIdx  = rows.indexOf(curRow);
         const nextIdx = rowIdx + hDir;
         if (nextIdx < 0 || nextIdx >= rows.length) return;
-        const targetTab = hDir > 0 ? 0 : tabCount - 1;
-        root.querySelector(`.pg-pill[data-tab="${targetTab}"]`).click();
-        requestAnimationFrame(() => {
-            const nextRowName = rows[nextIdx].dataset.rowName;
-            const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-                td.dataset.rowName === nextRowName &&
-                (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${targetTab}`))
-            );
-            const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
-            if (target) _openEdit(root, target);
-        });
+        const nextRowName = rows[nextIdx].dataset.rowName;
+        const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+            td.dataset.rowName === nextRowName
+        );
+        const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
+        if (target) _openEdit(root, target);
     }
 
     // ── Row selection ──────────────────────────────────────────────
@@ -2357,16 +2448,26 @@
                     { label: "Contract Value",fn: "custom_contract_value", ft: "Currency", def: row.contract || "" },
                 ],
             },
+            {
+                label: "Social & Web",
+                fields: [
+                    { label: "Instagram", fn: "custom_instagram", ft: "Data", def: row.instagram || "" },
+                    { label: "LinkedIn",  fn: "custom_linkedin",  ft: "Data", def: row.linkedin  || "" },
+                    { label: "Facebook",  fn: "custom_facebook",  ft: "Data", def: row.facebook  || "" },
+                    { label: "Telegram",  fn: "custom_telegram",  ft: "Data", def: row.telegram  || "" },
+                    { label: "Website",   fn: "website",          ft: "Data", def: row.website   || "" },
+                ],
+            },
         ];
 
         // Build menu dialog
         const menuDlg = new frappe.ui.Dialog({
-            title: `Edit: ${row.first || ""} ${row.last || ""}`.trim() || "Edit Prospect",
+            title: "Edit Prospect",
             fields: [{
                 fieldtype: "HTML",
                 fieldname: "menu_html",
                 options: sections.map(s =>
-                    `<button type="button" style="display:block;width:100%;margin-bottom:10px;padding:13px 16px;border:none;border-radius:14px;background:#eff6ff;color:#2563eb;font-weight:700;font-size:14px;text-align:left;cursor:pointer;" data-section="${_e(s.label)}">${_e(s.label)}</button>`
+                    `<button type="button" class="pg-mob-section-btn" data-section="${_e(s.label)}">${_e(s.label)}</button>`
                 ).join(""),
             }],
         });
@@ -2419,7 +2520,6 @@
 // ── Full wiring ────────────────────────────────────────────────
     function _wire(root, cfg) {
         const tabCount = cfg.tabs.length;
-        let _wt = 0, _ts = null;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
 
@@ -2429,28 +2529,28 @@
             if (pill) _activatePill(root, pill, tabCount);
         });
 
-        // ── Close edit on scroll ────────────────────────────────
-        outer.addEventListener("scroll", () => { if (_eIn) _closeEdit(true); }, { passive: true });
-
-        // ── Wheel tab switch ────────────────────────────────────
-        outer.addEventListener("wheel", e => {
-            const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
-            if (ax <= ay || ax < 8) return;
-            e.preventDefault();
-            const now = Date.now();
-            if (now - _wt < 450) return;
-            _wt = now;
-            _stepTab(root, tabCount, e.deltaX);
-        }, { passive: false });
-
-        // ── Touch swipe ─────────────────────────────────────────
-        root.addEventListener("touchstart", e => { _ts = e.touches[0].clientX; }, { passive: true });
-        root.addEventListener("touchend",   e => {
-            if (_ts === null) return;
-            const dx = e.changedTouches[0].clientX - _ts; _ts = null;
-            if (Math.abs(dx) < 40) return;
-            _stepTab(root, tabCount, -dx);
-        });
+        // ── Scroll: close edit + track active tab from position ────
+        let _scrollRaf = null;
+        outer.addEventListener("scroll", () => {
+            if (_eIn) _closeEdit(true);
+            if (_scrollRaf) return;
+            _scrollRaf = requestAnimationFrame(() => {
+                _scrollRaf = null;
+                const tbl2   = root.querySelector(".pg-tbl");
+                const fixedW = (cfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
+                const sl     = outer.scrollLeft;
+                let activeN  = 0;
+                for (let i = tabCount - 1; i >= 0; i--) {
+                    const th = tbl2.querySelector(`th.pg-v-${i}`);
+                    if (th && (th.offsetLeft - fixedW) <= sl + 20) { activeN = i; break; }
+                }
+                const cur = parseInt(tbl2.getAttribute("data-tab") || 0);
+                if (activeN !== cur) {
+                    const pill2 = root.querySelector(`.pg-pill[data-tab="${activeN}"]`);
+                    if (pill2) _activatePill(root, pill2, tabCount, true);
+                }
+            });
+        }, { passive: true });
 
         // ── Row number selection ─────────────────────────────────
         tbody.addEventListener("mousedown", e => {
@@ -2513,6 +2613,30 @@
                 if (!td) return;
                 _openEdit(root, td);
             });
+
+            // Notes cells open immediately on hover — no click needed
+            root.addEventListener("mouseenter", e => {
+                const td = e.target.closest("td.pg-ed");
+                if (!td || td.dataset.ctype !== "notes") return;
+                clearTimeout(_hoverCloseTimer);
+                if (_eTd === td) return; // already editing this cell
+                _hoverEdit = true;
+                _openEdit(root, td);
+                // Keep open while mouse is over the float wrapper
+                if (_eFl) {
+                    _eFl.onmouseenter = () => clearTimeout(_hoverCloseTimer);
+                    _eFl.onmouseleave = () => {
+                        if (_hoverEdit) _hoverCloseTimer = setTimeout(() => _closeEdit(true), 120);
+                    };
+                }
+            }, true);
+
+            // Close on mouseleave of notes cell (grace period for moving to float)
+            root.addEventListener("mouseleave", e => {
+                const td = e.target.closest("td.pg-ed");
+                if (!td || td.dataset.ctype !== "notes" || !_hoverEdit) return;
+                _hoverCloseTimer = setTimeout(() => { if (_hoverEdit) _closeEdit(true); }, 120);
+            }, true);
         }
 
         // ── Expand button (inside popup) — wired once ────────────
@@ -2630,8 +2754,9 @@
             const contactName = av.dataset.contactName || "";
             const ini         = av.dataset.ini          || "?";
             const color       = av.dataset.color        || "#6b7280";
+            const rowOwner    = av.dataset.rowOwner     || "";
             clearTimeout(_contactTimer);
-            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root), 180);
+            _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root, rowOwner), 180);
         }, true);
 
         root.addEventListener("mouseleave", e => {
@@ -2802,16 +2927,21 @@
         ind.style.width = pr.width + "px";
     }
 
-    function _activatePill(root, pill, tabCount) {
-        const tbl  = root.querySelector(".pg-tbl");
-        const newN = parseInt(pill.dataset.tab);
-        const oldN = parseInt(tbl.getAttribute("data-tab") || 0);
-        if (newN === oldN) return;
+    function _activatePill(root, pill, _tabCount, skipScroll) {
+        const tbl   = root.querySelector(".pg-tbl");
+        const outer = root.querySelector(".pg-tbl-outer");
+        const newN  = parseInt(pill.dataset.tab);
         root.querySelectorAll(".pg-pill").forEach(p => p.classList.remove("active"));
         pill.classList.add("active");
         _positionInd(pill);
-        tbl.style.setProperty("--pg-dir", (newN > oldN ? 160 : -160) + "px");
         tbl.setAttribute("data-tab", newN);
+        if (!skipScroll && outer) {
+            const firstTh = tbl.querySelector(`th.pg-v-${newN}`);
+            if (firstTh) {
+                const fixedW = (root._pgCfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
+                outer.scrollTo({ left: Math.max(0, firstTh.offsetLeft - fixedW), behavior: "instant" });
+            }
+        }
     }
 
     function _stepTab(root, tabCount, deltaX) {

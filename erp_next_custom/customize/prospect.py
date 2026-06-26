@@ -1,4 +1,11 @@
+import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+
+def set_prospect_name(doc, method=None):
+    """Give every Prospect a unique auto-incremented name so multiple
+    prospects from the same company are allowed."""
+    doc.name = frappe.generate_hash(length=8)
 
 # ── Custom fields added to the Prospect DocType ───────────────────
 # ERPNext's Prospect already has: company_name, industry, website
@@ -45,10 +52,23 @@ FIELDS = [
         "bold": 1,
     },
     {
+        "fieldname": "custom_company_activity_type",
+        "fieldtype": "Data",
+        "label": "Activity Type",
+        "insert_after": "custom_last_name",
+    },
+    {
+        "fieldname": "custom_lead_source",
+        "fieldtype": "Select",
+        "label": "Source",
+        "options": "\nReferral\nCold Call\nWalk-in\nWebsite\nExhibition\nSocial Media\nDigital",
+        "insert_after": "custom_last_name",
+    },
+    {
         "fieldname": "custom_position",
         "fieldtype": "Data",
         "label": "Role",
-        "insert_after": "custom_last_name",
+        "insert_after": "custom_lead_source",
     },
     {
         "fieldname": "custom_prospect_status",
@@ -149,7 +169,7 @@ FIELDS = [
         "fieldname": "custom_project_status",
         "fieldtype": "Select",
         "label": "Project Status",
-        "options": "\nEmpty lot\nExcavation\nConcrete structure\nTopped out\nFinishing\nMEP\nCompleted",
+        "options": "\nCommercial\nResidential\nIndustrial\nReligious\nBuilding – New Construction\nBuilding – Renovation / Façade\nHigh-Rise / Tower\nIndustrial / Plant\nBridge / Infrastructure\nHeritage / Restoration\nShoring / Propping\nEvent / Temporary Structure\nOther",
         "insert_after": "custom_scope_section",
         "in_filter": 1,
     },
@@ -180,7 +200,7 @@ FIELDS = [
         "fieldname": "custom_scaffold_type",
         "fieldtype": "Select",
         "label": "Scaffold Type",
-        "options": "\nRinglock System\nTube & Coupler\nKwikstage\nSuspended\nFrame System\nShoring",
+        "options": "\nExternal Scaffolding\nPropping Scaffolding\nAdjustable Props\nRental per Piece\nSales per Piece\nSales Used\nMobile Scaffolding",
         "insert_after": "custom_area",
     },
     {
@@ -214,7 +234,7 @@ FIELDS = [
     {
         "fieldname": "custom_project_owner",
         "fieldtype": "Data",
-        "label": "Project Owner",
+        "label": "Contact Person #1",
         "insert_after": "custom_architect",
     },
     {
@@ -225,7 +245,7 @@ FIELDS = [
     {
         "fieldname": "custom_site_engineer",
         "fieldtype": "Data",
-        "label": "Site Engineer",
+        "label": "Contact Person #2",
         "insert_after": "custom_col_break_team",
     },
     {
@@ -237,8 +257,14 @@ FIELDS = [
     {
         "fieldname": "custom_safety_officer",
         "fieldtype": "Data",
-        "label": "Safety Officer",
+        "label": "Contact Person #3",
         "insert_after": "custom_workers_count",
+    },
+    {
+        "fieldname": "custom_contact_person_4",
+        "fieldtype": "Data",
+        "label": "Contact Person #4",
+        "insert_after": "custom_safety_officer",
     },
     {
         "fieldname": "custom_contract_value",
@@ -283,6 +309,18 @@ FIELDS = [
         "fieldtype": "Data",
         "label": "Instagram",
         "insert_after": "custom_facebook",
+    },
+    {
+        "fieldname": "custom_tiktok",
+        "fieldtype": "Data",
+        "label": "TikTok",
+        "insert_after": "custom_instagram",
+    },
+    {
+        "fieldname": "custom_x",
+        "fieldtype": "Data",
+        "label": "X",
+        "insert_after": "custom_tiktok",
     },
 ]
 

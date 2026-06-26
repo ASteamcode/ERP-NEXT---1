@@ -21,6 +21,43 @@ function _focusDraftCompany(host) {
     });
 }
 
+function _extractMapsCoords(url) {
+    // @lat,lng,zoom  or  @lat,lng
+    const m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) return { lat: m[1], lng: m[2] };
+    // ?q=lat,lng
+    const q = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (q) return { lat: q[1], lng: q[2] };
+    return null;
+}
+
+function _geocodeAndFillLocation(name, url, row, rows) {
+    const coords = _extractMapsCoords(url);
+    if (!coords) return;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json&addressdetails=1`, {
+        headers: { "Accept-Language": "en" }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const a = data.address || {};
+        // Build: Country, District, City, Street
+        const parts = [
+            a.country,
+            a.state || a.state_district || a.county,
+            a.city  || a.town || a.village || a.suburb,
+            a.road  || a.pedestrian || a.neighbourhood,
+        ].filter(Boolean);
+        if (!parts.length) return;
+        const loc = parts.join(", ");
+        frappe.db.set_value("Prospect", name, "custom_site_location", loc);
+        row.city = loc;
+        const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
+        if (td) { td.dataset.val = loc; td.textContent = loc; }
+    })
+    .catch(() => {});
+}
+
 const _PROSPECT_CFG = {
     tabs: ["Profile & Contact", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
@@ -32,9 +69,10 @@ const _PROSPECT_CFG = {
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
+        { tab: 0, key: "activity", label: "Activity Type",   type: "text",   frappe_field: "custom_company_activity_type" },
+        { tab: 0, key: "source",   label: "Source",         type: "select", frappe_field: "custom_lead_source",
+          options: ["", "Referral", "Cold Call", "Walk-in", "Website", "Exhibition", "Social Media", "Digital"] },
         { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
-        { tab: 0, key: "status",   label: "Status",         type: "status", frappe_field: "custom_prospect_status",
-          map: { Lead: "pg-badge-blue", "In Discussion": "pg-badge-indigo", Contacted: "pg-badge-teal", Converted: "pg-badge-green", Lost: "pg-badge-gray" } },
         { tab: 0, key: "stage",    label: "Stage",          type: "status", frappe_field: "custom_stage",
           map: {
             "Prospect":      "pg-badge-gray",
@@ -51,29 +89,33 @@ const _PROSPECT_CFG = {
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
         { tab: 1, key: "city",     label: "Site Location",  type: "text",   frappe_field: "custom_site_location"  },
-        { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url"    },
-        { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 220 },
+        { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url",   width: 130 },
+        { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 1, key: "files",       label: "Files",          type: "files"                                      },
         { tab: 1, key: "drawing",  label: "Drawing",        type: "drawing"                                       },
-        { tab: 2, key: "pstatus",  label: "Project Status", type: "status", frappe_field: "custom_project_status",
-          map: { "Empty lot": "pg-badge-gray", "Excavation": "pg-badge-amber", "Concrete structure": "pg-badge-orange", "Topped out": "pg-badge-yellow", "Finishing": "pg-badge-lime", "MEP": "pg-badge-amber", "Completed": "pg-badge-green" } },
+        { tab: 2, key: "pstatus",  label: "Project Status", type: "select", frappe_field: "custom_project_status",
+          options: ["", "Commercial", "Residential", "Industrial", "Religious", "Building – New Construction", "Building – Renovation / Façade", "High-Rise / Tower", "Industrial / Plant", "Bridge / Infrastructure", "Heritage / Restoration", "Shoring / Propping", "Event / Temporary Structure", "Other"] },
         { tab: 2, key: "pstart",   label: "Start Date",     type: "date",   frappe_field: "custom_project_start" },
         { tab: 2, key: "floors",   label: "Floors",         type: "num",    frappe_field: "custom_floors"        },
-        { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
-        { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "text",   frappe_field: "custom_scaffold_type" },
         { tab: 2, key: "ptype",    label: "Project Type",   type: "text",   frappe_field: "custom_project_type"  },
+        { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "select", frappe_field: "custom_scaffold_type",
+          options: ["", "External Scaffolding", "Propping Scaffolding", "Adjustable Props", "Rental per Piece", "Sales per Piece", "Sales Used", "Mobile Scaffolding"] },
+        { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
         { tab: 2, key: "scope_notes", label: "Notes",       type: "notes",  frappe_field: "custom_scope_notes", width: 200 },
-        { tab: 3, key: "architect",  label: "Architect",       type: "contact-link", frappe_field: "custom_architect" },
-        { tab: 3, key: "proj_owner", label: "Project Owner",   type: "contact-link", frappe_field: "custom_project_owner",  contactPre: ""    },
-        { tab: 3, key: "site_eng",   label: "Site Engineer",   type: "contact-link", frappe_field: "custom_site_engineer",  contactPre: "Eng" },
-        { tab: 3, key: "workers",    label: "Workers on Site", type: "num",    frappe_field: "custom_workers_count" },
-        { tab: 3, key: "safety",     label: "Safety Officer",  type: "contact-link", frappe_field: "custom_safety_officer", contactPre: ""    },
-        { tab: 3, key: "contract",   label: "Contract Value",  type: "text",   frappe_field: "custom_contract_value"},
+        { tab: 3, key: "architect",  label: "Architect",         type: "contact-link", frappe_field: "custom_architect"          },
+        { tab: 3, key: "cp1",        label: "Contact Person #1", type: "contact-link", frappe_field: "custom_project_owner",     contactPre: "" },
+        { tab: 3, key: "cp2",        label: "Contact Person #2", type: "contact-link", frappe_field: "custom_site_engineer",     contactPre: "" },
+        { tab: 3, key: "cp3",        label: "Contact Person #3", type: "contact-link", frappe_field: "custom_safety_officer",    contactPre: "" },
+        { tab: 3, key: "cp4",        label: "Contact Person #4", type: "contact-link", frappe_field: "custom_contact_person_4",  contactPre: "" },
+        { tab: 3, key: "workers",    label: "Workers on Site",   type: "num",    frappe_field: "custom_workers_count" },
+        { tab: 3, key: "contract",   label: "Contract Value",    type: "text",   frappe_field: "custom_contract_value"},
         { tab: 4, key: "instagram",label: "Instagram",      type: "link",   frappe_field: "custom_instagram"    },
         { tab: 4, key: "linkedin", label: "LinkedIn",       type: "link",   frappe_field: "custom_linkedin"     },
         { tab: 4, key: "facebook", label: "Facebook",       type: "link",   frappe_field: "custom_facebook"     },
         { tab: 4, key: "telegram", label: "Telegram",       type: "link",   frappe_field: "custom_telegram"     },
         { tab: 4, key: "website",  label: "Website",        type: "link",   frappe_field: "website"             },
+        { tab: 4, key: "tiktok",   label: "TikTok",         type: "link",   frappe_field: "custom_tiktok"       },
+        { tab: 4, key: "x",        label: "X",              type: "link",   frappe_field: "custom_x"            },
     ],
     rows: [],
     editable: true,
@@ -187,6 +229,12 @@ function _pl_render(listview) {
                     // ── Normal saved row ────────────────────────────────
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
+
+                    // ── Maps → auto-fill Site Location if empty ─────────
+                    if (frappe_field === "custom_maps_url" && value) {
+                        const row = rows.find(r => r.name === name);
+                        if (row && !row.city) _geocodeAndFillLocation(name, value, row, rows);
+                    }
                 },
 
                 onAddRow(reload) {
