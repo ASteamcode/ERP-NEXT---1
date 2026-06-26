@@ -124,11 +124,28 @@ FIELDS = [
         "collapsible": 0,
     },
     {
-        "fieldname": "custom_site_location",
+        "fieldname": "custom_site_country",
         "fieldtype": "Data",
-        "label": "Site Location",
-        "description": "Format: Country, District, City, Street",
+        "label": "Country",
         "insert_after": "custom_site_section",
+    },
+    {
+        "fieldname": "custom_site_district",
+        "fieldtype": "Data",
+        "label": "District",
+        "insert_after": "custom_site_country",
+    },
+    {
+        "fieldname": "custom_site_city",
+        "fieldtype": "Data",
+        "label": "City",
+        "insert_after": "custom_site_district",
+    },
+    {
+        "fieldname": "custom_site_street",
+        "fieldtype": "Data",
+        "label": "Street",
+        "insert_after": "custom_site_city",
     },
     {
         "fieldname": "custom_maps_url",

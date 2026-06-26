@@ -31,29 +31,60 @@ function _extractMapsCoords(url) {
     return null;
 }
 
-function _geocodeAndFillLocation(name, url, row, rows) {
+function _fillLocationCells(name, row, country, district, city, street) {
+    const updates = {
+        custom_site_country:  country  || "",
+        custom_site_district: district || "",
+        custom_site_city:     city     || "",
+        custom_site_street:   street   || "",
+    };
+    const keyMap = { custom_site_country: "site_country", custom_site_district: "site_district", custom_site_city: "site_city", custom_site_street: "site_street" };
+    const tr = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"]`);
+    for (const [ff, val] of Object.entries(updates)) {
+        if (!val) continue;
+        frappe.db.set_value("Prospect", name, ff, val);
+        if (row) row[keyMap[ff]] = val;
+        if (tr) {
+            const td = tr.querySelector(`td[data-ff="${ff}"]`);
+            if (td) { td.dataset.val = val; td.innerHTML = `<span>${val}</span>`; }
+        }
+    }
+}
+
+function _geocodeAndFillLocation(name, url, row) {
     const coords = _extractMapsCoords(url);
     if (!coords) return;
-
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json&addressdetails=1`, {
         headers: { "Accept-Language": "en" }
     })
     .then(r => r.json())
     .then(data => {
         const a = data.address || {};
-        // Build: Country, District, City, Street
-        const parts = [
+        _fillLocationCells(name, row,
             a.country,
             a.state || a.state_district || a.county,
             a.city  || a.town || a.village || a.suburb,
             a.road  || a.pedestrian || a.neighbourhood,
-        ].filter(Boolean);
-        if (!parts.length) return;
-        const loc = parts.join(", ");
-        frappe.db.set_value("Prospect", name, "custom_site_location", loc);
-        row.city = loc;
-        const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
-        if (td) { td.dataset.val = loc; td.textContent = loc; }
+        );
+    })
+    .catch(() => {});
+}
+
+function _geocodeByCityName(name, cityVal, row) {
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityVal)}&format=json&addressdetails=1&limit=1`, {
+        headers: { "Accept-Language": "en" }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const hit = (data || [])[0];
+        if (!hit) return;
+        const a = hit.address || {};
+        _fillLocationCells(name, row,
+            a.country,
+            a.state || a.state_district || a.county,
+            a.city  || a.town || a.village || a.suburb || cityVal,
+            row.site_street || "",
+        );
     })
     .catch(() => {});
 }
@@ -90,7 +121,10 @@ const _PROSPECT_CFG = {
           } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
-        { tab: 1, key: "city",     label: "Site Location",  type: "text",   frappe_field: "custom_site_location"  },
+        { tab: 1, key: "site_country",  label: "Country",  type: "text", frappe_field: "custom_site_country",  width: 90  },
+        { tab: 1, key: "site_district", label: "District", type: "text", frappe_field: "custom_site_district", width: 110 },
+        { tab: 1, key: "site_city",     label: "City",     type: "text", frappe_field: "custom_site_city",     width: 90  },
+        { tab: 1, key: "site_street",   label: "Street",   type: "text", frappe_field: "custom_site_street",   width: 130 },
         { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url",   width: 130 },
         { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 1, key: "files",       label: "Files",          type: "files"                                      },
@@ -249,10 +283,15 @@ function _pl_fetch(listview, offset) {
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
 
-                    // ── Maps → auto-fill Site Location if empty ─────────
+                    // ── Maps → auto-fill location fields if empty ───────
                     if (frappe_field === "custom_maps_url" && value) {
                         const row = rows.find(r => r.name === name);
-                        if (row && !row.city) _geocodeAndFillLocation(name, value, row, rows);
+                        if (row && !row.site_country) _geocodeAndFillLocation(name, value, row);
+                    }
+                    // ── City → auto-fill Country + District if empty ────
+                    if (frappe_field === "custom_site_city" && value) {
+                        const row = rows.find(r => r.name === name);
+                        if (row && !row.site_country) _geocodeByCityName(name, value, row);
                     }
                 },
 

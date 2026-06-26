@@ -2375,8 +2375,8 @@
                     close();
                     if (r.message) {
                         const fullName = r.message.full_name
-                            || [r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
-                            || [doc.first_name, doc.last_name].filter(Boolean).join(" ");
+                            || [r.message.salutation, r.message.first_name, r.message.last_name].filter(Boolean).join(" ")
+                            || [doc.salutation, doc.first_name, doc.last_name].filter(Boolean).join(" ");
                         // Update cell immediately with avatar rendering
                         const col = _colCfgForTd(root, td);
                         td.dataset.val = fullName;
