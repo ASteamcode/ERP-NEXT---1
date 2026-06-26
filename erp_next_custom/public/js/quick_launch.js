@@ -478,6 +478,102 @@
         }
     `;
 
+    // ── Location Permission Popup ─────────────────────────────────────────
+    function _showLocationPopup() {
+        if (document.getElementById("gl-loc-popup")) return;
+
+        const style = document.createElement("style");
+        style.id = "gl-loc-popup-style";
+        style.textContent = `
+            #gl-loc-popup { position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:999999;display:flex;align-items:center;justify-content:center; }
+            .gl-loc-card { background:#fff;border-radius:20px;width:320px;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.28); }
+            .gl-loc-header { position:relative;background:linear-gradient(135deg,#1e3f85,#2563eb);height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center; }
+            .gl-loc-ring { position:absolute;border-radius:50%;border:1.5px solid rgba(255,255,255,.18); }
+            .gl-loc-ring-1 { width:60px;height:60px; }
+            .gl-loc-ring-2 { width:100px;height:100px; }
+            .gl-loc-ring-3 { width:150px;height:150px; }
+            .gl-loc-sweep { position:absolute;width:75px;height:75px;border-radius:50%;background:conic-gradient(rgba(96,165,250,.35),transparent 60%);animation:gl-sweep 2.8s linear infinite;transform-origin:center; }
+            @keyframes gl-sweep { to { transform:rotate(360deg); } }
+            .gl-loc-dot { position:absolute;width:8px;height:8px;border-radius:50%;background:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.3); }
+            .gl-loc-blip { position:absolute;width:7px;height:7px;border-radius:50%;animation:gl-blip-ping 2s ease-out infinite; }
+            .gl-loc-blip-a { background:#34d399;top:38%;left:62%;animation-delay:.4s; }
+            .gl-loc-blip-b { background:#a78bfa;top:58%;left:35%;animation-delay:1.1s; }
+            .gl-loc-blip-c { background:#fb923c;top:32%;left:40%;animation-delay:1.8s; }
+            @keyframes gl-blip-ping { 0%{box-shadow:0 0 0 0 currentColor;opacity:1} 70%{box-shadow:0 0 0 8px currentColor;opacity:0} 100%{opacity:0} }
+            .gl-loc-body { padding:20px 22px 14px; }
+            .gl-loc-app { font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#6b7280;text-transform:uppercase;margin-bottom:4px; }
+            .gl-loc-title { font-size:18px;font-weight:800;color:#111827;margin:0 0 8px; }
+            .gl-loc-desc { font-size:12px;color:#4b5563;line-height:1.5;margin-bottom:14px; }
+            .gl-loc-list { list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:6px; }
+            .gl-loc-list li { display:flex;align-items:center;gap:8px;font-size:12px;color:#374151; }
+            .gl-loc-icon { width:18px;height:18px;border-radius:50%;background:#f0fdf4;color:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+            .gl-loc-icon svg { width:10px;height:10px; }
+            .gl-loc-footer { display:flex;gap:8px;padding:14px 22px 18px;border-top:1px solid #f1f5f9; }
+            .gl-loc-btn-ghost { flex:1;height:38px;border:1.5px solid #e5e7eb;border-radius:99px;background:#fff;color:#374151;font-size:12.5px;font-weight:500;cursor:pointer;transition:background .12s; }
+            .gl-loc-btn-ghost:hover { background:#f9fafb; }
+            .gl-loc-btn-primary { flex:2;height:38px;border:none;border-radius:99px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .12s; }
+            .gl-loc-btn-primary:hover { opacity:.9; }
+            .gl-loc-btn-primary svg { width:13px;height:13px; }
+            .gl-loc-fade-in { animation:gl-fade-in .22s cubic-bezier(.2,0,.2,1); }
+            @keyframes gl-fade-in { from{opacity:0;transform:scale(.94) translateY(8px)} to{opacity:1;transform:none} }
+        `;
+        document.head.appendChild(style);
+
+        const el = document.createElement("div");
+        el.id = "gl-loc-popup";
+        el.innerHTML = `
+            <div class="gl-loc-card gl-loc-fade-in">
+                <div class="gl-loc-header">
+                    <div class="gl-loc-ring gl-loc-ring-3"></div>
+                    <div class="gl-loc-ring gl-loc-ring-2"></div>
+                    <div class="gl-loc-ring gl-loc-ring-1"></div>
+                    <div class="gl-loc-sweep"></div>
+                    <div class="gl-loc-dot"></div>
+                    <div class="gl-loc-blip gl-loc-blip-a"></div>
+                    <div class="gl-loc-blip gl-loc-blip-b"></div>
+                    <div class="gl-loc-blip gl-loc-blip-c"></div>
+                </div>
+                <div class="gl-loc-body">
+                    <p class="gl-loc-app">ERP Next</p>
+                    <h2 class="gl-loc-title">Allow Location Access</h2>
+                    <p class="gl-loc-desc">Your team uses live location to coordinate field employees, track coverage, and stay in sync on the radar map.</p>
+                    <ul class="gl-loc-list">
+                        <li><span class="gl-loc-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Used only while the app is open</li>
+                        <li><span class="gl-loc-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Visible only to workspace admins</li>
+                        <li><span class="gl-loc-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Never shared outside your organisation</li>
+                    </ul>
+                </div>
+                <div class="gl-loc-footer">
+                    <button class="gl-loc-btn-ghost" id="gl-loc-dismiss">Not Now</button>
+                    <button class="gl-loc-btn-primary" id="gl-loc-allow">
+                        <svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5S12.5 9.75 12.5 6c0-2.49-2.01-4.5-4.5-4.5zm0 6.1a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>
+                        Allow Location
+                    </button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(el);
+
+        el.querySelector("#gl-loc-dismiss").addEventListener("click", () => {
+            sessionStorage.setItem("gl_loc_dismissed", "1");
+            el.remove();
+        });
+
+        el.querySelector("#gl-loc-allow").addEventListener("click", () => {
+            localStorage.setItem("loc_permission_granted", "1");
+            el.remove();
+            _startLocationTracking();
+            _injectLocationBanner();
+        });
+    }
+
+    // Show once per browser session (disappears on tab close / new login)
+    function _maybeShowLocationPopup() {
+        if (localStorage.getItem("loc_permission_granted") === "1") return; // already granted
+        if (sessionStorage.getItem("gl_loc_dismissed")) return;            // dismissed this session
+        setTimeout(_showLocationPopup, 1200); // slight delay so page settles
+    }
+
     // ── User color palette (consistent per initials) ──────────────────────
     const _BLIP_COLORS = ["#2563eb","#0891b2","#7c3aed","#059669","#d97706","#dc2626","#db2777"];
     function _blipColor(ini) {
@@ -628,6 +724,8 @@
         if (localStorage.getItem("loc_permission_granted") === "1") {
             _startLocationTracking();
             _injectLocationBanner();
+        } else {
+            _maybeShowLocationPopup();
         }
     }
 
