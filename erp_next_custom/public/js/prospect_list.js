@@ -86,7 +86,8 @@ const _PROSPECT_CFG = {
           options: ["Construction", "Real Estate Development", "Architecture", "Engineering", "General Contracting", "Interior Design", "Infrastructure", "Government / Public Works", "Industrial", "Commercial Development", "Residential Development"] },
         { tab: 0, key: "source",   label: "Source",         type: "select", frappe_field: "custom_lead_source",
           options: ["", "Referral", "Cold Call", "Walk-in", "Website", "Exhibition", "Social Media", "Digital"] },
-        { tab: 0, key: "role",     label: "Role",           type: "text",   frappe_field: "custom_position"       },
+        { tab: 0, key: "role",     label: "Role",           type: "dynselect", frappe_field: "custom_position", dynKey: "pg_role",
+          options: ["Owner / Partner","General Manager","Project Manager","Site Engineer","Site Foreman / معلم","Technical / Studies Engineer","Procurement / Purchasing","Architect","Quantity Surveyor","Accountant / Finance","Other"] },
         { tab: 0, key: "stage",    label: "Stage",          type: "status", frappe_field: "custom_stage",
           map: {
             "Prospect":      "pg-badge-gray",
