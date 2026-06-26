@@ -228,3 +228,360 @@
         }
     });
 })();
+
+// ── Team Radar Widget ─────────────────────────────────────────────────────────
+(function () {
+    "use strict";
+
+    const RADAR_CSS = `
+        #tr-wrap {
+            position: fixed;
+            bottom: 28px;
+            left: 28px;
+            z-index: 9997;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* ── Collapsed trigger ── */
+        #tr-trigger {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 2px solid rgba(37,99,235,0.55);
+            box-shadow: 0 0 0 0 rgba(37,99,235,0.4), 0 4px 16px rgba(0,0,0,0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #60a5fa;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+            animation: tr-pulse-ring 2.4s ease-in-out infinite;
+        }
+        #tr-trigger:hover {
+            border-color: #2563eb;
+            transform: scale(1.06);
+        }
+        #tr-trigger svg { width: 22px; height: 22px; pointer-events: none; }
+
+        @keyframes tr-pulse-ring {
+            0%, 100% { box-shadow: 0 0 0 0   rgba(37,99,235,0.5), 0 4px 16px rgba(0,0,0,0.4); }
+            50%       { box-shadow: 0 0 0 8px rgba(37,99,235,0),   0 4px 16px rgba(0,0,0,0.4); }
+        }
+
+        /* ── Panel ── */
+        #tr-panel {
+            width: 220px;
+            background: #0b1120;
+            border: 1.5px solid rgba(37,99,235,0.35);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.55), inset 0 0 40px rgba(37,99,235,0.04);
+            overflow: hidden;
+            transform-origin: bottom left;
+            transform: scale(0.85) translateY(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease;
+        }
+        #tr-panel.tr-open {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ── Panel header ── */
+        .tr-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 13px 8px;
+            border-bottom: 1px solid rgba(37,99,235,0.2);
+        }
+        .tr-head-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .10em;
+            text-transform: uppercase;
+            color: #60a5fa;
+        }
+        .tr-close-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.12s, color 0.12s;
+        }
+        .tr-close-btn:hover { background: rgba(220,38,38,0.2); color: #f87171; }
+        .tr-close-btn svg { width: 11px; height: 11px; pointer-events: none; }
+
+        /* ── Radar display ── */
+        .tr-radar {
+            position: relative;
+            width: 178px;
+            height: 178px;
+            margin: 14px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, #0d1f3c 0%, #060d1a 100%);
+            border: 1.5px solid rgba(37,99,235,0.3);
+            overflow: hidden;
+            box-shadow: inset 0 0 24px rgba(37,99,235,0.12), 0 0 16px rgba(37,99,235,0.1);
+        }
+
+        /* Concentric rings */
+        .tr-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(37,99,235,0.2);
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+        }
+        .tr-ring-1 { width: 60px;  height: 60px; }
+        .tr-ring-2 { width: 116px; height: 116px; }
+        .tr-ring-3 { width: 170px; height: 170px; border-color: rgba(37,99,235,0.1); }
+
+        /* Crosshairs */
+        .tr-radar::before,
+        .tr-radar::after {
+            content: "";
+            position: absolute;
+            background: rgba(37,99,235,0.18);
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+        }
+        .tr-radar::before { width: 1px; height: 100%; }
+        .tr-radar::after  { height: 1px; width: 100%; }
+
+        /* Sweep */
+        .tr-sweep {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(37,99,235,0)    0%,
+                rgba(37,99,235,0.55) 20%,
+                rgba(37,99,235,0)    25%
+            );
+            animation: tr-rotate 3s linear infinite;
+        }
+        @keyframes tr-rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Centre dot */
+        .tr-origin {
+            position: absolute;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #fff;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            box-shadow: 0 0 6px 2px rgba(255,255,255,0.5);
+            z-index: 2;
+        }
+
+        /* Blips */
+        .tr-blip {
+            position: absolute;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transform: translate(-50%,-50%);
+            z-index: 3;
+            transition: transform 0.15s;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.15), 0 0 10px rgba(0,0,0,0.4);
+        }
+        .tr-blip::after {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0;
+            animation: tr-blip-ping 2.5s ease-out infinite;
+        }
+        .tr-blip:hover { transform: translate(-50%,-50%) scale(1.18); z-index: 10; }
+
+        @keyframes tr-blip-ping {
+            0%   { inset: -1px; opacity: 0.7; }
+            100% { inset: -10px; opacity: 0; }
+        }
+
+        /* Blip tooltip */
+        .tr-blip-tip {
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            padding: 3px 7px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #e2e8f0;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.12s;
+        }
+        .tr-blip:hover .tr-blip-tip { opacity: 1; }
+
+        /* ── Footer status bar ── */
+        .tr-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 13px 10px;
+            border-top: 1px solid rgba(37,99,235,0.15);
+        }
+        .tr-status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 5px 1px rgba(34,197,94,0.6);
+            animation: tr-blink 1.8s ease-in-out infinite;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        @keyframes tr-blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+        .tr-status-text {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+        }
+        .tr-count-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: #60a5fa;
+            background: rgba(37,99,235,0.18);
+            border-radius: 99px;
+            padding: 1px 7px;
+        }
+    `;
+
+    // Static placeholder blips — real positions will come from the location backend
+    const DEMO_BLIPS = [
+        { initials: "AK", color: "#2563eb", top: "32%", left: "64%", name: "Anthony Karam",  delay: "0s"    },
+        { initials: "LY", color: "#0891b2", top: "61%", left: "38%", name: "Lamine Yamal",   delay: "0.8s"  },
+        { initials: "TF", color: "#7c3aed", top: "42%", left: "28%", name: "Tony Fekhoury",  delay: "1.5s"  },
+        { initials: "SJ", color: "#059669", top: "70%", left: "60%", name: "Salim Jaafar",   delay: "0.4s"  },
+    ];
+
+    function initials(name) {
+        if (!name) return "?";
+        const parts = name.trim().split(/\s+/);
+        return parts.length === 1
+            ? parts[0][0].toUpperCase()
+            : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    const RADAR_ICON = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+        <path d="M12 12 L20 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <circle cx="12" cy="12" r="5"  stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
+        <circle cx="12" cy="12" r="9"  stroke="currentColor" stroke-width="1.2" opacity="0.28"/>
+        <line x1="12" y1="3"  x2="12" y2="21" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+        <line x1="3"  y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+    </svg>`;
+
+    const CLOSE_ICON = `<svg viewBox="0 0 12 12" fill="none">
+        <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="11" y1="1" x2="1"  y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`;
+
+    function buildBlips() {
+        return DEMO_BLIPS.map(b => `
+            <div class="tr-blip"
+                 style="top:${b.top};left:${b.left};background:${b.color};animation-delay:${b.delay};color:#fff;">
+                ${b.initials}
+                <span class="tr-blip-tip">${b.name}</span>
+            </div>
+        `).join("");
+    }
+
+    function injectRadar() {
+        if (document.getElementById("tr-wrap")) return;
+
+        const style = document.createElement("style");
+        style.id = "tr-style";
+        style.textContent = RADAR_CSS;
+        document.head.appendChild(style);
+
+        const wrap = document.createElement("div");
+        wrap.id = "tr-wrap";
+        wrap.innerHTML = `
+            <div id="tr-panel">
+                <div class="tr-head">
+                    <span class="tr-head-label">Team Radar</span>
+                    <button class="tr-close-btn" id="tr-close">${CLOSE_ICON}</button>
+                </div>
+                <div class="tr-radar">
+                    <div class="tr-ring tr-ring-1"></div>
+                    <div class="tr-ring tr-ring-2"></div>
+                    <div class="tr-ring tr-ring-3"></div>
+                    <div class="tr-sweep"></div>
+                    <div class="tr-origin"></div>
+                    ${buildBlips()}
+                </div>
+                <div class="tr-foot">
+                    <span class="tr-status-text">
+                        <span class="tr-status-dot"></span>Live
+                    </span>
+                    <span class="tr-count-badge">${DEMO_BLIPS.length} online</span>
+                </div>
+            </div>
+            <button id="tr-trigger" title="Team Radar">${RADAR_ICON}</button>
+        `;
+
+        document.body.appendChild(wrap);
+
+        const panel   = document.getElementById("tr-panel");
+        const trigger = document.getElementById("tr-trigger");
+        const closeBtn = document.getElementById("tr-close");
+
+        let open = false;
+
+        function togglePanel() {
+            open = !open;
+            panel.classList.toggle("tr-open", open);
+        }
+
+        trigger.addEventListener("click", (e) => { e.stopPropagation(); togglePanel(); });
+        closeBtn.addEventListener("click", (e) => { e.stopPropagation(); open = true; togglePanel(); });
+
+        document.addEventListener("click", (e) => {
+            if (open && !wrap.contains(e.target)) { open = true; togglePanel(); }
+        });
+    }
+
+    $(document).on("page-change.tr-boot", function () {
+        if (!frappe.session?.user || frappe.session.user === "Guest") return;
+        $(document).off("page-change.tr-boot");
+        injectRadar();
+    });
+
+    $(document).on("page-change", () => {
+        if (frappe.session?.user && frappe.session.user !== "Guest") {
+            if (!document.getElementById("tr-wrap")) injectRadar();
+        }
+    });
+})();

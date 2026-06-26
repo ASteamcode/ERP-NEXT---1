@@ -187,7 +187,7 @@ FIELDS = [
         "fieldname": "custom_scaffold_type",
         "fieldtype": "Select",
         "label": "Scaffold Type",
-        "options": "\nRinglock System\nTube & Coupler\nKwikstage\nSuspended\nFrame System\nShoring",
+        "options": "\nExternal Scaffolding\nPropping Scaffolding\nAdjustable Props\nRental per Piece\nSales per Piece\nSales Used\nMobile Scaffolding",
         "insert_after": "custom_area",
     },
     {
@@ -221,7 +221,7 @@ FIELDS = [
     {
         "fieldname": "custom_project_owner",
         "fieldtype": "Data",
-        "label": "Project Owner",
+        "label": "Contact Person #1",
         "insert_after": "custom_architect",
     },
     {
@@ -232,7 +232,7 @@ FIELDS = [
     {
         "fieldname": "custom_site_engineer",
         "fieldtype": "Data",
-        "label": "Site Engineer",
+        "label": "Contact Person #2",
         "insert_after": "custom_col_break_team",
     },
     {
@@ -244,8 +244,14 @@ FIELDS = [
     {
         "fieldname": "custom_safety_officer",
         "fieldtype": "Data",
-        "label": "Safety Officer",
+        "label": "Contact Person #3",
         "insert_after": "custom_workers_count",
+    },
+    {
+        "fieldname": "custom_contact_person_4",
+        "fieldtype": "Data",
+        "label": "Contact Person #4",
+        "insert_after": "custom_safety_officer",
     },
     {
         "fieldname": "custom_contract_value",

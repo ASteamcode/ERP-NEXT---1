@@ -69,13 +69,12 @@
 .pg-f{position:sticky;z-index:2;}
 .pg-tbl td.pg-f{background:#fff;}
 .pg-tr-alt td.pg-f{background:#f8faff;}
-.pg-tbl th.pg-f{z-index:3;background:transparent;}
+.pg-tbl th.pg-f{z-index:3;background:#1e3f85;}
 .pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.10);}
 .pg-tbl th.pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.08);}
 
-/* variable cols */
-.pg-v{display:none;min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
-@keyframes pg-col-in{from{opacity:0;transform:translateX(var(--pg-dir,22px))}to{opacity:1;transform:none}}
+/* variable cols — all always visible; tabs scroll into view */
+.pg-v{min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
 
 /* row hover — obvious for non-technical users */
 .pg-tbl tbody tr:hover td{background:#e8f4fd !important;}
@@ -341,8 +340,7 @@
 .pg-tb-del.pg-tb-del-on{opacity:1;pointer-events:all;max-width:180px;padding:7px 14px;border-width:1.5px;}
 .pg-tb-del:hover{background:rgba(239,68,68,.22);border-color:#fca5a5;color:#fff;}
 .pg-tb-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:0 4px;}
-.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}
-.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:300px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity .12s;}
+.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
@@ -582,10 +580,17 @@
         const empty = v == null || v === "" || v === "—";
         switch (col.type) {
             case "text":
-            case "select":
                 if (empty) return `<span class="pg-mt">—</span>`;
                 if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
                 return `<span>${_e(v)}</span>`;
+            case "select": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const _pal = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
+                const _opts = (col.options || []).filter(o => o);
+                const _idx  = _opts.indexOf(String(v));
+                const _cls  = _idx >= 0 ? _pal[_idx % _pal.length] : "pg-badge-gray";
+                return `<span class="pg-badge ${_cls}">${_e(v)}</span>`;
+            }
             case "link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const val = String(v);
@@ -679,7 +684,7 @@
             `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}">${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -704,7 +709,7 @@
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
     }
@@ -1693,13 +1698,6 @@
         el._pgCfg = cfg;
 
         const n = cfg.tabs.length;
-        const dynId = "pg-tabs-" + n;
-        if (!document.getElementById(dynId)) {
-            const s = document.createElement("style");
-            s.id = dynId;
-            s.textContent = buildTabRevealCSS(n);
-            document.head.appendChild(s);
-        }
 
         let left = 0;
         cfg.fixed.forEach(f => { f._left = left; left += (f.width || 120); });
@@ -2018,6 +2016,14 @@
             el.type = "text";
             el.value = val;
             el.placeholder = "Paste Google Maps URL…";
+        } else if (ctype === "notes" && ckey === "description") {
+            const H = 160;
+            _eFl.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${H}px;z-index:99999;pointer-events:none;`;
+            el = document.createElement("textarea");
+            el.className = "pg-float-input";
+            el.style.padding = "6px 12px";
+            el.style.resize = "none";
+            el.value = val;
         } else if (ctype === "notes") {
             el = document.createElement("textarea");
             el.className = "pg-float-input";
@@ -2045,7 +2051,8 @@
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
             if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
-            if (e.key === "Enter" && el.tagName === "TEXTAREA" && e.shiftKey) return;
+            // Notes (textarea): Enter = newline, Escape already handled above
+            if (e.key === "Enter" && el.tagName === "TEXTAREA") return;
             if (e.key === "Enter") { e.preventDefault(); _closeEdit(true); _navCell(root, td, "right"); return; }
 
             const isText = el.tagName === "INPUT" && (el.type === "text" || el.type === "url" || el.type === "");
@@ -2295,10 +2302,8 @@
     }
 
     function _navCell(root, fromTd, direction) {
-        const tbl      = root.querySelector(".pg-tbl");
-        const tabN     = parseInt(tbl.getAttribute("data-tab") || 0);
-        const tabCount = (root._pgCfg.tabs || []).length;
-        const rowName  = fromTd.dataset.rowName;
+        const tbl     = root.querySelector(".pg-tbl");
+        const rowName = fromTd.dataset.rowName;
 
         if (direction === "up" || direction === "down") {
             const colIdx  = fromTd.cellIndex;
@@ -2313,47 +2318,27 @@
         }
 
         const hDir  = direction === "right" ? 1 : -1;
-        const rowEd = (t) => Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-            td.dataset.rowName === rowName &&
-            (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${t}`))
+        // All columns always visible — navigate across the full row
+        const allEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+            td.dataset.rowName === rowName
         );
-        const allEd = rowEd(tabN);
-        const idx   = allEd.indexOf(fromTd);
+        const idx  = allEd.indexOf(fromTd);
         if (idx === -1) return;
-        const next  = allEd[idx + hDir];
+        const next = allEd[idx + hDir];
         if (next) { _openEdit(root, next); return; }
 
-        const nextTab = tabN + hDir;
-        if (nextTab >= 0 && nextTab < tabCount) {
-            root.querySelector(`.pg-pill[data-tab="${nextTab}"]`).click();
-            requestAnimationFrame(() => {
-                const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-                    td.dataset.rowName === rowName && td.classList.contains(`pg-v-${nextTab}`)
-                );
-                const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
-                if (target) _openEdit(root, target);
-            });
-            return;
-        }
-
-        // Past end of last tab going right → jump to first cell of next row
-        // Past start of first tab going left → jump to last cell of prev row
-        const rows = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
+        // Past end/start of row → jump to first/last cell of next/prev row
+        const rows    = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
         const curRow  = fromTd.closest("tr");
         const rowIdx  = rows.indexOf(curRow);
         const nextIdx = rowIdx + hDir;
         if (nextIdx < 0 || nextIdx >= rows.length) return;
-        const targetTab = hDir > 0 ? 0 : tabCount - 1;
-        root.querySelector(`.pg-pill[data-tab="${targetTab}"]`).click();
-        requestAnimationFrame(() => {
-            const nextRowName = rows[nextIdx].dataset.rowName;
-            const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-                td.dataset.rowName === nextRowName &&
-                (td.classList.contains("pg-f") || td.classList.contains(`pg-v-${targetTab}`))
-            );
-            const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
-            if (target) _openEdit(root, target);
-        });
+        const nextRowName = rows[nextIdx].dataset.rowName;
+        const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
+            td.dataset.rowName === nextRowName
+        );
+        const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
+        if (target) _openEdit(root, target);
     }
 
     // ── Row selection ──────────────────────────────────────────────
@@ -2478,7 +2463,6 @@
 // ── Full wiring ────────────────────────────────────────────────
     function _wire(root, cfg) {
         const tabCount = cfg.tabs.length;
-        let _wt = 0, _ts = null;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
 
@@ -2488,28 +2472,28 @@
             if (pill) _activatePill(root, pill, tabCount);
         });
 
-        // ── Close edit on scroll ────────────────────────────────
-        outer.addEventListener("scroll", () => { if (_eIn) _closeEdit(true); }, { passive: true });
-
-        // ── Wheel tab switch ────────────────────────────────────
-        outer.addEventListener("wheel", e => {
-            const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
-            if (ax <= ay || ax < 8) return;
-            e.preventDefault();
-            const now = Date.now();
-            if (now - _wt < 450) return;
-            _wt = now;
-            _stepTab(root, tabCount, e.deltaX);
-        }, { passive: false });
-
-        // ── Touch swipe ─────────────────────────────────────────
-        root.addEventListener("touchstart", e => { _ts = e.touches[0].clientX; }, { passive: true });
-        root.addEventListener("touchend",   e => {
-            if (_ts === null) return;
-            const dx = e.changedTouches[0].clientX - _ts; _ts = null;
-            if (Math.abs(dx) < 40) return;
-            _stepTab(root, tabCount, -dx);
-        });
+        // ── Scroll: close edit + track active tab from position ────
+        let _scrollRaf = null;
+        outer.addEventListener("scroll", () => {
+            if (_eIn) _closeEdit(true);
+            if (_scrollRaf) return;
+            _scrollRaf = requestAnimationFrame(() => {
+                _scrollRaf = null;
+                const tbl2   = root.querySelector(".pg-tbl");
+                const fixedW = (cfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
+                const sl     = outer.scrollLeft;
+                let activeN  = 0;
+                for (let i = tabCount - 1; i >= 0; i--) {
+                    const th = tbl2.querySelector(`th.pg-v-${i}`);
+                    if (th && (th.offsetLeft - fixedW) <= sl + 20) { activeN = i; break; }
+                }
+                const cur = parseInt(tbl2.getAttribute("data-tab") || 0);
+                if (activeN !== cur) {
+                    const pill2 = root.querySelector(`.pg-pill[data-tab="${activeN}"]`);
+                    if (pill2) _activatePill(root, pill2, tabCount, true);
+                }
+            });
+        }, { passive: true });
 
         // ── Row number selection ─────────────────────────────────
         tbody.addEventListener("mousedown", e => {
@@ -2572,6 +2556,14 @@
                 if (!td) return;
                 _openEdit(root, td);
             });
+
+            // Notes cells open immediately on hover — no click needed
+            root.addEventListener("mouseenter", e => {
+                const td = e.target.closest("td.pg-ed");
+                if (!td || td.dataset.ctype !== "notes") return;
+                if (_eTd === td) return; // already editing this cell
+                _openEdit(root, td);
+            }, true);
         }
 
         // ── Expand button (inside popup) — wired once ────────────
@@ -2861,16 +2853,21 @@
         ind.style.width = pr.width + "px";
     }
 
-    function _activatePill(root, pill, tabCount) {
-        const tbl  = root.querySelector(".pg-tbl");
-        const newN = parseInt(pill.dataset.tab);
-        const oldN = parseInt(tbl.getAttribute("data-tab") || 0);
-        if (newN === oldN) return;
+    function _activatePill(root, pill, _tabCount, skipScroll) {
+        const tbl   = root.querySelector(".pg-tbl");
+        const outer = root.querySelector(".pg-tbl-outer");
+        const newN  = parseInt(pill.dataset.tab);
         root.querySelectorAll(".pg-pill").forEach(p => p.classList.remove("active"));
         pill.classList.add("active");
         _positionInd(pill);
-        tbl.style.setProperty("--pg-dir", (newN > oldN ? 160 : -160) + "px");
         tbl.setAttribute("data-tab", newN);
+        if (!skipScroll && outer) {
+            const firstTh = tbl.querySelector(`th.pg-v-${newN}`);
+            if (firstTh) {
+                const fixedW = (root._pgCfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
+                outer.scrollTo({ left: Math.max(0, firstTh.offsetLeft - fixedW), behavior: "instant" });
+            }
+        }
     }
 
     function _stepTab(root, tabCount, deltaX) {
