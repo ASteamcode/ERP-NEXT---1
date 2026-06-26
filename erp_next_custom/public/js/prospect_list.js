@@ -21,27 +21,41 @@ function _focusDraftCompany(host) {
     });
 }
 
-function _extractMapsLocation(url) {
-    try {
-        // /maps/place/PLACE+NAME/@lat,lng  →  "Place Name"
-        const placeMatch = url.match(/\/maps\/place\/([^/@?]+)/);
-        if (placeMatch) {
-            return decodeURIComponent(placeMatch[1].replace(/\+/g, " ")).trim();
-        }
-        // ?q=QUERY or &q=QUERY
-        const qMatch = url.match(/[?&]q=([^&]+)/);
-        if (qMatch) {
-            const q = decodeURIComponent(qMatch[1].replace(/\+/g, " ")).trim();
-            // Skip if it looks like pure coordinates
-            if (!/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(q)) return q;
-        }
-        // /maps/search/QUERY/@...
-        const searchMatch = url.match(/\/maps\/search\/([^/@?]+)/);
-        if (searchMatch) {
-            return decodeURIComponent(searchMatch[1].replace(/\+/g, " ")).trim();
-        }
-    } catch(e) {}
+function _extractMapsCoords(url) {
+    // @lat,lng,zoom  or  @lat,lng
+    const m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) return { lat: m[1], lng: m[2] };
+    // ?q=lat,lng
+    const q = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (q) return { lat: q[1], lng: q[2] };
     return null;
+}
+
+function _geocodeAndFillLocation(name, url, row, rows) {
+    const coords = _extractMapsCoords(url);
+    if (!coords) return;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json&addressdetails=1`, {
+        headers: { "Accept-Language": "en" }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const a = data.address || {};
+        // Build: Country, District, City, Street
+        const parts = [
+            a.country,
+            a.state || a.state_district || a.county,
+            a.city  || a.town || a.village || a.suburb,
+            a.road  || a.pedestrian || a.neighbourhood,
+        ].filter(Boolean);
+        if (!parts.length) return;
+        const loc = parts.join(", ");
+        frappe.db.set_value("Prospect", name, "custom_site_location", loc);
+        row.city = loc;
+        const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
+        if (td) { td.dataset.val = loc; td.textContent = loc; }
+    })
+    .catch(() => {});
 }
 
 const _PROSPECT_CFG = {
@@ -219,16 +233,7 @@ function _pl_render(listview) {
                     // ── Maps → auto-fill Site Location if empty ─────────
                     if (frappe_field === "custom_maps_url" && value) {
                         const row = rows.find(r => r.name === name);
-                        if (row && !row.city) {
-                            const loc = _extractMapsLocation(value);
-                            if (loc) {
-                                frappe.db.set_value("Prospect", name, "custom_site_location", loc);
-                                row.city = loc;
-                                // Update cell in DOM without full reload
-                                const td = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"] td[data-ff="custom_site_location"]`);
-                                if (td) { td.dataset.val = loc; td.textContent = loc; }
-                            }
-                        }
+                        if (row && !row.city) _geocodeAndFillLocation(name, value, row, rows);
                     }
                 },
 
