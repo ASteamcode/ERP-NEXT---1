@@ -372,43 +372,54 @@
             top: 50%; left: 50%; transform: translate(-50%,-50%);
             z-index: 5;
         }
+        /* pan/zoom canvas inside radar */
+        #tr-radar-canvas {
+            position: absolute; inset: 0;
+            transform-origin: center;
+            z-index: 5;
+        }
+        #tr-radar { cursor: grab; }
+        #tr-radar.tr-dragging { cursor: grabbing; }
         /* blips */
         .tr-blip {
             position: absolute;
-            width: 28px; height: 28px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 9.5px; font-weight: 800; color: #fff;
             transform: translate(-50%,-50%);
-            z-index: 10;
-            box-shadow: 0 0 0 2px rgba(255,255,255,.18), 0 3px 12px rgba(0,0,0,.5);
-            cursor: pointer;
-            transition: transform .12s cubic-bezier(.34,1.56,.64,1);
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 10; pointer-events: auto;
         }
-        .tr-blip::after {
+        .tr-blip-dot {
+            width: 17px; height: 17px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 7.5px; font-weight: 900; color: #fff;
+            box-shadow: 0 0 0 1.5px rgba(255,255,255,.22), 0 2px 8px rgba(0,0,0,.55);
+            position: relative; flex-shrink: 0;
+        }
+        .tr-blip-dot::after {
             content: "";
-            position: absolute; inset: -3px; border-radius: 50%;
+            position: absolute; inset: -2px; border-radius: 50%;
             border: 1.5px solid currentColor;
-            opacity: 0;
-            animation: tr-ping 2.2s ease-out infinite;
+            opacity: 0; animation: tr-ping 2.2s ease-out infinite;
         }
-        @keyframes tr-ping { 0%{inset:-1px;opacity:.8} 100%{inset:-11px;opacity:0} }
-        .tr-blip:hover { transform: translate(-50%,-50%) scale(1.22); z-index: 15; }
-        /* name label — shown immediately on hover, no fade delay */
-        .tr-blip-tip {
-            position: absolute;
-            bottom: calc(100% + 6px); left: 50%;
-            transform: translateX(-50%);
-            background: #0f1e38;
-            border: 1px solid rgba(96,165,250,.35);
-            border-radius: 7px;
-            padding: 4px 9px;
-            font-size: 10.5px; font-weight: 700; color: #e2e8f0;
+        @keyframes tr-ping { 0%{inset:-1px;opacity:.75} 100%{inset:-9px;opacity:0} }
+        .tr-blip-name {
+            margin-top: 3px;
+            font-size: 8px; font-weight: 700; color: #cbd5e1;
             white-space: nowrap; pointer-events: none;
-            opacity: 0;
-            /* instant show */
-            transition: none;
+            text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,.9);
+            max-width: 64px; overflow: hidden; text-overflow: ellipsis;
+            line-height: 1;
         }
-        .tr-blip:hover .tr-blip-tip { opacity: 1; }
+        .tr-blip.tr-dimmed { opacity: .18; }
+        /* search bar */
+        .tr-search-wrap { padding: 5px 10px 0; background: #07101f; }
+        #tr-search {
+            width: 100%; box-sizing: border-box;
+            background: rgba(255,255,255,.06); border: 1px solid rgba(37,99,235,.28);
+            border-radius: 6px; padding: 5px 9px;
+            font-size: 11px; color: #e2e8f0; outline: none;
+        }
+        #tr-search::placeholder { color: rgba(255,255,255,.3); }
+        #tr-search:focus { border-color: rgba(96,165,250,.55); background: rgba(255,255,255,.09); }
 
         /* ── Map view (fullscreen only) ── */
         #tr-map-wrap {
@@ -564,10 +575,10 @@
         setTimeout(_showLocationPopup, 1200); // slight delay so page settles
     }
 
-    // ── User color palette (consistent per initials) ──────────────────────
-    const _BLIP_COLORS = ["#2563eb","#0891b2","#7c3aed","#059669","#d97706","#dc2626","#db2777"];
-    function _blipColor(ini) {
-        let h = 0; for (let i = 0; i < ini.length; i++) h = (h * 31 + ini.charCodeAt(i)) & 0xffff;
+    // ── User color palette (consistent per user, different colors even for same initials) ──
+    const _BLIP_COLORS = ["#2563eb","#0891b2","#7c3aed","#059669","#d97706","#dc2626","#db2777","#0d9488","#ea580c","#4f46e5","#0284c7","#16a34a"];
+    function _blipColor(str) {
+        let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) & 0x7fffffff;
         return _BLIP_COLORS[h % _BLIP_COLORS.length];
     }
 
@@ -689,6 +700,9 @@
                         <button class="tr-icon-btn tr-close" id="tr-close">${CLOSE_ICON}</button>
                     </div>
                 </div>
+                <div class="tr-search-wrap">
+                    <input id="tr-search" type="text" placeholder="Search by name…" autocomplete="off" spellcheck="false" />
+                </div>
                 <div id="tr-radar">
                     <div class="tr-ring tr-ring-3"></div>
                     <div class="tr-ring tr-ring-2"></div>
@@ -697,6 +711,7 @@
                     <div class="tr-cross tr-cross-v"></div>
                     <div class="tr-sweep"></div>
                     <div class="tr-origin"></div>
+                    <div id="tr-radar-canvas"></div>
                 </div>
                 <div id="tr-map-wrap"><div id="tr-map"></div></div>
                 <div class="tr-foot">
@@ -713,22 +728,80 @@
         const closeBtn  = document.getElementById("tr-close");
         const expandBtn = document.getElementById("tr-expand");
         const radarEl   = document.getElementById("tr-radar");
+        const canvasEl  = document.getElementById("tr-radar-canvas");
+        const searchEl  = document.getElementById("tr-search");
         const countEl   = document.getElementById("tr-count");
         let open = false, fullscreen = false, _lastLocs = [];
+        let _panX = 0, _panY = 0, _zoom = 1;
+
+        function _applyTransform() {
+            canvasEl.style.transform = `translate(${_panX}px,${_panY}px) scale(${_zoom})`;
+        }
+
+        // ── Pan / zoom on radar dome ───────────────────────────────
+        (function _initPanZoom() {
+            let dragging = false, startX, startY, startPanX, startPanY;
+            radarEl.addEventListener("mousedown", e => {
+                if (e.button !== 0) return;
+                dragging = true; startX = e.clientX; startY = e.clientY;
+                startPanX = _panX; startPanY = _panY;
+                radarEl.classList.add("tr-dragging");
+                e.preventDefault();
+            });
+            document.addEventListener("mousemove", e => {
+                if (!dragging) return;
+                _panX = startPanX + (e.clientX - startX);
+                _panY = startPanY + (e.clientY - startY);
+                _applyTransform();
+            });
+            document.addEventListener("mouseup", () => {
+                dragging = false; radarEl.classList.remove("tr-dragging");
+            });
+            radarEl.addEventListener("wheel", e => {
+                e.preventDefault();
+                const rect   = radarEl.getBoundingClientRect();
+                const cx     = e.clientX - rect.left - rect.width  / 2;
+                const cy     = e.clientY - rect.top  - rect.height / 2;
+                const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
+                const newZoom = Math.max(0.4, Math.min(6, _zoom * factor));
+                _panX = cx - (cx - _panX) * newZoom / _zoom;
+                _panY = cy - (cy - _panY) * newZoom / _zoom;
+                _zoom = newZoom;
+                _applyTransform();
+            }, { passive: false });
+            // double-click resets view
+            radarEl.addEventListener("dblclick", () => {
+                _panX = 0; _panY = 0; _zoom = 1; _applyTransform();
+            });
+        })();
+
+        // ── Search filter ──────────────────────────────────────────
+        searchEl.addEventListener("input", () => {
+            const q = searchEl.value.trim().toLowerCase();
+            canvasEl.querySelectorAll(".tr-blip").forEach(el => {
+                const name = (el.dataset.name || "").toLowerCase();
+                el.classList.toggle("tr-dimmed", q.length > 0 && !name.includes(q));
+            });
+        });
+        // prevent panel close on search click
+        searchEl.addEventListener("click", e => e.stopPropagation());
 
         // ── CSS radar blips (small view) ──────────────────────────
         function _renderRadarBlips(locs) {
-            radarEl.querySelectorAll(".tr-blip").forEach(el => el.remove());
+            canvasEl.querySelectorAll(".tr-blip").forEach(el => el.remove());
+            const q = searchEl.value.trim().toLowerCase();
             locs.forEach((b, i) => {
                 const ini   = _initials(b.full_name || b.user);
-                const color = _blipColor(ini);
+                const color = _blipColor(b.user || b.full_name || ini);
                 const pos   = _toRadarPos(b.lat, b.lng, locs);
-                const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
-                const d = document.createElement("div");
-                d.className = "tr-blip";
-                d.style.cssText = `top:${pos.top};left:${pos.left};background:${color};animation-delay:${(i*.55)%2}s`;
-                d.innerHTML = `${ini}<span class="tr-blip-tip">${label}</span>`;
-                radarEl.appendChild(d);
+                const name  = b.full_name || b.user;
+                const label = b.city ? `${name} · ${b.city}` : name;
+                const d     = document.createElement("div");
+                d.className = "tr-blip" + (q && !label.toLowerCase().includes(q) ? " tr-dimmed" : "");
+                d.dataset.name = label;
+                d.style.cssText = `top:${pos.top};left:${pos.left}`;
+                d.innerHTML = `<div class="tr-blip-dot" style="background:${color};color:${color};animation-delay:${(i*.55)%2}s">${ini}</div><div class="tr-blip-name">${name}</div>`;
+                canvasEl.appendChild(d);
             });
         }
 
@@ -749,7 +822,7 @@
             _trMarkers.forEach(m => m.remove()); _trMarkers = [];
             locs.forEach((b, i) => {
                 const ini   = _initials(b.full_name || b.user);
-                const color = _blipColor(ini);
+                const color = _blipColor(b.user || b.full_name || ini);
                 const label = b.city ? `${b.full_name || b.user}<br><small style="opacity:.7">${b.city}</small>` : (b.full_name || b.user);
                 const icon  = L.divIcon({ className: "", html: `<div class="tr-lmarker" style="background:${color};animation-delay:${(i*.6)%2}s">${ini}</div>`, iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-18] });
                 _trMarkers.push(L.marker([b.lat, b.lng], { icon }).bindPopup(label).addTo(_trMap));
