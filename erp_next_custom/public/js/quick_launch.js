@@ -392,7 +392,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 7.5px; font-weight: 900; color: #fff;
             box-shadow: 0 0 0 1.5px rgba(255,255,255,.22), 0 2px 8px rgba(0,0,0,.55);
-            position: relative; flex-shrink: 0;
+            position: relative; flex-shrink: 0; cursor: pointer;
         }
         .tr-blip-dot::after {
             content: "";
@@ -401,24 +401,24 @@
             opacity: 0; animation: tr-ping 2.2s ease-out infinite;
         }
         @keyframes tr-ping { 0%{inset:-1px;opacity:.75} 100%{inset:-9px;opacity:0} }
+        .tr-city-tip {
+            position: absolute; bottom: calc(100% + 7px); left: 50%;
+            transform: translateX(-50%);
+            background: #0f1e38; border: 1px solid rgba(96,165,250,.35);
+            border-radius: 6px; padding: 4px 9px;
+            font-size: 10px; font-weight: 700; color: #bfdbfe;
+            white-space: nowrap; pointer-events: none;
+            opacity: 0; transition: none; z-index: 20;
+        }
+        .tr-blip-dot:hover .tr-city-tip { opacity: 1; }
         .tr-blip-name {
             margin-top: 3px;
             font-size: 8px; font-weight: 700; color: #cbd5e1;
-            white-space: nowrap; pointer-events: auto; cursor: default;
+            white-space: nowrap; pointer-events: none;
             text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,.9);
             max-width: 64px; overflow: hidden; text-overflow: ellipsis;
-            line-height: 1; position: relative;
+            line-height: 1;
         }
-        .tr-blip-name .tr-city-tip {
-            position: absolute; bottom: calc(100% + 5px); left: 50%;
-            transform: translateX(-50%);
-            background: #0f1e38; border: 1px solid rgba(96,165,250,.35);
-            border-radius: 6px; padding: 3px 8px;
-            font-size: 9.5px; font-weight: 600; color: #bfdbfe;
-            white-space: nowrap; pointer-events: none;
-            opacity: 0; transition: none;
-        }
-        .tr-blip-name:hover .tr-city-tip { opacity: 1; }
         .tr-blip.tr-dimmed { opacity: .18; }
         /* search bar */
         .tr-search-wrap { padding: 5px 10px 0; background: #07101f; }
@@ -806,7 +806,7 @@
                 d.dataset.name = label;
                 d.style.cssText = `top:${pos.top};left:${pos.left}`;
                 const cityTip = b.city ? `<span class="tr-city-tip">${b.city}</span>` : "";
-                d.innerHTML = `<div class="tr-blip-dot" style="background:${color};color:${color};animation-delay:${(i*.55)%2}s">${ini}</div><div class="tr-blip-name">${name}${cityTip}</div>`;
+                d.innerHTML = `<div class="tr-blip-dot" style="background:${color};color:${color};animation-delay:${(i*.55)%2}s">${ini}${cityTip}</div><div class="tr-blip-name">${name}</div>`;
                 canvasEl.appendChild(d);
             });
         }
