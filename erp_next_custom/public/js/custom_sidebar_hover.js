@@ -364,71 +364,6 @@ select.form-control:focus {
     });
   }
 
-  // ─── Inbox panel ─────────────────────────────────────────────────────────
-
-  function injectInboxIcon() {
-    if (document.getElementById("cst-inbox-item")) return;
-    // Find the sidebar items list — insert before the bottom account section
-    const sidebar = document.querySelector(".body-sidebar");
-    if (!sidebar) return;
-    const itemsList = sidebar.querySelector(".sidebar-items, .list-unstyled.sidebar-items, ul.list-unstyled");
-    const bottom    = sidebar.querySelector(".body-sidebar-bottom");
-    if (!bottom) return;
-
-    if (!document.getElementById("cst-inbox-styles")) {
-      const s = document.createElement("style");
-      s.id = "cst-inbox-styles";
-      s.textContent = `
-        #cst-inbox-item { list-style: none; }
-        #cst-inbox-item .item-anchor {
-          display: flex; align-items: center; gap: 8px;
-          padding: 6px 12px; border-radius: 6px; cursor: pointer;
-          text-decoration: none; color: rgba(255,255,255,.82);
-          transition: background .12s;
-        }
-        #cst-inbox-item .item-anchor:hover { background: rgba(255,255,255,.10); color: #fff; }
-        #cst-inbox-item .sidebar-item-icon {
-          width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-          background: linear-gradient(135deg,#3b82f6,#1d4ed8);
-          border-radius: 7px;
-          box-shadow: 0 2px 8px rgba(37,99,235,.5);
-        }
-        #cst-inbox-item .sidebar-item-icon svg { filter: none !important; opacity: 1 !important; }
-        #cst-inbox-item .sidebar-item-label { font-size: 13px; font-weight: 600; white-space: nowrap; }
-        #cst-inbox-item .cst-ib-dot {
-          margin-left: auto; width: 7px; height: 7px; border-radius: 50%;
-          background: #60a5fa; box-shadow: 0 0 6px 2px rgba(96,165,250,.6);
-          flex-shrink: 0;
-        }
-      `;
-      document.head.appendChild(s);
-    }
-
-    const li = document.createElement("li");
-    li.id = "cst-inbox-item";
-    li.className = "standard-sidebar-item";
-    li.innerHTML = `
-      <a class="item-anchor" href="#" title="Inbox">
-        <span class="sidebar-item-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
-            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
-          </svg>
-        </span>
-        <span class="sidebar-item-label">Inbox</span>
-        <span class="cst-ib-dot"></span>
-      </a>`;
-
-    // Insert just above the bottom account bar
-    bottom.insertAdjacentElement("beforebegin", li);
-
-    li.querySelector(".item-anchor").addEventListener("click", e => {
-      e.preventDefault();
-      frappe.set_route("inbox");
-    });
-  }
-
   // ─── Bootstrap ────────────────────────────────────────────────────────────
 
   function init() {
@@ -437,7 +372,6 @@ select.form-control:focus {
     wireHomeButton();
     _watchAddBtn();
     watchLogo();
-    injectInboxIcon();
   }
 
   document.addEventListener("DOMContentLoaded", init);
@@ -451,7 +385,5 @@ select.form-control:focus {
       simplifyAddButton();
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    const _ibObs = new MutationObserver(() => injectInboxIcon());
-    _ibObs.observe(document.body, { childList: true, subtree: true });
   }
 })();
