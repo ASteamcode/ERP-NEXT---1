@@ -247,235 +247,175 @@
 
         /* ── Collapsed trigger ── */
         #tr-trigger {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             border-radius: 50%;
             background: #0f172a;
             border: 2px solid rgba(37,99,235,0.55);
             box-shadow: 0 0 0 0 rgba(37,99,235,0.4), 0 4px 16px rgba(0,0,0,0.4);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             color: #60a5fa;
             transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
             animation: tr-pulse-ring 2.4s ease-in-out infinite;
         }
-        #tr-trigger:hover {
-            border-color: #2563eb;
-            transform: scale(1.06);
-        }
+        #tr-trigger:hover { border-color: #2563eb; transform: scale(1.06); }
         #tr-trigger svg { width: 22px; height: 22px; pointer-events: none; }
-
         @keyframes tr-pulse-ring {
-            0%, 100% { box-shadow: 0 0 0 0   rgba(37,99,235,0.5), 0 4px 16px rgba(0,0,0,0.4); }
-            50%       { box-shadow: 0 0 0 8px rgba(37,99,235,0),   0 4px 16px rgba(0,0,0,0.4); }
+            0%,100% { box-shadow: 0 0 0 0   rgba(37,99,235,0.5), 0 4px 16px rgba(0,0,0,0.4); }
+            50%     { box-shadow: 0 0 0 8px rgba(37,99,235,0),   0 4px 16px rgba(0,0,0,0.4); }
         }
 
         /* ── Panel ── */
         #tr-panel {
-            width: 220px;
-            background: #0b1120;
+            width: 240px;
+            background: #080f1e;
             border: 1.5px solid rgba(37,99,235,0.35);
-            border-radius: 16px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.55), inset 0 0 40px rgba(37,99,235,0.04);
+            border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7), inset 0 0 40px rgba(37,99,235,0.04);
             overflow: hidden;
             transform-origin: bottom left;
             transform: scale(0.85) translateY(6px);
             opacity: 0;
             pointer-events: none;
-            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease;
+            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease,
+                        width 0.28s ease, height 0.28s ease, border-radius 0.28s ease, bottom 0.28s ease, left 0.28s ease;
         }
-        #tr-panel.tr-open {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            pointer-events: all;
+        #tr-panel.tr-open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+        #tr-panel.tr-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            z-index: 99999;
         }
 
         /* ── Panel header ── */
         .tr-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 10px 13px 8px;
             border-bottom: 1px solid rgba(37,99,235,0.2);
+            background: #080f1e;
+            position: relative; z-index: 10;
         }
+        .tr-head-left { display:flex; align-items:center; gap:8px; }
         .tr-head-label {
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: .10em;
-            text-transform: uppercase;
-            color: #60a5fa;
+            font-size: 10px; font-weight: 800; letter-spacing: .10em;
+            text-transform: uppercase; color: #60a5fa;
         }
-        .tr-close-btn {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.4);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .tr-head-btns { display:flex; align-items:center; gap:6px; }
+        .tr-icon-btn {
+            width: 24px; height: 24px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: background 0.12s, color 0.12s;
         }
-        .tr-close-btn:hover { background: rgba(220,38,38,0.2); color: #f87171; }
-        .tr-close-btn svg { width: 11px; height: 11px; pointer-events: none; }
+        .tr-icon-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .tr-icon-btn.tr-close:hover { background: rgba(220,38,38,0.2); color: #f87171; }
+        .tr-icon-btn svg { width: 12px; height: 12px; pointer-events: none; }
 
-        /* ── Radar display ── */
-        .tr-radar {
+        /* ── Map dome container ── */
+        .tr-map-wrap {
             position: relative;
-            width: 178px;
-            height: 178px;
+            width: 200px; height: 200px;
             margin: 14px auto;
             border-radius: 50%;
-            background: radial-gradient(circle, #0d1f3c 0%, #060d1a 100%);
-            border: 1.5px solid rgba(37,99,235,0.3);
             overflow: hidden;
-            box-shadow: inset 0 0 24px rgba(37,99,235,0.12), 0 0 16px rgba(37,99,235,0.1);
+            /* Dome bump: multi-layer shadow + specular highlight */
+            box-shadow:
+                inset 0 -8px 24px rgba(0,0,0,0.65),
+                inset 0  2px 10px rgba(255,255,255,0.06),
+                0 8px 32px rgba(0,0,0,0.55),
+                0 2px 8px  rgba(0,0,0,0.4);
+            border: 2px solid rgba(37,99,235,0.4);
+            transition: width 0.28s ease, height 0.28s ease, border-radius 0.28s ease;
+            cursor: grab;
         }
-
-        /* Concentric rings */
-        .tr-ring {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px solid rgba(37,99,235,0.2);
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
+        .tr-map-wrap:active { cursor: grabbing; }
+        #tr-panel.tr-fullscreen .tr-map-wrap {
+            width: 100% !important;
+            height: calc(100vh - 44px - 38px) !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            border-left: none; border-right: none;
         }
-        .tr-ring-1 { width: 60px;  height: 60px; }
-        .tr-ring-2 { width: 116px; height: 116px; }
-        .tr-ring-3 { width: 170px; height: 170px; border-color: rgba(37,99,235,0.1); }
-
-        /* Crosshairs */
-        .tr-radar::before,
-        .tr-radar::after {
+        /* Specular lens highlight overlay */
+        .tr-map-wrap::after {
             content: "";
-            position: absolute;
-            background: rgba(37,99,235,0.18);
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-        }
-        .tr-radar::before { width: 1px; height: 100%; }
-        .tr-radar::after  { height: 1px; width: 100%; }
-
-        /* Sweep */
-        .tr-sweep {
             position: absolute;
             inset: 0;
             border-radius: 50%;
-            background: conic-gradient(
-                from 0deg,
-                rgba(37,99,235,0)    0%,
-                rgba(37,99,235,0.55) 20%,
-                rgba(37,99,235,0)    25%
-            );
-            animation: tr-rotate 3s linear infinite;
-        }
-        @keyframes tr-rotate {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-
-        /* Centre dot */
-        .tr-origin {
-            position: absolute;
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: #fff;
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-            box-shadow: 0 0 6px 2px rgba(255,255,255,0.5);
-            z-index: 2;
-        }
-
-        /* Blips */
-        .tr-blip {
-            position: absolute;
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            font-weight: 700;
-            color: #fff;
-            cursor: pointer;
-            transform: translate(-50%,-50%);
-            z-index: 3;
-            transition: transform 0.15s;
-            box-shadow: 0 0 0 2px rgba(255,255,255,0.15), 0 0 10px rgba(0,0,0,0.4);
-        }
-        .tr-blip::after {
-            content: "";
-            position: absolute;
-            inset: -3px;
-            border-radius: 50%;
-            border: 2px solid currentColor;
-            opacity: 0;
-            animation: tr-blip-ping 2.5s ease-out infinite;
-        }
-        .tr-blip:hover { transform: translate(-50%,-50%) scale(1.18); z-index: 10; }
-
-        @keyframes tr-blip-ping {
-            0%   { inset: -1px; opacity: 0.7; }
-            100% { inset: -10px; opacity: 0; }
-        }
-
-        /* Blip tooltip */
-        .tr-blip-tip {
-            position: absolute;
-            bottom: calc(100% + 5px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 6px;
-            padding: 3px 7px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #e2e8f0;
-            white-space: nowrap;
+            background: radial-gradient(ellipse at 35% 28%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 45%, transparent 68%);
             pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.12s;
+            z-index: 500;
+            transition: border-radius 0.28s ease;
         }
-        .tr-blip:hover .tr-blip-tip { opacity: 1; }
+        #tr-panel.tr-fullscreen .tr-map-wrap::after { border-radius: 0; }
 
-        /* ── Footer status bar ── */
+        /* Leaflet map itself */
+        #tr-map {
+            width: 100%; height: 100%;
+        }
+        /* Dark Leaflet UI */
+        #tr-map .leaflet-control-zoom a {
+            background: #0f172a !important;
+            color: #60a5fa !important;
+            border-color: rgba(37,99,235,0.3) !important;
+        }
+        #tr-map .leaflet-control-zoom a:hover { background: #1e293b !important; }
+        #tr-map .leaflet-control-attribution { display: none; }
+
+        /* ── Footer ── */
         .tr-foot {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 7px 13px 10px;
             border-top: 1px solid rgba(37,99,235,0.15);
+            background: #080f1e;
+            position: relative; z-index: 10;
         }
         .tr-status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
+            width: 6px; height: 6px; border-radius: 50%;
             background: #22c55e;
             box-shadow: 0 0 5px 1px rgba(34,197,94,0.6);
             animation: tr-blink 1.8s ease-in-out infinite;
-            display: inline-block;
-            margin-right: 5px;
+            display: inline-block; margin-right: 5px;
         }
-        @keyframes tr-blink {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.3; }
-        }
-        .tr-status-text {
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
-        }
+        @keyframes tr-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .tr-status-text { font-size: 10px; color: rgba(255,255,255,0.4); }
         .tr-count-badge {
-            font-size: 10px;
-            font-weight: 700;
-            color: #60a5fa;
-            background: rgba(37,99,235,0.18);
-            border-radius: 99px;
-            padding: 1px 7px;
+            font-size: 10px; font-weight: 700; color: #60a5fa;
+            background: rgba(37,99,235,0.18); border-radius: 99px; padding: 1px 7px;
         }
+
+        /* ── Leaflet blip markers ── */
+        .tr-lmarker {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800; color: #fff;
+            box-shadow: 0 0 0 2.5px rgba(255,255,255,0.2), 0 4px 14px rgba(0,0,0,0.55);
+            cursor: pointer; position: relative;
+        }
+        .tr-lmarker::after {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0;
+            animation: tr-blip-ping 2.4s ease-out infinite;
+        }
+        @keyframes tr-blip-ping { 0%{inset:-2px;opacity:.7} 100%{inset:-12px;opacity:0} }
+        .leaflet-popup-content-wrapper {
+            background: #1e293b !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+            color: #e2e8f0 !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+        }
+        .leaflet-popup-tip { background: #1e293b !important; }
+        .leaflet-popup-close-button { color: rgba(255,255,255,0.4) !important; }
     `;
 
     // ── Location Permission Popup ─────────────────────────────────────────
@@ -588,18 +528,22 @@
             : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
 
-    // Map from lat/lng bounding box to radar % positions
-    // We use a simple Mercator-ish normalisation over whatever bounding box we have
-    function _latLngToRadar(lat, lng, allLocs) {
-        if (allLocs.length === 1) return { top: "50%", left: "50%" };
-        const lats = allLocs.map(l => l.lat), lngs = allLocs.map(l => l.lng);
-        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-        const pad = 0.1;
-        const rLat = maxLat - minLat || 1, rLng = maxLng - minLng || 1;
-        const top  = (1 - (lat - minLat) / rLat) * (1 - 2 * pad) + pad;
-        const left = (lng - minLng) / rLng * (1 - 2 * pad) + pad;
-        return { top: `${(top * 100).toFixed(1)}%`, left: `${(left * 100).toFixed(1)}%` };
+    // ── Leaflet loader ────────────────────────────────────────────────────
+    let _leafletReady = null;
+    function _loadLeaflet() {
+        if (_leafletReady) return _leafletReady;
+        _leafletReady = new Promise(resolve => {
+            if (window.L) { resolve(window.L); return; }
+            const css = document.createElement("link");
+            css.rel = "stylesheet";
+            css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+            document.head.appendChild(css);
+            const js = document.createElement("script");
+            js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            js.onload = () => resolve(window.L);
+            document.head.appendChild(js);
+        });
+        return _leafletReady;
     }
 
     const RADAR_ICON = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -616,16 +560,8 @@
         <line x1="11" y1="1" x2="1"  y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
 
-    function _buildBlipsHTML(locs) {
-        return locs.map((b, i) => {
-            const ini   = _initials(b.full_name || b.user);
-            const color = _blipColor(ini);
-            const delay = `${(i * 0.5) % 2}s`;
-            const pos   = _latLngToRadar(b.lat, b.lng, locs);
-            const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
-            return `<div class="tr-blip" style="top:${pos.top};left:${pos.left};background:${color};animation-delay:${delay};color:#fff;">${ini}<span class="tr-blip-tip">${label}</span></div>`;
-        }).join("");
-    }
+    // Leaflet map instance and marker layer
+    let _trMap = null, _trMarkers = [];
 
     // ── Location tracking (start after permission) ────────────────────────
     let _lastCity = "";
@@ -669,6 +605,9 @@
         document.head.appendChild(style);
     }
 
+    const EXPAND_ICON = `<svg viewBox="0 0 12 12" fill="none"><path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const SHRINK_ICON  = `<svg viewBox="0 0 12 12" fill="none"><path d="M4 1v3H1M11 4H8V1M8 11V8h3M1 8h3v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
     function injectRadar() {
         if (document.getElementById("tr-wrap")) return;
 
@@ -682,20 +621,19 @@
         wrap.innerHTML = `
             <div id="tr-panel">
                 <div class="tr-head">
-                    <span class="tr-head-label">Team Radar</span>
-                    <button class="tr-close-btn" id="tr-close">${CLOSE_ICON}</button>
+                    <div class="tr-head-left">
+                        <span class="tr-head-label">Team Radar</span>
+                    </div>
+                    <div class="tr-head-btns">
+                        <button class="tr-icon-btn" id="tr-expand" title="Fullscreen">${EXPAND_ICON}</button>
+                        <button class="tr-icon-btn tr-close" id="tr-close">${CLOSE_ICON}</button>
+                    </div>
                 </div>
-                <div class="tr-radar" id="tr-radar-body">
-                    <div class="tr-ring tr-ring-1"></div>
-                    <div class="tr-ring tr-ring-2"></div>
-                    <div class="tr-ring tr-ring-3"></div>
-                    <div class="tr-sweep"></div>
-                    <div class="tr-origin"></div>
+                <div class="tr-map-wrap" id="tr-map-wrap">
+                    <div id="tr-map"></div>
                 </div>
                 <div class="tr-foot">
-                    <span class="tr-status-text">
-                        <span class="tr-status-dot"></span>Live
-                    </span>
+                    <span class="tr-status-text"><span class="tr-status-dot"></span>Live</span>
                     <span class="tr-count-badge" id="tr-count">0 online</span>
                 </div>
             </div>
@@ -704,17 +642,88 @@
 
         document.body.appendChild(wrap);
 
-        const panel    = document.getElementById("tr-panel");
-        const trigger  = document.getElementById("tr-trigger");
-        const closeBtn = document.getElementById("tr-close");
-        const radarBody = document.getElementById("tr-radar-body");
-        const countEl  = document.getElementById("tr-count");
+        const panel     = document.getElementById("tr-panel");
+        const trigger   = document.getElementById("tr-trigger");
+        const closeBtn  = document.getElementById("tr-close");
+        const expandBtn = document.getElementById("tr-expand");
+        const countEl   = document.getElementById("tr-count");
 
-        let open = false;
-        function togglePanel() { open = !open; panel.classList.toggle("tr-open", open); if (open) _refreshRadar(); }
-        trigger.addEventListener("click", (e) => { e.stopPropagation(); togglePanel(); });
-        closeBtn.addEventListener("click", (e) => { e.stopPropagation(); open = true; togglePanel(); });
-        document.addEventListener("click", (e) => { if (open && !wrap.contains(e.target)) { open = true; togglePanel(); } });
+        let open = false, fullscreen = false;
+
+        function togglePanel() {
+            open = !open;
+            panel.classList.toggle("tr-open", open);
+            if (open) {
+                _loadLeaflet().then(_initMap).then(_refreshRadar);
+            }
+        }
+
+        function toggleFullscreen() {
+            fullscreen = !fullscreen;
+            panel.classList.toggle("tr-fullscreen", fullscreen);
+            expandBtn.innerHTML = fullscreen ? SHRINK_ICON : EXPAND_ICON;
+            if (_trMap) setTimeout(() => _trMap.invalidateSize(), 300);
+        }
+
+        trigger.addEventListener("click",  e => { e.stopPropagation(); togglePanel(); });
+        closeBtn.addEventListener("click", e => { e.stopPropagation(); if (fullscreen) toggleFullscreen(); open = true; togglePanel(); });
+        expandBtn.addEventListener("click",e => { e.stopPropagation(); toggleFullscreen(); });
+        document.addEventListener("click", e => { if (open && !fullscreen && !wrap.contains(e.target)) { open = true; togglePanel(); } });
+        document.addEventListener("keydown", e => { if (e.key === "Escape" && fullscreen) toggleFullscreen(); });
+
+        // ── Init Leaflet map ───────────────────────────────────────
+        function _initMap() {
+            if (_trMap) return Promise.resolve();
+            return new Promise(resolve => {
+                const L = window.L;
+                _trMap = L.map("tr-map", {
+                    zoomControl: true,
+                    attributionControl: false,
+                    zoom: 12,
+                    center: [33.8938, 35.5018], // Beirut default
+                });
+                L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+                    maxZoom: 19,
+                    subdomains: "abcd",
+                }).addTo(_trMap);
+                resolve();
+            });
+        }
+
+        // ── Place/update blip markers on the Leaflet map ──────────
+        function _updateMarkers(locs) {
+            const L = window.L;
+            // Clear old markers
+            _trMarkers.forEach(m => m.remove());
+            _trMarkers = [];
+
+            locs.forEach((b, i) => {
+                const ini   = _initials(b.full_name || b.user);
+                const color = _blipColor(ini);
+                const delay = `${(i * 0.6) % 2}s`;
+                const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
+
+                const icon = L.divIcon({
+                    className: "",
+                    html: `<div class="tr-lmarker" style="background:${color};color:#fff;animation-delay:${delay}">${ini}</div>`,
+                    iconSize:   [30, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor:[0, -18],
+                });
+                const marker = L.marker([b.lat, b.lng], { icon })
+                    .bindPopup(label, { closeButton: true, autoClose: true })
+                    .addTo(_trMap);
+                _trMarkers.push(marker);
+            });
+
+            // Auto-fit view to all markers
+            if (locs.length === 1) {
+                _trMap.setView([locs[0].lat, locs[0].lng], _trMap.getZoom());
+            } else if (locs.length > 1) {
+                const bounds = L.latLngBounds(locs.map(b => [b.lat, b.lng]));
+                _trMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+            }
+        }
 
         // ── Poll live locations every 30s ─────────────────────────
         function _refreshRadar() {
@@ -722,18 +731,14 @@
                 method: "erp_next_custom.erp_next_custom.api.get_locations",
                 callback(r) {
                     const locs = r.message || [];
-                    // Remove old blips
-                    radarBody.querySelectorAll(".tr-blip").forEach(el => el.remove());
-                    if (locs.length) {
-                        radarBody.insertAdjacentHTML("beforeend", _buildBlipsHTML(locs));
-                    }
                     countEl.textContent = `${locs.length} online`;
+                    if (_trMap && locs.length) _updateMarkers(locs);
+                    else if (_trMap) { _trMarkers.forEach(m => m.remove()); _trMarkers = []; }
                 },
                 error() {},
             });
         }
-        _refreshRadar();
-        setInterval(_refreshRadar, 30000);
+        setInterval(() => { if (open) _refreshRadar(); }, 30000);
 
         // ── Start location tracking if permission granted ──────────
         if (localStorage.getItem("loc_permission_granted") === "1") {
