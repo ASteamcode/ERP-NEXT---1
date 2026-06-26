@@ -307,6 +307,7 @@
 .pg-owner-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
 .pg-contact-av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:10.5px;font-weight:800;color:#fff;letter-spacing:.02em;flex-shrink:0;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.18);}
 .pg-contact-av:hover{transform:scale(1.18);box-shadow:0 4px 14px rgba(0,0,0,.26);}
+.pg-cl-name{font-size:12px;color:#1e293b;cursor:pointer;}
 /* owner popup */
 .pg-owner-popup{position:fixed;z-index:99990;background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 40px rgba(0,0,0,.14);padding:14px 14px 0;width:230px;opacity:0;transition:opacity .15s;pointer-events:none;overflow:hidden;}
 .pg-owner-popup .pg-owner-popup-rows{padding-bottom:12px;}
@@ -662,9 +663,20 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
+            case "dynselect": {
+                if (empty) return `<span class="pg-mt">—</span>`;
+                const _pal2 = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
+                const _baseOpts = col.options || [];
+                const _extra = (() => { try { return JSON.parse(localStorage.getItem(col.dynKey || "pg_dynselect") || "[]"); } catch(e) { return []; } })();
+                const _allOpts = [...new Set([..._baseOpts, ..._extra])].filter(Boolean);
+                const _idx2  = _allOpts.indexOf(String(v));
+                const _cls2  = _idx2 >= 0 ? _pal2[_idx2 % _pal2.length] : "pg-badge-gray";
+                return `<span class="pg-badge ${_cls2}">${_e(v)}</span>`;
+            }
             case "contact-link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const name = String(v);
+                if (col.noAvatar) return `<span class="pg-cl-name" data-contact-name="${_e(name)}" data-row-owner="${_e(row.owner||"")}">${_e(name)}</span>`;
                 const words = name.trim().split(/\s+/);
                 const ini = words.length === 1
                     ? words[0][0].toUpperCase()
@@ -1875,6 +1887,66 @@
                 if (o === val) opt.selected = true;
                 el.appendChild(opt);
             });
+        } else if (ctype === "dynselect") {
+            el = document.createElement("input");
+            el.className = "pg-float-input";
+            el.type = "text";
+            el.value = val;
+            el.setAttribute("autocomplete", "off");
+            _eFl.style.overflow = "visible";
+
+            const _dynKey = col.dynKey || "pg_dynselect";
+            const _getOpts = () => {
+                const base = col.options || [];
+                try { return [...new Set([...base, ...JSON.parse(localStorage.getItem(_dynKey) || "[]")])].filter(Boolean); } catch(e) { return base; }
+            };
+            const _saveOpt = (v) => {
+                const cur = _getOpts();
+                if (!cur.includes(v)) { localStorage.setItem(_dynKey, JSON.stringify([...cur.filter(o => !(col.options||[]).includes(o)), v])); }
+            };
+
+            const drop = document.createElement("div");
+            drop.className = "pg-ac-drop";
+            const tdRect2 = td.getBoundingClientRect();
+            drop.style.cssText = `top:${tdRect2.bottom + 2}px;left:${tdRect2.left}px;min-width:${Math.max(tdRect2.width, 220)}px;`;
+            document.body.appendChild(drop);
+
+            const _renderDynDrop = (q) => {
+                const opts = _getOpts();
+                const filtered = q ? opts.filter(o => o.toLowerCase().includes(q.toLowerCase())) : opts;
+                drop.innerHTML = "";
+                filtered.forEach(o => {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item" + (o === val ? " pg-ac-active" : "");
+                    d.textContent = o;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = o; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                });
+                const exact = opts.some(o => o.toLowerCase() === (q || "").toLowerCase());
+                if (q && !exact) {
+                    const d = document.createElement("div");
+                    d.className = "pg-ac-item pg-ac-create";
+                    d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add "<strong>${_e(q)}</strong>"`;
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); _saveOpt(q); el.value = q; drop.remove(); _closeEdit(true); });
+                    drop.appendChild(d);
+                }
+                drop.style.display = drop.children.length ? "block" : "none";
+            };
+
+            el.addEventListener("focus", () => _renderDynDrop(""));
+            el.addEventListener("input", () => _renderDynDrop(el.value.trim()));
+            el.addEventListener("keydown", ev => {
+                if (ev.key === "Escape") { drop.remove(); _closeEdit(false); ev.preventDefault(); return; }
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    const active = drop.querySelector(".pg-ac-active");
+                    if (active) { active.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); return; }
+                    const q = el.value.trim();
+                    if (q) _saveOpt(q);
+                    drop.remove(); _closeEdit(true);
+                }
+            }, true);
+            el.addEventListener("blur", () => { setTimeout(() => drop.remove(), 180); });
         } else if (ctype === "company") {
             el = document.createElement("input");
             el.className = "pg-float-input";
@@ -2770,10 +2842,10 @@
 
         // ── Contact avatar hover popup ───────────────────────────
         root.addEventListener("mouseenter", e => {
-            const av = e.target.closest(".pg-contact-av");
+            const av = e.target.closest(".pg-contact-av, .pg-cl-name");
             if (!av) return;
             const contactName = av.dataset.contactName || "";
-            const ini         = av.dataset.ini          || "?";
+            const ini         = av.dataset.ini          || contactName.split(/\s+/).map(w=>w[0]||"").join("").toUpperCase().slice(0,2) || "?";
             const color       = av.dataset.color        || "#6b7280";
             const rowOwner    = av.dataset.rowOwner     || "";
             clearTimeout(_contactTimer);
@@ -2781,7 +2853,7 @@
         }, true);
 
         root.addEventListener("mouseleave", e => {
-            if (!e.target.closest(".pg-contact-av")) return;
+            if (!e.target.closest(".pg-contact-av, .pg-cl-name")) return;
             clearTimeout(_contactTimer);
             _contactTimer = setTimeout(_hideContactPopup, 120);
         }, true);
