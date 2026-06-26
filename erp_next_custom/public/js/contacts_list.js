@@ -33,37 +33,53 @@ const _CC_FIELDS = [
     "status","designation","department","mobile_no",
     "email_id","phone","gender","middle_name",
 ];
+const _CC_LIMIT = 100;
+let _cc_allRows = [], _cc_offset = 0;
 
 frappe.provide("frappe.listview_settings.Contact");
 frappe.listview_settings.Contact = {
     add_fields: _CC_FIELDS,
     onload(lv) { GL.suppressRefresh(lv); GL.hideChrome(lv); },
-    refresh(lv) { GL.hideChrome(lv); _cc_render(lv); },
+    refresh(lv) { GL.hideChrome(lv); _cc_render(lv, 0); },
 };
 
-function _cc_render(lv) {
+function _toRow(d, i) {
+    return {
+        name: d.name, num: i + 1,
+        title:  d.salutation || "",
+        first:  d.first_name || "", last: d.last_name || "", company: d.company_name || "",
+        status:      d.status || "",
+        designation: d.designation || "", department: d.department || "",
+        mobile: d.mobile_no || "",
+        email:  d.email_id || "", phone: d.phone || "",
+        gender: d.gender || "", middle: d.middle_name || "",
+    };
+}
+
+function _cc_render(lv, offset) {
     const host = GL.bootstrap(lv, { doctype: CONTACT_DOCTYPE });
     if (!host) return;
     GL.hideNative(lv);
-    host.innerHTML = `<div class="pl-loading">Loading contacts…</div>`;
+    if (offset === 0) { host.innerHTML = `<div class="pl-loading">Loading contacts…</div>`; _cc_allRows = []; }
+
     frappe.call({
         method: "frappe.client.get_list",
-        args: { doctype: CONTACT_DOCTYPE, fields: _CC_FIELDS, limit_page_length: 500, order_by: "creation asc" },
+        args: { doctype: CONTACT_DOCTYPE, fields: _CC_FIELDS, limit_page_length: _CC_LIMIT, limit_start: offset, order_by: "first_name asc, last_name asc" },
         callback(r) {
             if (!document.contains(host)) return;
-            const rows = (r.message || []).map((d, i) => ({
-                name: d.name, num: i + 1,
-                title:  d.salutation || "",
-                first:  d.first_name || "", last: d.last_name || "", company: d.company_name || "",
-                status:      d.status || "",
-                designation: d.designation || "", department: d.department || "",
-                mobile: d.mobile_no || "",
-                email:  d.email_id || "", phone: d.phone || "",
-                gender: d.gender || "", middle: d.middle_name || "",
-            }));
+            const newRows = r.message || [];
+            if (offset === 0) _cc_allRows = newRows.map(_toRow);
+            else _cc_allRows = [..._cc_allRows, ...newRows.map((d, i) => _toRow(d, _cc_allRows.length + i))];
+            // fix sequential nums
+            _cc_allRows.forEach((row, i) => { row.num = i + 1; });
+
+            const hasMore = newRows.length === _CC_LIMIT;
+
             PG.mount(host, Object.assign({}, _CC_CFG, {
-                rows,
-                onReload() { _cc_render(lv); },
+                rows: _cc_allRows,
+                hasMore,
+                onLoadMore() { _cc_render(lv, _cc_allRows.length); },
+                onReload() { _cc_render(lv, 0); },
                 onEdit(name, ff, val) {
                     frappe.db.set_value(CONTACT_DOCTYPE, name, ff, val)
                         .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
@@ -100,6 +116,8 @@ function _cc_render(lv) {
 .page-container[data-page-route="List/Contact/List"] .list-headers,
 .page-container[data-page-route="List/Contact/List"] .list-subjects,
 .page-container[data-page-route="List/Contact/List"] header.frappe-list-head { display:none !important; }
+.page-container[data-page-route="List/Contact/List"] .layout-main { overflow-y: auto !important; height: auto !important; }
+.page-container[data-page-route="List/Contact/List"] .gl-host .pg-shell { overflow: visible !important; }
     `;
     document.head.appendChild(s);
 })();
