@@ -481,8 +481,8 @@
     // Static placeholder blips — real positions will come from the location backend
     const DEMO_BLIPS = [
         { initials: "AK", color: "#2563eb", top: "32%", left: "64%", name: "Anthony Karam",  delay: "0s"    },
-        { initials: "LY", color: "#0891b2", top: "61%", left: "38%", name: "Lamine Yamal",   delay: "0.8s"  },
-        { initials: "TF", color: "#7c3aed", top: "42%", left: "28%", name: "Tony Fekhoury",  delay: "1.5s"  },
+        { initials: "SK", color: "#0891b2", top: "61%", left: "38%", name: "Simon Karam",    delay: "0.8s"  },
+        { initials: "CK", color: "#7c3aed", top: "42%", left: "28%", name: "Charbel Karam",  delay: "1.5s"  },
         { initials: "SJ", color: "#059669", top: "70%", left: "60%", name: "Salim Jaafar",   delay: "0.4s"  },
     ];
 
