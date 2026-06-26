@@ -236,186 +236,236 @@
     const RADAR_CSS = `
         #tr-wrap {
             position: fixed;
-            bottom: 28px;
-            left: 28px;
+            bottom: 28px; left: 28px;
             z-index: 9997;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
+            display: flex; flex-direction: column;
+            align-items: flex-start; gap: 8px;
         }
 
-        /* ── Collapsed trigger ── */
+        /* ── Trigger button ── */
         #tr-trigger {
-            width: 48px; height: 48px;
-            border-radius: 50%;
+            width: 48px; height: 48px; border-radius: 50%;
             background: #0f172a;
             border: 2px solid rgba(37,99,235,0.55);
-            box-shadow: 0 0 0 0 rgba(37,99,235,0.4), 0 4px 16px rgba(0,0,0,0.4);
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             color: #60a5fa;
-            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+            transition: border-color .15s, transform .15s;
             animation: tr-pulse-ring 2.4s ease-in-out infinite;
         }
-        #tr-trigger:hover { border-color: #2563eb; transform: scale(1.06); }
+        #tr-trigger:hover { border-color: #2563eb; transform: scale(1.07); }
         #tr-trigger svg { width: 22px; height: 22px; pointer-events: none; }
         @keyframes tr-pulse-ring {
-            0%,100% { box-shadow: 0 0 0 0   rgba(37,99,235,0.5), 0 4px 16px rgba(0,0,0,0.4); }
-            50%     { box-shadow: 0 0 0 8px rgba(37,99,235,0),   0 4px 16px rgba(0,0,0,0.4); }
+            0%,100% { box-shadow: 0 0 0 0   rgba(37,99,235,.5), 0 4px 16px rgba(0,0,0,.4); }
+            50%     { box-shadow: 0 0 0 9px rgba(37,99,235,0),  0 4px 16px rgba(0,0,0,.4); }
         }
 
         /* ── Panel ── */
         #tr-panel {
-            width: 240px;
-            background: #080f1e;
-            border: 1.5px solid rgba(37,99,235,0.35);
+            width: 236px;
+            background: #07101f;
+            border: 1.5px solid rgba(37,99,235,.3);
             border-radius: 18px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7), inset 0 0 40px rgba(37,99,235,0.04);
+            box-shadow: 0 24px 60px rgba(0,0,0,.75), inset 0 0 32px rgba(37,99,235,.04);
             overflow: hidden;
             transform-origin: bottom left;
-            transform: scale(0.85) translateY(6px);
-            opacity: 0;
-            pointer-events: none;
-            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease,
-                        width 0.28s ease, height 0.28s ease, border-radius 0.28s ease, bottom 0.28s ease, left 0.28s ease;
+            transform: scale(.88) translateY(5px);
+            opacity: 0; pointer-events: none;
+            transition: transform .12s cubic-bezier(.2,0,.2,1), opacity .1s ease;
         }
-        #tr-panel.tr-open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+        #tr-panel.tr-open  { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
         #tr-panel.tr-fullscreen {
-            position: fixed !important;
-            inset: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            border-radius: 0 !important;
-            z-index: 99999;
+            position: fixed !important; inset: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+            border-radius: 0 !important; z-index: 99999;
+            transition: none;
         }
 
-        /* ── Panel header ── */
+        /* ── Header ── */
         .tr-head {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 13px 8px;
-            border-bottom: 1px solid rgba(37,99,235,0.2);
-            background: #080f1e;
-            position: relative; z-index: 10;
+            padding: 9px 12px 7px;
+            border-bottom: 1px solid rgba(37,99,235,.18);
+            background: #07101f; position: relative; z-index: 10;
         }
-        .tr-head-left { display:flex; align-items:center; gap:8px; }
         .tr-head-label {
-            font-size: 10px; font-weight: 800; letter-spacing: .10em;
+            font-size: 9.5px; font-weight: 800; letter-spacing: .11em;
             text-transform: uppercase; color: #60a5fa;
         }
-        .tr-head-btns { display:flex; align-items:center; gap:6px; }
+        .tr-head-btns { display:flex; align-items:center; gap:5px; }
         .tr-icon-btn {
-            width: 24px; height: 24px; border-radius: 50%; border: none;
-            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45);
+            width: 22px; height: 22px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,.06); color: rgba(255,255,255,.4);
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: background 0.12s, color 0.12s;
+            transition: background .1s, color .1s;
         }
-        .tr-icon-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .tr-icon-btn.tr-close:hover { background: rgba(220,38,38,0.2); color: #f87171; }
-        .tr-icon-btn svg { width: 12px; height: 12px; pointer-events: none; }
+        .tr-icon-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
+        .tr-icon-btn.tr-close:hover { background: rgba(220,38,38,.2); color: #f87171; }
+        .tr-icon-btn svg { width: 11px; height: 11px; pointer-events: none; }
 
-        /* ── Map dome container ── */
-        .tr-map-wrap {
+        /* ── CSS Radar (small view) ── */
+        #tr-radar {
             position: relative;
-            width: 200px; height: 200px;
-            margin: 14px auto;
+            width: 196px; height: 196px;
+            margin: 12px auto;
             border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #0d2040 0%, #050c18 70%, #030810 100%);
+            border: 2px solid rgba(37,99,235,.35);
             overflow: hidden;
-            /* Dome bump: multi-layer shadow + specular highlight */
+            /* dome bump */
             box-shadow:
-                inset 0 -8px 24px rgba(0,0,0,0.65),
-                inset 0  2px 10px rgba(255,255,255,0.06),
-                0 8px 32px rgba(0,0,0,0.55),
-                0 2px 8px  rgba(0,0,0,0.4);
-            border: 2px solid rgba(37,99,235,0.4);
-            transition: width 0.28s ease, height 0.28s ease, border-radius 0.28s ease;
-            cursor: grab;
+                inset 0 -10px 28px rgba(0,0,0,.7),
+                inset 0   3px 12px rgba(255,255,255,.045),
+                0 10px 36px rgba(0,0,0,.6);
         }
-        .tr-map-wrap:active { cursor: grabbing; }
-        #tr-panel.tr-fullscreen .tr-map-wrap {
-            width: 100% !important;
-            height: calc(100vh - 44px - 38px) !important;
-            border-radius: 0 !important;
-            margin: 0 !important;
-            border-left: none; border-right: none;
-        }
-        /* Specular lens highlight overlay */
-        .tr-map-wrap::after {
+        /* Specular lens highlight */
+        #tr-radar::before {
             content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: radial-gradient(ellipse at 35% 28%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 45%, transparent 68%);
+            position: absolute; inset: 0; z-index: 20; border-radius: 50%;
+            background: radial-gradient(ellipse at 36% 26%,
+                rgba(255,255,255,.10) 0%,
+                rgba(255,255,255,.02) 38%,
+                transparent 62%);
             pointer-events: none;
-            z-index: 500;
-            transition: border-radius 0.28s ease;
         }
-        #tr-panel.tr-fullscreen .tr-map-wrap::after { border-radius: 0; }
+        /* Edge vignette */
+        #tr-radar::after {
+            content: "";
+            position: absolute; inset: 0; z-index: 19; border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%);
+            pointer-events: none;
+        }
+        .tr-ring {
+            position: absolute; border-radius: 50%;
+            border: 1px solid rgba(37,99,235,.22);
+            top: 50%; left: 50%; transform: translate(-50%,-50%);
+        }
+        .tr-ring-1 { width: 58px;  height: 58px; }
+        .tr-ring-2 { width: 112px; height: 112px; }
+        .tr-ring-3 { width: 168px; height: 168px; border-color: rgba(37,99,235,.12); }
+        /* crosshairs */
+        .tr-cross {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            width: 100%; height: 1px;
+            background: rgba(37,99,235,.15);
+        }
+        .tr-cross-v { width: 1px; height: 100%; }
+        /* sweep */
+        .tr-sweep {
+            position: absolute; inset: 0; border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(37,99,235,0)    0%,
+                rgba(96,165,250,.5)  18%,
+                rgba(37,99,235,0)    24%
+            );
+            animation: tr-rotate 2.6s linear infinite;
+            z-index: 1;
+        }
+        @keyframes tr-rotate { to { transform: rotate(360deg); } }
+        /* origin dot */
+        .tr-origin {
+            position: absolute; width: 6px; height: 6px; border-radius: 50%;
+            background: #93c5fd;
+            box-shadow: 0 0 8px 3px rgba(147,197,253,.55);
+            top: 50%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 5;
+        }
+        /* blips */
+        .tr-blip {
+            position: absolute;
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9.5px; font-weight: 800; color: #fff;
+            transform: translate(-50%,-50%);
+            z-index: 10;
+            box-shadow: 0 0 0 2px rgba(255,255,255,.18), 0 3px 12px rgba(0,0,0,.5);
+            cursor: pointer;
+            transition: transform .12s cubic-bezier(.34,1.56,.64,1);
+        }
+        .tr-blip::after {
+            content: "";
+            position: absolute; inset: -3px; border-radius: 50%;
+            border: 1.5px solid currentColor;
+            opacity: 0;
+            animation: tr-ping 2.2s ease-out infinite;
+        }
+        @keyframes tr-ping { 0%{inset:-1px;opacity:.8} 100%{inset:-11px;opacity:0} }
+        .tr-blip:hover { transform: translate(-50%,-50%) scale(1.22); z-index: 15; }
+        /* name label — shown immediately on hover, no fade delay */
+        .tr-blip-tip {
+            position: absolute;
+            bottom: calc(100% + 6px); left: 50%;
+            transform: translateX(-50%);
+            background: #0f1e38;
+            border: 1px solid rgba(96,165,250,.35);
+            border-radius: 7px;
+            padding: 4px 9px;
+            font-size: 10.5px; font-weight: 700; color: #e2e8f0;
+            white-space: nowrap; pointer-events: none;
+            opacity: 0;
+            /* instant show */
+            transition: none;
+        }
+        .tr-blip:hover .tr-blip-tip { opacity: 1; }
 
-        /* Leaflet map itself */
-        #tr-map {
-            width: 100%; height: 100%;
+        /* ── Map view (fullscreen only) ── */
+        #tr-map-wrap {
+            display: none;
+            width: 100%; height: calc(100vh - 44px - 38px);
         }
-        /* Dark Leaflet UI */
+        #tr-panel.tr-fullscreen #tr-radar   { display: none; }
+        #tr-panel.tr-fullscreen #tr-map-wrap { display: block; }
+        #tr-map { width: 100%; height: 100%; }
         #tr-map .leaflet-control-zoom a {
-            background: #0f172a !important;
-            color: #60a5fa !important;
-            border-color: rgba(37,99,235,0.3) !important;
+            background: #0f172a !important; color: #60a5fa !important;
+            border-color: rgba(37,99,235,.3) !important;
         }
         #tr-map .leaflet-control-zoom a:hover { background: #1e293b !important; }
         #tr-map .leaflet-control-attribution { display: none; }
-
-        /* ── Footer ── */
-        .tr-foot {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 7px 13px 10px;
-            border-top: 1px solid rgba(37,99,235,0.15);
-            background: #080f1e;
-            position: relative; z-index: 10;
+        .leaflet-popup-content-wrapper {
+            background: #1e293b !important;
+            border: 1px solid rgba(255,255,255,.12) !important;
+            border-radius: 9px !important;
+            box-shadow: 0 6px 24px rgba(0,0,0,.55) !important;
+            color: #e2e8f0 !important; font-size: 12px !important; font-weight: 600 !important;
         }
-        .tr-status-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 5px 1px rgba(34,197,94,0.6);
-            animation: tr-blink 1.8s ease-in-out infinite;
-            display: inline-block; margin-right: 5px;
-        }
-        @keyframes tr-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .tr-status-text { font-size: 10px; color: rgba(255,255,255,0.4); }
-        .tr-count-badge {
-            font-size: 10px; font-weight: 700; color: #60a5fa;
-            background: rgba(37,99,235,0.18); border-radius: 99px; padding: 1px 7px;
-        }
-
-        /* ── Leaflet blip markers ── */
+        .leaflet-popup-tip { background: #1e293b !important; }
+        .leaflet-popup-close-button { color: rgba(255,255,255,.4) !important; }
         .tr-lmarker {
             width: 30px; height: 30px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 10px; font-weight: 800; color: #fff;
-            box-shadow: 0 0 0 2.5px rgba(255,255,255,0.2), 0 4px 14px rgba(0,0,0,0.55);
+            box-shadow: 0 0 0 2.5px rgba(255,255,255,.2), 0 4px 14px rgba(0,0,0,.55);
             cursor: pointer; position: relative;
         }
         .tr-lmarker::after {
-            content: "";
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            border: 2px solid currentColor;
-            opacity: 0;
-            animation: tr-blip-ping 2.4s ease-out infinite;
+            content: ""; position: absolute; inset: -4px;
+            border-radius: 50%; border: 2px solid currentColor;
+            opacity: 0; animation: tr-ping 2.4s ease-out infinite;
         }
-        @keyframes tr-blip-ping { 0%{inset:-2px;opacity:.7} 100%{inset:-12px;opacity:0} }
-        .leaflet-popup-content-wrapper {
-            background: #1e293b !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-            color: #e2e8f0 !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
+
+        /* ── Footer ── */
+        .tr-foot {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 12px 9px;
+            border-top: 1px solid rgba(37,99,235,.14);
+            background: #07101f; position: relative; z-index: 10;
         }
-        .leaflet-popup-tip { background: #1e293b !important; }
-        .leaflet-popup-close-button { color: rgba(255,255,255,0.4) !important; }
+        .tr-status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px 2px rgba(34,197,94,.6);
+            animation: tr-blink 1.8s ease-in-out infinite;
+            display: inline-block; margin-right: 5px;
+        }
+        @keyframes tr-blink { 0%,100%{opacity:1} 50%{opacity:.28} }
+        .tr-status-text { font-size: 10px; color: rgba(255,255,255,.38); }
+        .tr-count-badge {
+            font-size: 10px; font-weight: 700; color: #60a5fa;
+            background: rgba(37,99,235,.18); border-radius: 99px; padding: 1px 7px;
+        }
     `;
 
     // ── Location Permission Popup ─────────────────────────────────────────
@@ -560,6 +610,18 @@
         <line x1="11" y1="1" x2="1"  y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`;
 
+    // ── Bounding-box normalise lat/lng → radar % ────────────────────────
+    function _toRadarPos(lat, lng, locs) {
+        if (locs.length === 1) return { top: "50%", left: "50%" };
+        const lats = locs.map(l => l.lat), lngs = locs.map(l => l.lng);
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+        const p = 0.12;
+        const top  = (1 - (lat - minLat) / (maxLat - minLat || 1)) * (1 - 2*p) + p;
+        const left = (lng - minLng) / (maxLng - minLng || 1) * (1 - 2*p) + p;
+        return { top: `${(top*100).toFixed(1)}%`, left: `${(left*100).toFixed(1)}%` };
+    }
+
     // Leaflet map instance and marker layer
     let _trMap = null, _trMarkers = [];
 
@@ -621,17 +683,22 @@
         wrap.innerHTML = `
             <div id="tr-panel">
                 <div class="tr-head">
-                    <div class="tr-head-left">
-                        <span class="tr-head-label">Team Radar</span>
-                    </div>
+                    <span class="tr-head-label">Team Radar</span>
                     <div class="tr-head-btns">
-                        <button class="tr-icon-btn" id="tr-expand" title="Fullscreen">${EXPAND_ICON}</button>
+                        <button class="tr-icon-btn" id="tr-expand" title="Fullscreen map">${EXPAND_ICON}</button>
                         <button class="tr-icon-btn tr-close" id="tr-close">${CLOSE_ICON}</button>
                     </div>
                 </div>
-                <div class="tr-map-wrap" id="tr-map-wrap">
-                    <div id="tr-map"></div>
+                <div id="tr-radar">
+                    <div class="tr-ring tr-ring-3"></div>
+                    <div class="tr-ring tr-ring-2"></div>
+                    <div class="tr-ring tr-ring-1"></div>
+                    <div class="tr-cross"></div>
+                    <div class="tr-cross tr-cross-v"></div>
+                    <div class="tr-sweep"></div>
+                    <div class="tr-origin"></div>
                 </div>
+                <div id="tr-map-wrap"><div id="tr-map"></div></div>
                 <div class="tr-foot">
                     <span class="tr-status-text"><span class="tr-status-dot"></span>Live</span>
                     <span class="tr-count-badge" id="tr-count">0 online</span>
@@ -639,108 +706,96 @@
             </div>
             <button id="tr-trigger" title="Team Radar">${RADAR_ICON}</button>
         `;
-
         document.body.appendChild(wrap);
 
         const panel     = document.getElementById("tr-panel");
         const trigger   = document.getElementById("tr-trigger");
         const closeBtn  = document.getElementById("tr-close");
         const expandBtn = document.getElementById("tr-expand");
+        const radarEl   = document.getElementById("tr-radar");
         const countEl   = document.getElementById("tr-count");
+        let open = false, fullscreen = false, _lastLocs = [];
 
-        let open = false, fullscreen = false;
-
-        function togglePanel() {
-            open = !open;
-            panel.classList.toggle("tr-open", open);
-            if (open) {
-                _loadLeaflet().then(_initMap).then(_refreshRadar);
-            }
+        // ── CSS radar blips (small view) ──────────────────────────
+        function _renderRadarBlips(locs) {
+            radarEl.querySelectorAll(".tr-blip").forEach(el => el.remove());
+            locs.forEach((b, i) => {
+                const ini   = _initials(b.full_name || b.user);
+                const color = _blipColor(ini);
+                const pos   = _toRadarPos(b.lat, b.lng, locs);
+                const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
+                const d = document.createElement("div");
+                d.className = "tr-blip";
+                d.style.cssText = `top:${pos.top};left:${pos.left};background:${color};animation-delay:${(i*.55)%2}s`;
+                d.innerHTML = `${ini}<span class="tr-blip-tip">${label}</span>`;
+                radarEl.appendChild(d);
+            });
         }
 
+        // ── Leaflet map (fullscreen view) ─────────────────────────
+        function _initMap() {
+            if (_trMap) { setTimeout(() => _trMap.invalidateSize(), 60); return; }
+            _loadLeaflet().then(() => {
+                const L = window.L;
+                _trMap = L.map("tr-map", { zoomControl: true, attributionControl: false, zoom: 12, center: [33.8938, 35.5018] });
+                L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd" }).addTo(_trMap);
+                _updateMapMarkers(_lastLocs);
+            });
+        }
+
+        function _updateMapMarkers(locs) {
+            if (!_trMap || !window.L) return;
+            const L = window.L;
+            _trMarkers.forEach(m => m.remove()); _trMarkers = [];
+            locs.forEach((b, i) => {
+                const ini   = _initials(b.full_name || b.user);
+                const color = _blipColor(ini);
+                const label = b.city ? `${b.full_name || b.user}<br><small style="opacity:.7">${b.city}</small>` : (b.full_name || b.user);
+                const icon  = L.divIcon({ className: "", html: `<div class="tr-lmarker" style="background:${color};animation-delay:${(i*.6)%2}s">${ini}</div>`, iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-18] });
+                _trMarkers.push(L.marker([b.lat, b.lng], { icon }).bindPopup(label).addTo(_trMap));
+            });
+            if (locs.length === 1) _trMap.setView([locs[0].lat, locs[0].lng], 13);
+            else if (locs.length > 1) _trMap.fitBounds(L.latLngBounds(locs.map(b=>[b.lat,b.lng])), { padding:[32,32], maxZoom:14 });
+        }
+
+        // ── Toggle fullscreen ─────────────────────────────────────
         function toggleFullscreen() {
             fullscreen = !fullscreen;
             panel.classList.toggle("tr-fullscreen", fullscreen);
             expandBtn.innerHTML = fullscreen ? SHRINK_ICON : EXPAND_ICON;
-            if (_trMap) setTimeout(() => _trMap.invalidateSize(), 300);
+            if (fullscreen) _initMap();
+            else if (_trMap) _trMap.invalidateSize();
+        }
+
+        // ── Toggle panel open/close ───────────────────────────────
+        function togglePanel() {
+            open = !open;
+            panel.classList.toggle("tr-open", open);
+            if (open) _refreshRadar();
         }
 
         trigger.addEventListener("click",  e => { e.stopPropagation(); togglePanel(); });
         closeBtn.addEventListener("click", e => { e.stopPropagation(); if (fullscreen) toggleFullscreen(); open = true; togglePanel(); });
         expandBtn.addEventListener("click",e => { e.stopPropagation(); toggleFullscreen(); });
         document.addEventListener("click", e => { if (open && !fullscreen && !wrap.contains(e.target)) { open = true; togglePanel(); } });
-        document.addEventListener("keydown", e => { if (e.key === "Escape" && fullscreen) toggleFullscreen(); });
-
-        // ── Init Leaflet map ───────────────────────────────────────
-        function _initMap() {
-            if (_trMap) return Promise.resolve();
-            return new Promise(resolve => {
-                const L = window.L;
-                _trMap = L.map("tr-map", {
-                    zoomControl: true,
-                    attributionControl: false,
-                    zoom: 12,
-                    center: [33.8938, 35.5018], // Beirut default
-                });
-                L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-                    maxZoom: 19,
-                    subdomains: "abcd",
-                }).addTo(_trMap);
-                resolve();
-            });
-        }
-
-        // ── Place/update blip markers on the Leaflet map ──────────
-        function _updateMarkers(locs) {
-            const L = window.L;
-            // Clear old markers
-            _trMarkers.forEach(m => m.remove());
-            _trMarkers = [];
-
-            locs.forEach((b, i) => {
-                const ini   = _initials(b.full_name || b.user);
-                const color = _blipColor(ini);
-                const delay = `${(i * 0.6) % 2}s`;
-                const label = b.city ? `${b.full_name || b.user} · ${b.city}` : (b.full_name || b.user);
-
-                const icon = L.divIcon({
-                    className: "",
-                    html: `<div class="tr-lmarker" style="background:${color};color:#fff;animation-delay:${delay}">${ini}</div>`,
-                    iconSize:   [30, 30],
-                    iconAnchor: [15, 15],
-                    popupAnchor:[0, -18],
-                });
-                const marker = L.marker([b.lat, b.lng], { icon })
-                    .bindPopup(label, { closeButton: true, autoClose: true })
-                    .addTo(_trMap);
-                _trMarkers.push(marker);
-            });
-
-            // Auto-fit view to all markers
-            if (locs.length === 1) {
-                _trMap.setView([locs[0].lat, locs[0].lng], _trMap.getZoom());
-            } else if (locs.length > 1) {
-                const bounds = L.latLngBounds(locs.map(b => [b.lat, b.lng]));
-                _trMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
-            }
-        }
+        document.addEventListener("keydown", e => { if (e.key === "Escape" && (fullscreen || open)) { if (fullscreen) toggleFullscreen(); else { open = true; togglePanel(); } } });
 
         // ── Poll live locations every 30s ─────────────────────────
         function _refreshRadar() {
             frappe.call({
                 method: "erp_next_custom.erp_next_custom.api.get_locations",
                 callback(r) {
-                    const locs = r.message || [];
-                    countEl.textContent = `${locs.length} online`;
-                    if (_trMap && locs.length) _updateMarkers(locs);
-                    else if (_trMap) { _trMarkers.forEach(m => m.remove()); _trMarkers = []; }
+                    _lastLocs = r.message || [];
+                    countEl.textContent = `${_lastLocs.length} online`;
+                    _renderRadarBlips(_lastLocs);
+                    if (fullscreen) _updateMapMarkers(_lastLocs);
                 },
                 error() {},
             });
         }
         setInterval(() => { if (open) _refreshRadar(); }, 30000);
 
-        // ── Start location tracking if permission granted ──────────
+        // ── Location tracking ─────────────────────────────────────
         if (localStorage.getItem("loc_permission_granted") === "1") {
             _startLocationTracking();
             _injectLocationBanner();
