@@ -344,4 +344,15 @@ FIELDS = [
 
 
 def setup():
+    # Fields that need a fieldtype change (Frappe blocks this via update=True).
+    # Delete-and-recreate those fields first so create_custom_fields won't choke.
+    _RETYPE = {"custom_position": "Autocomplete"}
+    for fieldname, new_type in _RETYPE.items():
+        existing = frappe.db.get_value(
+            "Custom Field", {"dt": "Prospect", "fieldname": fieldname}, ["name", "fieldtype"], as_dict=True
+        )
+        if existing and existing.fieldtype != new_type:
+            frappe.delete_doc("Custom Field", existing.name, force=True)
+
     create_custom_fields({"Prospect": FIELDS}, update=True)
+    frappe.db.commit()

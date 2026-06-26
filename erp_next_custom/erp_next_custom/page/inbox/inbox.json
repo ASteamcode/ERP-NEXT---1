@@ -1,0 +1,13 @@
+{
+ "doctype": "Page",
+ "module": "Erp Next Custom",
+ "name": "inbox",
+ "page_name": "inbox",
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "Inbox",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Project Board"}
+ ]
+}
