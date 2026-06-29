@@ -27,12 +27,14 @@ const CRM_TAB_ORDER = [
 frappe.ui.form.on("CRM Log", {
 	onload(frm) {
 		crm_hide_raw_location(frm);
+		crm_set_default_country(frm);
 	},
 
 	refresh(frm) {
 		crm_hide_raw_location(frm);
 		crm_bind_enter_navigation(frm);
 		crm_bind_company_autocomplete(frm);
+		crm_bind_location_autocomplete(frm);
 		crm_update_linked_section(frm);
 	},
 
@@ -93,6 +95,114 @@ function crm_bind_company_autocomplete(frm) {
 				},
 			});
 		}, 180);
+	});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCATION AUTOCOMPLETE
+// Mirrors the Sales REP CRM location picker for country / district / city / street.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CRM_LOC_FIELD_KIND = {
+	loc_country: "country",
+	loc_district: "district",
+	loc_city: "city",
+	loc_street: "street",
+};
+
+function crm_set_default_country(frm) {
+	if (!frm.doc.loc_country) frm.set_value("loc_country", "Lebanon");
+}
+
+function crm_bind_location_autocomplete(frm) {
+	Object.keys(CRM_LOC_FIELD_KIND).forEach((fieldname) => {
+		const field = frm.get_field(fieldname);
+		const input = field?.$input?.get(0);
+		if (!input || input.dataset.crmLocAutocomplete === "1") return;
+		input.dataset.crmLocAutocomplete = "1";
+		input.setAttribute("autocomplete", "off");
+
+		let awesomplete = null;
+		if (window.Awesomplete) {
+			awesomplete = new Awesomplete(input, { minChars: 2, maxItems: 8, autoFirst: true });
+		}
+
+		let timer = null;
+		let hitsByLabel = new Map();
+
+		input.addEventListener("input", () => {
+			clearTimeout(timer);
+			const txt = input.value.trim();
+			if (!txt || txt.length < 2) {
+				if (awesomplete) awesomplete.list = [];
+				return;
+			}
+
+			timer = setTimeout(() => {
+				const query = crm_build_location_query(frm, fieldname, txt);
+				fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`, {
+					headers: { "Accept-Language": "en" },
+				})
+				.then(r => r.json())
+				.then(data => {
+					hitsByLabel = new Map();
+					const labels = (data || []).map(hit => {
+						const label = crm_location_label(hit, CRM_LOC_FIELD_KIND[fieldname]);
+						if (label) hitsByLabel.set(label, hit);
+						return label;
+					}).filter(Boolean);
+					if (awesomplete) {
+						awesomplete.list = [...new Set(labels)];
+						awesomplete.evaluate();
+					}
+				})
+				.catch(() => { if (awesomplete) awesomplete.list = []; });
+			}, 280);
+		});
+
+		input.addEventListener("awesomplete-selectcomplete", () => {
+			const hit = hitsByLabel.get(input.value);
+			if (hit) crm_apply_location_hit(frm, fieldname, hit);
+		});
+	});
+}
+
+function crm_build_location_query(frm, fieldname, txt) {
+	if (fieldname === "loc_street") return `${txt}${frm.doc.loc_city ? ", " + frm.doc.loc_city : ""}`;
+	if (fieldname === "loc_district") return `${txt}${frm.doc.loc_country ? ", " + frm.doc.loc_country : ""}`;
+	return txt;
+}
+
+function crm_pick_location_part(address, kind) {
+	if (kind === "country") return address.country;
+	if (kind === "district") return address.state || address.state_district || address.county;
+	if (kind === "city") return address.city || address.town || address.village || address.suburb || address.municipality;
+	if (kind === "street") return address.road || address.pedestrian || address.footway;
+	return null;
+}
+
+function crm_location_label(hit, kind) {
+	const address = hit.address || {};
+	const primary = crm_pick_location_part(address, kind) || (hit.display_name || "").split(",")[0];
+	const district = address.state || address.state_district || address.county || "";
+	const country = address.country || "";
+	const parts = [primary, kind !== "district" ? district : "", kind !== "country" ? country : ""]
+		.filter((p, i) => p && (i === 0 || p !== primary));
+	return [...new Set(parts)].join(", ");
+}
+
+function crm_apply_location_hit(frm, changedField, hit) {
+	const address = hit.address || {};
+	const values = {
+		loc_country: address.country,
+		loc_district: address.state || address.state_district || address.county,
+		loc_city: address.city || address.town || address.village || address.suburb || address.municipality,
+		loc_street: CRM_LOC_FIELD_KIND[changedField] === "street" ? (address.road || address.pedestrian || address.footway) : undefined,
+	};
+
+	Object.entries(values).forEach(([fieldname, value]) => {
+		if (!value) return;
+		if (fieldname === changedField || !frm.doc[fieldname]) frm.set_value(fieldname, value);
 	});
 }
 

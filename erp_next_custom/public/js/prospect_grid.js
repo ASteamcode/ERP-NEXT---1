@@ -1974,6 +1974,18 @@
             _eFl.style.overflow = "visible";
 
             const _locField = col.locField || "city"; // city | district | country | street
+            const _locFields = Object.assign({
+                country: "custom_site_country",
+                district: "custom_site_district",
+                city: "custom_site_city",
+                street: "custom_site_street",
+            }, cfg.locFields || {}, col.locFields || {});
+            const _locKeys = Object.assign({
+                country: "site_country",
+                district: "site_district",
+                city: "site_city",
+                street: "site_street",
+            }, cfg.locKeys || {}, col.locKeys || {});
             const drop = document.createElement("div");
             drop.className = "pg-ac-drop";
             const _tdR = td.getBoundingClientRect();
@@ -1986,8 +1998,8 @@
             // Build Nominatim query scoped to the field type
             const _buildQuery = (q) => {
                 const rowObj = (cfg.rows || []).find(r => r.name === td.dataset.rowName) || {};
-                if (_locField === "street") return `${q}${rowObj.site_city ? ", " + rowObj.site_city : ""}`;
-                if (_locField === "district") return `${q}${rowObj.site_country ? ", " + rowObj.site_country : ""}`;
+                if (_locField === "street") return `${q}${rowObj[_locKeys.city] ? ", " + rowObj[_locKeys.city] : ""}`;
+                if (_locField === "district") return `${q}${rowObj[_locKeys.country] ? ", " + rowObj[_locKeys.country] : ""}`;
                 return q;
             };
 
@@ -2020,10 +2032,10 @@
                         // Multi-fill: update related fields via cfg.onLocFill callback
                         if (cfg.onLocFill) {
                             cfg.onLocFill(td.dataset.rowName, {
-                                custom_site_country:  a.country,
-                                custom_site_district: a.state || a.state_district || a.county,
-                                custom_site_city:     a.city || a.town || a.village || a.suburb,
-                                custom_site_street:   _locField === "street" ? (a.road || a.pedestrian || a.footway) : undefined,
+                                [_locFields.country]:  a.country,
+                                [_locFields.district]: a.state || a.state_district || a.county,
+                                [_locFields.city]:     a.city || a.town || a.village || a.suburb,
+                                [_locFields.street]:   _locField === "street" ? (a.road || a.pedestrian || a.footway) : undefined,
                             }, _locField);
                         }
                         _closeEdit(true);
