@@ -36,11 +36,12 @@ const _CL_CFG = {
         { tab:1, key:"tel",         label:"Tel",          type:"phone",  frappe_field:"tel"         },
         { tab:1, key:"email",       label:"Email",        type:"link",   frappe_field:"email"       },
         // Tab 2 — Site: where the project is
-        { tab:2, key:"site_loc",    label:"Location",     type:"text",   frappe_field:"site_location", width:200 },
-        { tab:2, key:"maps",        label:"Maps",         type:"maps",   frappe_field:"google_maps_url" },
-        { tab:2, key:"loc_city",    label:"City",         type:"text",   frappe_field:"loc_city"    },
-        { tab:2, key:"loc_dist",    label:"District",     type:"text",   frappe_field:"loc_district" },
-        { tab:2, key:"loc_street",  label:"Street",       type:"text",   frappe_field:"loc_street"  },
+        { tab:2, key:"site_loc",    label:"Location",     type:"text",            frappe_field:"site_location", width:200 },
+        { tab:2, key:"maps",        label:"Maps",         type:"maps",            frappe_field:"google_maps_url" },
+        { tab:2, key:"loc_country", label:"Country",      type:"locautocomplete", frappe_field:"loc_country",   locField:"country",  width:90 },
+        { tab:2, key:"loc_dist",    label:"District",     type:"locautocomplete", frappe_field:"loc_district",  locField:"district", width:110 },
+        { tab:2, key:"loc_city",    label:"City",         type:"locautocomplete", frappe_field:"loc_city",      locField:"city",     width:90 },
+        { tab:2, key:"loc_street",  label:"Street",       type:"locautocomplete", frappe_field:"loc_street",    locField:"street",   width:130 },
         // Tab 3 — Notes & Outcome: what happened
         
         { tab:3, key:"updates",     label:"Updates",      type:"notes",  frappe_field:"updates",     width:240 },
@@ -52,6 +53,8 @@ const _CL_CFG = {
         { tab:4, key:"crm_customer",label:"Customer",     type:"text",   frappe_field:"crm_customer",icon:"building" },
     ],
     rows: [],
+    locFields: { country: "loc_country", district: "loc_district", city: "loc_city", street: "loc_street" },
+    locKeys: { country: "loc_country", district: "loc_dist", city: "loc_city", street: "loc_street" },
     editable: true,
     doctype: CL_DOCTYPE,
     searchPlaceholder: "Search logs…",
@@ -62,10 +65,59 @@ const _CL_FIELDS = [
     "name","status","date","prefix","first_name","last_name","company_name",
     "log_type","category","assigned_to","owner",
     "mobile","tel","email",
-    "site_location","google_maps_url","loc_city","loc_district","loc_street",
+    "site_location","google_maps_url","loc_country","loc_city","loc_district","loc_street",
     "description","updates","has_drawing",
     "crm_lead","crm_contact","crm_customer",
 ];
+
+function _cl_joinLocation(row) {
+    return [row.loc_country, row.loc_dist, row.loc_city, row.loc_street]
+        .map(v => (v || "").trim())
+        .filter(Boolean)
+        .join(", ");
+}
+
+function _cl_updateLocationCells(name, row, fields) {
+    const keyMap = { loc_country: "loc_country", loc_district: "loc_dist", loc_city: "loc_city", loc_street: "loc_street" };
+    const toSave = {};
+    const tr = document.querySelector(`tr[data-row-name="${CSS.escape(name)}"]`);
+
+    for (const [ff, val] of Object.entries(fields)) {
+        if (!val) continue;
+        toSave[ff] = val;
+        if (row && keyMap[ff]) row[keyMap[ff]] = val;
+        if (tr) {
+            const td = tr.querySelector(`td[data-ff="${ff}"]`);
+            if (td) {
+                td.dataset.val = val;
+                td.innerHTML = `<span>${frappe.utils.escape_html(val)}</span>`;
+            }
+        }
+    }
+
+    const siteLocation = _cl_joinLocation(row || {
+        loc_country: fields.loc_country,
+        loc_dist: fields.loc_district,
+        loc_city: fields.loc_city,
+        loc_street: fields.loc_street,
+    });
+    if (siteLocation) {
+        toSave.site_location = siteLocation;
+        if (row) row.site_loc = siteLocation;
+        if (tr) {
+            const siteTd = tr.querySelector('td[data-ff="site_location"]');
+            if (siteTd) {
+                siteTd.dataset.val = siteLocation;
+                siteTd.innerHTML = `<span>${frappe.utils.escape_html(siteLocation)}</span>`;
+            }
+        }
+    }
+
+    if (Object.keys(toSave).length) {
+        frappe.db.set_value(CL_DOCTYPE, name, toSave)
+            .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
+    }
+}
 
 function _cl_fmtDateTime(v) {
     if (!v) return "";
@@ -105,7 +157,7 @@ function _cl_render(lv) {
                 log_type:        d.log_type || "", category: d.category || "",
                 mobile: d.mobile || "", tel: d.tel || "", email: d.email || "",
                 site_loc:    d.site_location || "", maps: d.google_maps_url || "",
-                loc_city:    d.loc_city || "", loc_dist: d.loc_district || "", loc_street: d.loc_street || "",
+                loc_country: d.loc_country || "Lebanon", loc_city: d.loc_city || "", loc_dist: d.loc_district || "", loc_street: d.loc_street || "",
                 description: d.description ? d.description.replace(/<[^>]*>/g, "") : "",
                 updates:     d.updates     ? d.updates.replace(/<[^>]*>/g, "")     : "",
                 has_drawing: d.has_drawing || 0,
@@ -116,9 +168,25 @@ function _cl_render(lv) {
         onAddRow(reload) {
             frappe.call({
                 method: "frappe.client.insert",
-                args: { doc: { doctype: CL_DOCTYPE, status: "Open", first_name: "New" } },
+                args: { doc: { doctype: CL_DOCTYPE, status: "Open", first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" } },
                 callback(r) { if (!r.exc) { frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5); reload(); } },
             });
+        },
+        onLocFill(name, geoFields, changedLocField, rows) {
+            const row = rows.find(r => r.name === name);
+            const toFill = {};
+            const keyMap = { loc_country: "loc_country", loc_district: "loc_dist", loc_city: "loc_city", loc_street: "loc_street" };
+            const ffToLocField = { loc_country: "country", loc_district: "district", loc_city: "city", loc_street: "street" };
+
+            for (const [ff, val] of Object.entries(geoFields)) {
+                if (!val) continue;
+                const lf = ffToLocField[ff];
+                if (lf === changedLocField || !(row && row[keyMap[ff]])) {
+                    toFill[ff] = val;
+                }
+            }
+
+            if (Object.keys(toFill).length) _cl_updateLocationCells(name, row, toFill);
         },
         statsFn(raw) {
             const total  = raw.length;

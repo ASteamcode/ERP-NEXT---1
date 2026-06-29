@@ -1,0 +1,249 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-29 09:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "hunt_ui_panel",
+  "hunt_name",
+  "hunt_mode",
+  "model",
+  "api_key",
+  "section_person",
+  "target_name",
+  "target_email",
+  "target_username",
+  "target_phone",
+  "target_company",
+  "target_job",
+  "target_instagram",
+  "target_linkedin",
+  "target_facebook",
+  "target_twitter",
+  "target_website",
+  "target_notes",
+  "section_break_prompt",
+  "hunt_prompt",
+  "response_schema",
+  "section_break_filter",
+  "url_filter_pattern",
+  "column_break_filter",
+  "blocked_domains",
+  "section_break_urls",
+  "target_urls",
+  "section_break_results",
+  "last_run",
+  "hunt_log",
+  "hunt_result"
+ ],
+ "fields": [
+  {
+   "fieldname": "hunt_ui_panel",
+   "fieldtype": "HTML",
+   "label": "Hunt UI Panel"
+  },
+  {
+   "fieldname": "hunt_name",
+   "fieldtype": "Data",
+   "label": "Hunt Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "Person Intelligence",
+   "fieldname": "hunt_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Person Intelligence\nItem Prices",
+   "in_list_view": 1
+  },
+  {
+   "default": "gemini-2.5-flash-lite",
+   "fieldname": "model",
+   "fieldtype": "Select",
+   "label": "Gemini Model",
+   "options": "gemini-2.5-flash-lite\ngemini-2.0-flash\ngemini-2.5-flash"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "Gemini API Key",
+   "description": "Leave blank to use 'gemini_api_key' from site_config.json"
+  },
+  {
+   "fieldname": "section_person",
+   "fieldtype": "Section Break",
+   "label": "Person Target",
+   "collapsible": 1,
+   "collapsed": 1
+  },
+  {
+   "fieldname": "target_name",
+   "fieldtype": "Data",
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "target_email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "target_username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "target_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "target_company",
+   "fieldtype": "Data",
+   "label": "Company"
+  },
+  {
+   "fieldname": "target_job",
+   "fieldtype": "Data",
+   "label": "Job Title"
+  },
+  {
+   "fieldname": "target_instagram",
+   "fieldtype": "Data",
+   "label": "Instagram"
+  },
+  {
+   "fieldname": "target_linkedin",
+   "fieldtype": "Data",
+   "label": "LinkedIn"
+  },
+  {
+   "fieldname": "target_facebook",
+   "fieldtype": "Data",
+   "label": "Facebook"
+  },
+  {
+   "fieldname": "target_twitter",
+   "fieldtype": "Data",
+   "label": "X / Twitter"
+  },
+  {
+   "fieldname": "target_website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "target_notes",
+   "fieldtype": "Small Text",
+   "label": "Additional Context"
+  },
+  {
+   "fieldname": "section_break_prompt",
+   "fieldtype": "Section Break",
+   "label": "Extraction Prompt",
+   "collapsible": 1,
+   "collapsed": 1
+  },
+  {
+   "fieldname": "hunt_prompt",
+   "fieldtype": "Long Text",
+   "label": "Hunt Prompt",
+   "description": "Auto-generated from person data. Override if needed."
+  },
+  {
+   "fieldname": "response_schema",
+   "fieldtype": "Code",
+   "label": "JSON Response Schema (optional)",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "section_break_filter",
+   "fieldtype": "Section Break",
+   "label": "URL Pre-Filter",
+   "collapsible": 1,
+   "collapsed": 1
+  },
+  {
+   "fieldname": "url_filter_pattern",
+   "fieldtype": "Data",
+   "label": "Allow Pattern (regex)"
+  },
+  {
+   "fieldname": "column_break_filter",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "blocked_domains",
+   "fieldtype": "Small Text",
+   "label": "Blocked Domains",
+   "description": "One domain per line."
+  },
+  {
+   "fieldname": "section_break_urls",
+   "fieldtype": "Section Break",
+   "label": "Extra Target URLs",
+   "collapsible": 1,
+   "collapsed": 1
+  },
+  {
+   "fieldname": "target_urls",
+   "fieldtype": "Table",
+   "label": "Extra URLs",
+   "options": "Scraper Hunt URL"
+  },
+  {
+   "fieldname": "section_break_results",
+   "fieldtype": "Section Break",
+   "label": "Last Run",
+   "collapsible": 1,
+   "collapsed": 1
+  },
+  {
+   "fieldname": "last_run",
+   "fieldtype": "Datetime",
+   "label": "Last Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hunt_log",
+   "fieldtype": "Long Text",
+   "label": "Run Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hunt_result",
+   "fieldtype": "Long Text",
+   "label": "Raw Result JSON",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-06-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "Scraper Hunt",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "hunt_name",
+ "track_changes": 1
+}

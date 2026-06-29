@@ -57,6 +57,18 @@
             <line x1="5" y1="12" x2="19" y2="12"/>
             <polyline points="12 5 19 12 12 19"/>
         </svg>`,
+        hunt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+            <line x1="12" y1="2"  x2="12" y2="6"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="2"  y1="12" x2="6"  y2="12"/>
+            <line x1="18" y1="12" x2="22" y2="12"/>
+        </svg>`,
+        bolt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>`,
     };
 
     // ── CSS ───────────────────────────────────────────────────────────────────
@@ -154,6 +166,103 @@
         .dh-sc-icon svg { width: 22px; height: 22px; }
         .dh-sc-icon-overview { background: linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; }
         .dh-sc-icon-crm      { background: linear-gradient(135deg,#0891b2,#0e7490); color:#fff; }
+        .dh-sc-icon-hunt     { background: linear-gradient(135deg,#7c3aed,#5b21b6); color:#fff; }
+
+        /* Hunt shortcut — full-width feature row */
+        .dh-shortcut--hunt {
+            grid-column: 1 / -1;
+            background: rgba(124,58,237,.10);
+            border-color: rgba(124,58,237,.22);
+        }
+        .dh-shortcut--hunt:hover {
+            background: rgba(124,58,237,.20);
+        }
+        .dh-sc-lozenge {
+            margin-left: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .10em;
+            text-transform: uppercase;
+            background: rgba(167,139,250,.18);
+            border: 1px solid rgba(167,139,250,.28);
+            color: #c4b5fd;
+            border-radius: 99px;
+            padding: 2px 7px;
+        }
+
+        /* ── Recent Hunts card ── */
+        .dh-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .dh-new-btn {
+            background: rgba(124,58,237,.18);
+            border: 1px solid rgba(124,58,237,.28);
+            color: #c4b5fd;
+            border-radius: 99px;
+            padding: 3px 11px;
+            font-size: 10.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .12s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dh-new-btn:hover { background: rgba(124,58,237,.32); }
+
+        .dh-hunt-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            cursor: pointer;
+            transition: background .12s, padding-left .12s;
+            border-radius: 8px;
+        }
+        .dh-hunt-row:last-child { border-bottom: none; }
+        .dh-hunt-row:hover { background: rgba(255,255,255,.06); padding-left: 6px; }
+
+        .dh-hunt-ico {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(124,58,237,.25), rgba(91,33,182,.25));
+            border: 1px solid rgba(124,58,237,.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            color: #a78bfa;
+        }
+        .dh-hunt-ico svg { width: 15px; height: 15px; }
+
+        .dh-hunt-info { flex: 1; min-width: 0; }
+        .dh-hunt-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dh-hunt-meta {
+            font-size: 11px;
+            color: rgba(255,255,255,.38);
+            margin-top: 1px;
+        }
+
+        .dh-hunt-chip {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 99px;
+            padding: 2px 9px;
+            white-space: nowrap;
+            flex: none;
+        }
+        .dh-hunt-chip--ok   { color: #34d399; background: rgba(52,211,153,.12); }
+        .dh-hunt-chip--warn { color: #fbbf24; background: rgba(251,191,36,.12); }
+        .dh-hunt-chip--idle { color: rgba(255,255,255,.35); background: rgba(255,255,255,.06); }
         .dh-sc-label {
             font-size: 14px;
             font-weight: 700;
@@ -318,6 +427,64 @@
         });
     }
 
+    // ── Render recent hunts ───────────────────────────────────────────────
+    function renderHunts(container) {
+        container.innerHTML = `<div class="dh-loading">Loading…</div>`;
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Scraper Hunt",
+                fields: ["name", "hunt_name", "last_run", "hunt_log"],
+                order_by: "modified desc",
+                limit: 4,
+            },
+            callback(r) {
+                const list = r.message || [];
+                if (!list.length) {
+                    container.innerHTML = `<div class="dh-empty">No hunts yet — click New Hunt to create one</div>`;
+                    return;
+                }
+
+                container.innerHTML = list.map(h => {
+                    const log     = h.hunt_log || "";
+                    const hasRun  = !!h.last_run;
+                    const hasErr  = log.toLowerCase().includes("error");
+                    const exMatch = log.match(/Extracted\s*:\s*(\d+)/);
+                    const ex      = exMatch ? +exMatch[1] : null;
+
+                    let chipCls = "dh-hunt-chip--idle", chipTxt = "Not run";
+                    if (hasRun && !hasErr && ex !== null) { chipCls = "dh-hunt-chip--ok";   chipTxt = `${ex} records`; }
+                    else if (hasRun && hasErr)            { chipCls = "dh-hunt-chip--warn"; chipTxt = "Errors"; }
+                    else if (hasRun)                      { chipCls = "dh-hunt-chip--ok";   chipTxt = "Done"; }
+
+                    const meta = h.last_run
+                        ? frappe.datetime.prettyDate(h.last_run)
+                        : "Never run";
+
+                    return `
+                        <div class="dh-hunt-row" data-name="${h.name}">
+                            <div class="dh-hunt-ico">${ICON.hunt}</div>
+                            <div class="dh-hunt-info">
+                                <div class="dh-hunt-name">${h.hunt_name || h.name}</div>
+                                <div class="dh-hunt-meta">${meta}</div>
+                            </div>
+                            <span class="dh-hunt-chip ${chipCls}">${chipTxt}</span>
+                        </div>`;
+                }).join("");
+
+                container.querySelectorAll(".dh-hunt-row").forEach(row => {
+                    row.addEventListener("click", () => {
+                        frappe.set_route("Form", "Scraper Hunt", row.dataset.name);
+                    });
+                });
+            },
+            error() {
+                // DocType might not be migrated yet — fail silently
+                container.innerHTML = `<div class="dh-empty">Run <code>bench migrate</code> to activate AI Hunts</div>`;
+            },
+        });
+    }
+
     // ── Main render ───────────────────────────────────────────────────────
     function renderHome(wrapper) {
         injectCSS();
@@ -356,7 +523,27 @@
                         </div>
                         <div class="dh-sc-arrow">${ICON.arrow}</div>
                     </a>
+                    <a class="dh-shortcut dh-shortcut--hunt" id="dh-sc-hunt">
+                        <div class="dh-sc-icon dh-sc-icon-hunt">${ICON.hunt}</div>
+                        <div>
+                            <div class="dh-sc-label">
+                                AI Scraper Hunt
+                                <span class="dh-sc-lozenge">Gemini</span>
+                            </div>
+                            <div class="dh-sc-desc">Extract live pricing from any URL</div>
+                        </div>
+                        <div class="dh-sc-arrow">${ICON.arrow}</div>
+                    </a>
                 </div>
+            </div>
+
+            <!-- Recent Hunts -->
+            <div class="dh-card">
+                <div class="dh-card-header">
+                    <span class="dh-card-title" style="margin-bottom:0">AI Hunts</span>
+                    <button class="dh-new-btn" id="dh-new-hunt">${ICON.bolt}&ensp;New Hunt</button>
+                </div>
+                <div id="dh-hunts"></div>
             </div>
 
             <!-- Recent Contacts -->
@@ -371,6 +558,15 @@
         $(wrapper).html(html);
 
         renderContacts(document.getElementById("dh-contacts"));
+        renderHunts(document.getElementById("dh-hunts"));
+
+        // Hunt shortcut → list view; New Hunt → new doc
+        document.getElementById("dh-sc-hunt").addEventListener("click", () => {
+            frappe.set_route("List", "Scraper Hunt");
+        });
+        document.getElementById("dh-new-hunt").addEventListener("click", () => {
+            frappe.new_doc("Scraper Hunt");
+        });
     }
 
     // ── Hook into the desk page ───────────────────────────────────────────

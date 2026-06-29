@@ -27,6 +27,7 @@ const CRM_TAB_ORDER = [
 frappe.ui.form.on("CRM Log", {
 	onload(frm) {
 		crm_hide_raw_location(frm);
+		crm_set_default_country(frm);
 	},
 
 	refresh(frm) {
