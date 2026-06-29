@@ -101,7 +101,7 @@ const _PROSPECT_CFG = {
             "Job Scheduled": "pg-badge-emerald",
             "Lost":          "pg-badge-red",
           } },
-        { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
+        { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile", width: 170 },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
         { tab: 1, key: "site_country",  label: "Country",  type: "locautocomplete", frappe_field: "custom_site_country",  locField: "country",  width: 90  },
         { tab: 1, key: "site_district", label: "District", type: "locautocomplete", frappe_field: "custom_site_district", locField: "district", width: 110 },
