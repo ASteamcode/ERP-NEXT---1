@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "creation": "2026-06-29 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "url",
+  "url_label",
+  "is_active",
+  "last_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "URL",
+   "length": 2048,
+   "reqd": 1
+  },
+  {
+   "fieldname": "url_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "last_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Last Status",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-29 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Next Custom",
+ "name": "Scraper Hunt URL",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
