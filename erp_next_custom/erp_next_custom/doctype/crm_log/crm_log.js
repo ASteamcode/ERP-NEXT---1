@@ -32,6 +32,7 @@ frappe.ui.form.on("CRM Log", {
 	refresh(frm) {
 		crm_hide_raw_location(frm);
 		crm_bind_enter_navigation(frm);
+		crm_bind_company_autocomplete(frm);
 		crm_update_linked_section(frm);
 	},
 
@@ -50,6 +51,50 @@ frappe.ui.form.on("CRM Log", {
 	loc_city(frm)     { crm_rebuild_location(frm); },
 	loc_street(frm)   { crm_rebuild_location(frm); },
 });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLIENT COMPANY AUTOCOMPLETE
+// CRM Log company names should come from the client-company pool used by Sales
+// REP CRM, not ERPNext's internal Company doctype.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function crm_bind_company_autocomplete(frm) {
+	const field = frm.get_field("company_name");
+	const input = field?.$input?.get(0);
+	if (!input || input.dataset.crmCompanyAutocomplete === "1") return;
+	input.dataset.crmCompanyAutocomplete = "1";
+	input.setAttribute("autocomplete", "off");
+
+	let awesomplete = null;
+	if (window.Awesomplete) {
+		awesomplete = new Awesomplete(input, { minChars: 1, maxItems: 8, autoFirst: true });
+	}
+
+	let timer = null;
+	input.addEventListener("input", () => {
+		clearTimeout(timer);
+		const txt = input.value.trim();
+		if (!txt) {
+			if (awesomplete) awesomplete.list = [];
+			return;
+		}
+
+		timer = setTimeout(() => {
+			frappe.call({
+				method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.get_client_companies",
+				args: { txt, limit: 8 },
+				callback(r) {
+					const companies = r.message || [];
+					if (awesomplete) {
+						awesomplete.list = companies;
+						awesomplete.evaluate();
+					}
+				},
+			});
+		}, 180);
+	});
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SITE LOCATION — split inputs, single stored value
