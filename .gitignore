@@ -54,6 +54,10 @@ jspm_packages/
 # Aider AI Chat
 .aider*
 
+# Frontend build output
+erp_next_custom/public/frontend/
+erp_next_custom/www/frontend.html
+
 # Frappe bench runtime files
 development/frappe-bench/logs/
 development/frappe-bench/sites/assets/locale/
