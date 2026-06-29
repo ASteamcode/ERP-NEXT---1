@@ -8,22 +8,31 @@ const CL_DOCTYPE = "CRM Log";
 const _CL_CFG = {
     tabs: ["Log Details", "Contact Info", "Site", "Notes & Outcome", "Links"],
     fixed: [
-        { key:"num",     label:"#",       cls:"pg-f-num",   width:42,  type:"rownum" },
-        { key:"status",  label:"Status",  cls:"pg-f-stat",  width:108, frappe_field:"status", type:"status",
-          map:{ Open:"pg-badge-blue", Scheduled:"pg-badge-indigo", Viewed:"pg-badge-teal", Cancelled:"pg-badge-gray", Done:"pg-badge-lime" } },
-        { key:"prefix",  label:"Pre",     cls:"pg-f-pre",   width:52,  frappe_field:"prefix", type:"select", options:["","Mr","Ms","Mrs","Dr","Eng","Arch"] },
-        { key:"first",   label:"First",   cls:"pg-f-first", width:100, frappe_field:"first_name" },
-        { key:"last",    label:"Last",    cls:"pg-f-last",  width:100, frappe_field:"last_name"  },
-        { key:"company", label:"Company", cls:"pg-f-co",    width:168, frappe_field:"company_name", type:"company", shadow:true },
-    ],
+    { key:"num",     label:"#",       cls:"pg-f-num",   width:34,  type:"rownum" },
+
+    { key:"status",  label:"Status",  cls:"pg-f-stat",  width:85, frappe_field:"status", type:"status",
+      map:{ Open:"pg-badge-blue", Scheduled:"pg-badge-indigo", Viewed:"pg-badge-teal", Cancelled:"pg-badge-gray", Done:"pg-badge-lime" } },
+
+    { key:"log_date", label:"Date & Time", cls:"pg-f-date", width:140, type:"text" },
+
+    { key:"prefix",  label:"Pre",     cls:"pg-f-pre",   width:48, frappe_field:"prefix", type:"select", options:["","Mr","Ms","Mrs","Dr","Eng","Arch"] },
+
+    { key:"first",   label:"First",   cls:"pg-f-first", width:85, frappe_field:"first_name" },
+
+    { key:"last",    label:"Last",    cls:"pg-f-last",  width:85, frappe_field:"last_name" },
+
+    { key:"company", label:"Company", cls:"pg-f-co",    width:140, frappe_field:"company_name", type:"company", companySource:"client", shadow:true },
+
+    { key:"mobile", label:"Mobile", cls:"pg-f-mobile", width:115, type:"phone", frappe_field:"mobile" },
+],
     cols: [
         // Tab 0 — Log Details: when, what kind, who owns it
-        { tab:0, key:"log_date",    label:"Date & Time",  type:"text"                                                                              },
+        { tab:0, key:"description", label:"Description", type:"notes", frappe_field:"description", width:240 },
         { tab:0, key:"owner_initials", label:"Owner",     type:"owner"                                                                             },
         { tab:0, key:"log_type",    label:"Call Type",    type:"select", frappe_field:"log_type",  options:["","Inbound call","Quotation","Field","Job","Transport","Yard"] },
         { tab:0, key:"category",    label:"Category",     type:"select", frappe_field:"category",  options:["","Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"] },
         // Tab 1 — Contact Info: how to reach them
-        { tab:1, key:"mobile",      label:"Mobile",       type:"phone",  frappe_field:"mobile"      },
+        
         { tab:1, key:"tel",         label:"Tel",          type:"phone",  frappe_field:"tel"         },
         { tab:1, key:"email",       label:"Email",        type:"link",   frappe_field:"email"       },
         // Tab 2 — Site: where the project is
@@ -33,7 +42,7 @@ const _CL_CFG = {
         { tab:2, key:"loc_dist",    label:"District",     type:"text",   frappe_field:"loc_district" },
         { tab:2, key:"loc_street",  label:"Street",       type:"text",   frappe_field:"loc_street"  },
         // Tab 3 — Notes & Outcome: what happened
-        { tab:3, key:"description", label:"Description",  type:"notes",  frappe_field:"description", width:240 },
+        
         { tab:3, key:"updates",     label:"Updates",      type:"notes",  frappe_field:"updates",     width:240 },
         { tab:3, key:"drawing",     label:"Drawing",      type:"drawing"                             },
         { tab:3, key:"files",       label:"Files",        type:"files"                               },
