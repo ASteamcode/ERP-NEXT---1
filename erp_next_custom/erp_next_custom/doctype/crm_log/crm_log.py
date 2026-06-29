@@ -10,6 +10,42 @@ class CRMLog(Document):
 
 
 @frappe.whitelist()
+def get_client_companies(txt="", limit=20):
+    """Return client company names shared by Sales REP CRM and CRM Log.
+
+    ERPNext's Company doctype stores our own legal companies. Client companies in
+    this app live as free-text names on Prospect / CRM Log records, so the UI
+    uses this list for autocomplete instead of linking to Company.
+    """
+    txt = (txt or "").strip()
+    limit = frappe.utils.cint(limit) or 20
+    filters = {}
+    if txt:
+        filters["company_name"] = ["like", f"%{txt}%"]
+
+    names = []
+    seen = set()
+    for doctype in ("Prospect", "CRM Log"):
+        for row in frappe.get_all(
+            doctype,
+            filters=filters,
+            fields=["company_name"],
+            order_by="modified desc",
+            limit_page_length=limit * 4,
+        ):
+            company = (row.company_name or "").strip()
+            key = company.lower()
+            if not company or key in seen:
+                continue
+            seen.add(key)
+            names.append(company)
+            if len(names) >= limit:
+                return names
+
+    return names
+
+
+@frappe.whitelist()
 def create_lead_from_log(crm_log_name):
     """
     Creates a Contact, Customer (if company_name set), and Lead from a CRM Log.

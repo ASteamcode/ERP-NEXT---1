@@ -87,9 +87,8 @@
   },
   {
    "fieldname": "company_name",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company"
+   "fieldtype": "Data",
+   "label": "Company"
   },
   {
    "fieldname": "mobile",

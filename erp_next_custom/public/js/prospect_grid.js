@@ -1846,6 +1846,7 @@
     let _eIn = null;
     let _eTd = null;
     let _eRoot = null;
+    let _eDrop = null;
     let _hoverEdit = false;   // true when edit was opened by hover (not click)
     let _hoverCloseTimer = null;
 
@@ -1854,6 +1855,18 @@
         _eFl = document.createElement("div");
         _eFl.className = "pg-float-wrap";
         document.body.appendChild(_eFl);
+    }
+
+    function _setEditDrop(drop) {
+        if (_eDrop && _eDrop !== drop) _eDrop.remove();
+        _eDrop = drop || null;
+    }
+
+    function _removeEditDrop() {
+        if (_eDrop) {
+            _eDrop.remove();
+            _eDrop = null;
+        }
     }
 
     function _openEdit(root, td) {
@@ -1914,6 +1927,7 @@
             const tdRect2 = td.getBoundingClientRect();
             drop.style.cssText = `top:${tdRect2.bottom + 2}px;left:${tdRect2.left}px;min-width:${Math.max(tdRect2.width, 220)}px;`;
             document.body.appendChild(drop);
+            _setEditDrop(drop);
 
             const _renderDynDrop = (q) => {
                 const opts = _getOpts();
@@ -1965,6 +1979,7 @@
             const _tdR = td.getBoundingClientRect();
             drop.style.cssText = `top:${_tdR.bottom + 2}px;left:${_tdR.left}px;min-width:${Math.max(_tdR.width, 240)}px;max-width:320px;`;
             document.body.appendChild(drop);
+            _setEditDrop(drop);
 
             let _locTimer = null;
 
@@ -2063,8 +2078,11 @@
             const tdRect = td.getBoundingClientRect();
             drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 200)}px;`;
             document.body.appendChild(drop);
+            _setEditDrop(drop);
 
             let _acTimer = null, _acItems = [], _acIdx = -1;
+            const _companySource = col.companySource || cfg.companySource || "";
+            const _isClientCompany = _companySource === "client";
 
             const _renderDrop = (items, q) => {
                 _acItems = items;
@@ -2080,7 +2098,7 @@
                     const d = document.createElement("div");
                     d.className = "pg-ac-item pg-ac-create";
                     d.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create "<strong>${q}</strong>"`;
-                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = q; drop.remove(); _closeEdit(true); _bgCreateCompany(q); });
+                    d.addEventListener("mousedown", ev => { ev.preventDefault(); el.value = q; drop.remove(); _closeEdit(true); if (!_isClientCompany) _bgCreateCompany(q); });
                     drop.appendChild(d);
                 }
                 drop.style.display = drop.children.length ? "block" : "none";
@@ -2096,6 +2114,14 @@
 
             const _query = (q) => {
                 if (!q) { drop.style.display = "none"; return; }
+                if (_isClientCompany) {
+                    frappe.call({
+                        method: "erp_next_custom.erp_next_custom.doctype.crm_log.crm_log.get_client_companies",
+                        args: { txt: q, limit: 8 },
+                        callback(r) { _renderDrop(r.message || [], q); },
+                    });
+                    return;
+                }
                 frappe.call({
                     method: "frappe.client.get_list",
                     args: { doctype: "Company", filters: [["company_name", "like", "%" + q + "%"]], fields: ["company_name"], limit: 8 },
@@ -2132,13 +2158,15 @@
                     // Close immediately; verify/create in background
                     drop.remove();
                     _closeEdit(true);
-                    frappe.call({
-                        method: "frappe.client.get_list",
-                        args: { doctype: "Company", filters: [["company_name", "=", q]], fields: ["company_name"], limit: 1 },
-                        callback(r) {
-                            if (!r.message || !r.message.length) _bgCreateCompany(q);
-                        },
-                    });
+                    if (!_isClientCompany) {
+                        frappe.call({
+                            method: "frappe.client.get_list",
+                            args: { doctype: "Company", filters: [["company_name", "=", q]], fields: ["company_name"], limit: 1 },
+                            callback(r) {
+                                if (!r.message || !r.message.length) _bgCreateCompany(q);
+                            },
+                        });
+                    }
                     return;
                 }
             }, true);
@@ -2163,6 +2191,7 @@
             const tdRect = td.getBoundingClientRect();
             drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 240)}px;`;
             document.body.appendChild(drop);
+            _setEditDrop(drop);
 
             let _acTimer = null, _acIdx = -1, _acNames = [];
 
@@ -2585,6 +2614,7 @@
         const newVal = _eIn.value;
         const td = _eTd, root = _eRoot;
         _eTd = null; _eIn = null; _eRoot = null;
+        _removeEditDrop();
         if (_eFl) _eFl.innerHTML = "";
 
         if (!save || newVal === td.dataset.val) return;

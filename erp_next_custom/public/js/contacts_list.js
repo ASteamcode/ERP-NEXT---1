@@ -110,14 +110,17 @@ function _cc_render(lv, offset) {
     if (document.getElementById("cc-pg-styles")) return;
     const s = document.createElement("style"); s.id = "cc-pg-styles";
     s.textContent = `
-.gl-host{padding:12px 16px 32px;box-sizing:border-box;}
+.page-container[data-page-route="List/Contact/List"] .gl-host{padding:12px 16px 32px;box-sizing:border-box;height:calc(100vh - 112px);min-height:420px;overflow:hidden;}
 .pl-loading{padding:48px;text-align:center;color:#9ca3af;font-size:13px;}
 .page-container[data-page-route="List/Contact/List"] .list-row-head,
 .page-container[data-page-route="List/Contact/List"] .list-headers,
 .page-container[data-page-route="List/Contact/List"] .list-subjects,
 .page-container[data-page-route="List/Contact/List"] header.frappe-list-head { display:none !important; }
-.page-container[data-page-route="List/Contact/List"] .layout-main { overflow-y: auto !important; height: auto !important; }
-.page-container[data-page-route="List/Contact/List"] .gl-host .pg-shell { overflow: visible !important; }
+.page-container[data-page-route="List/Contact/List"] .layout-main { overflow:hidden !important; }
+.page-container[data-page-route="List/Contact/List"] .gl-host .pg-shell { height:100%;display:flex;flex-direction:column;border-radius:14px!important;overflow:hidden!important; }
+.page-container[data-page-route="List/Contact/List"] .gl-host .pg-tbl-outer { flex:1;min-height:0;overflow:auto!important; }
+.page-container[data-page-route="List/Contact/List"] .gl-host .pg-tbl thead { position:sticky;top:0;z-index:5; }
+.page-container[data-page-route="List/Contact/List"] .gl-host .pg-load-more-wrap { flex:none; }
     `;
     document.head.appendChild(s);
 })();
