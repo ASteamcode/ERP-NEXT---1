@@ -53,3 +53,16 @@ jspm_packages/
 
 # Aider AI Chat
 .aider*
+
+# Frappe bench runtime files
+development/frappe-bench/logs/
+development/frappe-bench/sites/assets/locale/
+development/frappe-bench/sites/assets/assets*.json
+development/frappe-bench/sites/assets/assets-rtl.json
+development/frappe-bench/sites/dev.localhost/logs/
+development/frappe-bench/sites/dev.localhost/indexes/
+development/frappe-bench/sites/dev.localhost/site_config.json
+development/frappe-bench/sites/dev.localhost/touched_tables.json
+development/frappe-bench/sites/common_site_config.json
+development/frappe-bench/patches.txt
+development/frappe-bench/config/scheduler_process
