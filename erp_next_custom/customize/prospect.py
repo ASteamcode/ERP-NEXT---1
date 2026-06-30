@@ -175,6 +175,21 @@ FIELDS = [
         "hidden": 1,
     },
 
+    # ── Follow-up ────────────────────────────────────────────────
+    {
+        "fieldname": "custom_follow_up_date",
+        "fieldtype": "Date",
+        "label": "Follow Up Date",
+        "insert_after": "custom_has_drawing",
+    },
+    {
+        "fieldname": "custom_follow_up_notes",
+        "fieldtype": "Small Text",
+        "label": "Follow Up Notes",
+        "insert_after": "custom_follow_up_date",
+    },
+
+
     # ── Scope & specs ────────────────────────────────────────────
     {
         "fieldname": "custom_scope_section",

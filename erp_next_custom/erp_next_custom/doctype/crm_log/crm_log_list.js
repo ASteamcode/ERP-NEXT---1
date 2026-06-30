@@ -7,23 +7,37 @@ const CRM_ATTACH_FIELD  = "attachments";
 const CRM_COL_WIDTH_KEY = "crm_gl_col_widths";
 
 const CRM_COLS = [
-    { field: "status",          label: "Status",        type: "select",   width: 130, options: ["Open","Scheduled","Viewed","Cancelled","Done"], sticky: true },
-    { field: "category",        label: "Category",      type: "select",   width: 170, options: ["Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"], sticky: true },
-    { field: "date",            label: "Created",       type: "datetime", width: 150 },
+    // Fixed / frozen columns
+    { field: "status", label: "Status", type: "select", width: 74,
+      options: ["Open","Scheduled","Viewed","Cancelled","Done"],
+      sticky: true
+    },
+
+    { field: "date", label: "Date & Time", type: "datetime", width: 132,
+      sticky: true
+    },
+
+    // Scrollable columns
+    { field: "prefix",          label: "Pre",           type: "select",   width: 50,  options: ["Mr","Ms","Mrs","Dr","Eng","Arch"] },
+    { field: "first_name",      label: "Name",          type: "text",     width: 100 },
+    { field: "last_name",       label: "Surname",       type: "text",     width: 100 },
+    { field: "company_name",    label: "Company",       type: "text",     width: 150 },
+    { field: "mobile",          label: "Mobile",        type: "tel",      width: 120 },
+
+    { field: "description",     label: "Description",   type: "area",     width: 240 },
+    { field: "follow_up_date",  label: "Follow Up",     type: "date",     width: 120 },
+    { field: "follow_up_notes", label: "Follow Notes",  type: "area",     width: 220 },
+    { field: "category",        label: "Category",      type: "select",   width: 130, options: ["Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"] },
+    { field: "log_type",        label: "Type",          type: "select",   width: 120, options: ["Inbound call","Quotation","Field","Job","Transport","Yard"] },
+
     { field: "user",            label: "User",          type: "avatar",   width: 52 },
     { field: "assigned_to",     label: "To",            type: "avatar",   width: 52, variant: "grey" },
-    { field: "log_type",        label: "Type",          type: "select",   width: 130, options: ["Inbound call","Quotation","Field","Job","Transport","Yard"] },
-    { field: "prefix",          label: "Pre",           type: "select",   width: 64,  options: ["Mr","Ms","Mrs","Dr","Eng","Arch"] },
-    { field: "first_name",      label: "Name",          type: "text",     width: 120 },
-    { field: "last_name",       label: "Surname",       type: "text",     width: 120 },
-    { field: "company_name",    label: "Company",       type: "text",     width: 150 },
-    { field: "mobile",          label: "Mobile",        type: "tel",      width: 130 },
+
     { field: "tel",             label: "Tel",           type: "tel",      width: 120 },
     { field: "email",           label: "Email",         type: "email",    width: 190 },
-    { field: "description",     label: "Description",   type: "area",     width: 200 },
-    { field: "updates",         label: "Update(s)",     type: "area",     width: 200 },
-    { field: "site_location",   label: "Site Location", type: "text",     width: 150 },
-    { field: "google_maps_url", label: "Maps",          type: "maps",     width: 120 },
+    { field: "updates",         label: "Update(s)",     type: "area",     width: 220 },
+    { field: "site_location",   label: "Site Location", type: "text",     width: 170 },
+    { field: "google_maps_url", label: "Maps",          type: "maps",     width: 100 },
     { field: "attachments",     label: "Files",         type: "attach",   width: 52 },
     { field: "drawing",         label: "Drawing",       type: "drawing",  width: 52 },
 ];
@@ -81,8 +95,17 @@ function _crm_render(listview) {
 }
 
 function _crm_paint(listview, host, rows) {
-    const cols   = CRM_COLS;
-    const getTpl = () => GL.gridTpl(cols, _CRM_COL_WIDTHS);
+    const cols = CRM_COLS;
+
+    const getTpl = () => {
+        const tracks = cols.map(col => {
+            const savedWidth = _CRM_COL_WIDTHS?.[col.field];
+            const width = savedWidth || col.width || 120;
+            return `${Math.round(width)}px`;
+        });
+
+        return ["42px", ...tracks].join(" ");
+    };
 
     const toolbar = document.createElement("div");
     toolbar.className = "gl-toolbar";
@@ -135,6 +158,7 @@ function _crm_cell(col, doc) {
         case "text":
         case "tel":
         case "email":    return GL.renderText(col, doc.name, raw, col.type);
+        case "date":     return GL.renderDate(col, doc.name, raw);
         case "datetime": return `<span class="crm-dt">${frappe.utils.escape_html(_crm_fmt_date(raw))}</span>`;
         case "avatar":   return _crm_render_avatar(col, doc.name, raw);
         case "maps":     return _crm_render_maps(col, doc.name, raw);
@@ -234,18 +258,32 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
 
     const saveFn = (name, field, val) => {
         if (val !== "") {
-            if (field === "company_name") { crm_upsert_company_and_save(name, val, listview, null); return Promise.resolve(); }
-            if (field === "user")         { crm_upsert_user_and_save(name, val, listview, null);    return Promise.resolve(); }
-            if (field === "assigned_to")  { crm_upsert_employee_and_save(name, val, listview, null); return Promise.resolve(); }
+            // Client company should stay text, not ERPNext Company
+            if (field === "user") {
+                crm_upsert_user_and_save(name, val, listview, null);
+                return Promise.resolve();
+            }
+
+            if (field === "assigned_to") {
+                crm_upsert_employee_and_save(name, val, listview, null);
+                return Promise.resolve();
+            }
         }
+
         return GL.fastSave(CRM_DOCTYPE, name, field, val);
     };
 
     const getTplFull = () => {
         const t = getTpl();
+
         const _so = GL.computeStickyOffsets(cols, _CRM_COL_WIDTHS);
-        Object.entries(_so).forEach(([f, l]) => $grid.find(`.gl-cell[data-field="${f}"]`).css('left', `${l}px`));
+
+        Object.entries(_so).forEach(([f, l]) => {
+            $grid.find(`.gl-cell[data-field="${f}"]`).css("left", `${l}px`);
+        });
+
         host._glRefreshHScroll?.();
+
         return t;
     };
 
@@ -255,6 +293,7 @@ function _crm_bind(listview, host, rows, cols, getTpl) {
 
     GL.bindSelectChange($grid, rows, saveFn);
     GL.bindTextEdit($grid, rows, saveFn, esm);
+    GL.bindDateEdit($grid, rows, saveFn, esm);
     GL.bindOutsideClick($grid, esm, "crm");
     GL.bindAddRow($host, () => _crm_add_row(listview));
 
@@ -542,10 +581,16 @@ function crm_upsert_employee_and_save(crm_docname, employee_value, listview, $el
         frappe.db.get_value("Employee", { employee_name: employee_value }, "name", r => {
             if (r?.name) { crm_save_linked_field(listview, crm_docname, "assigned_to", r.name, employee_value, $el); return; }
             frappe.show_alert({ message: __("Creating employee '{0}'…", [employee_value]), indicator: "orange" }, 1.0);
-            const row_company = listview.data.find(d => d.name === crm_docname)?.company_name || "";
-            const do_insert = (company) => frappe.call({
+
+            frappe.call({
                 method: "frappe.client.insert",
-                args: { doc: { doctype: "Employee", first_name: employee_value, company: company || frappe.defaults.get_default("company") || "" } },
+                args: {
+                    doc: {
+                        doctype: "Employee",
+                        first_name: employee_value,
+                        company: frappe.defaults.get_default("company") || "",
+                    },
+                },
                 callback: ({ exc, message }) => {
                     if (!exc && message) {
                         frappe.show_alert({ message: __("Employee '{0}' Created", [employee_value]), indicator: "green" }, 1.2);
@@ -553,8 +598,6 @@ function crm_upsert_employee_and_save(crm_docname, employee_value, listview, $el
                     }
                 },
             });
-            if (row_company) frappe.db.get_value("Company", { company_name: row_company }, "name", c => do_insert(c?.name || ""));
-            else do_insert("");
         });
     });
 }
@@ -690,12 +733,17 @@ function _crm_attach_preview_item(r) {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function _crm_fmt_date(v) {
     if (!v) return "–";
+
     try {
-        const [d, t = "00:00:00"] = String(v).split(" ");
-        const [year, mo, day]     = d.split("-");
-        const [hh, mm]            = t.split(":");
-        return `${parseInt(day, 10)}/${parseInt(mo, 10)}/${year.substring(2)} ${hh}:${mm}`;
-    } catch { return v; }
+        const value = String(v).replace("T", " ");
+        const [d, t = "00:00:00"] = value.split(" ");
+        const [year, mo, day] = d.split("-");
+        const [hh = "00", mm = "00"] = t.split(":");
+
+        return `${day.padStart(2, "0")}/${mo.padStart(2, "0")}/${year} ${hh.padStart(2, "0")}:${mm.padStart(2, "0")}`;
+    } catch {
+        return v;
+    }
 }
 
 // ── CRM-specific CSS ───────────────────────────────────────────────────────────

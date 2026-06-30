@@ -30,6 +30,8 @@
   "google_maps_url",
   "description",
   "updates",
+  "follow_up_date",
+  "follow_up_notes",
   "drawing",
   "has_drawing",
   "workflow_section",
@@ -114,6 +116,16 @@
    "fieldname": "updates",
    "fieldtype": "Text Editor",
    "label": "Update(s)"
+  },
+  {
+   "fieldname": "follow_up_date",
+   "fieldtype": "Date",
+   "label": "Follow Up Date"
+  },
+  {
+   "fieldname": "follow_up_notes",
+   "fieldtype": "Text Editor",
+   "label": "Follow Up Notes"
   },
   {
    "fieldname": "site_location",

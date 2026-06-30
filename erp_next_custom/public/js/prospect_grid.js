@@ -53,14 +53,14 @@
 .pg-qs-c3{background:#014486;}
 .pg-qs-c4{background:#0e7490;}
 /* table wrapper — z-index must stay below nav (nav is z-index:20) */
-.pg-tbl-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
-.pg-tbl-outer::-webkit-scrollbar{height:4px;}
+.pg-tbl-outer{overflow:auto;max-height:var(--pg-body-max-height,none);padding-bottom:56px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
+.pg-tbl-outer::-webkit-scrollbar{height:4px;width:6px;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
 
 /* table */
-.pg-tbl{width:100%;border-collapse:separate;border-spacing:0;}
+.pg-tbl{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:8px;}
 .pg-tbl thead tr{background:#1e3f85;}
-.pg-tbl th{background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
+.pg-tbl th{position:sticky;top:0;z-index:4;background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
 .pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;}
 .pg-tbl td:last-child{border-right:none;}
@@ -69,12 +69,13 @@
 .pg-f{position:sticky;z-index:2;}
 .pg-tbl td.pg-f{background:#fff;}
 .pg-tr-alt td.pg-f{background:#f8faff;}
-.pg-tbl th.pg-f{z-index:3;background:#1e3f85;}
+.pg-tbl th.pg-f{z-index:5;background:#1e3f85;}
 .pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.10);}
 .pg-tbl th.pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.08);}
 
 /* variable cols — all always visible; tabs scroll into view */
 .pg-v{min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
+.pg-tbl th.pg-v{z-index:4;background:#1e3f85;}
 
 /* row hover — obvious for non-technical users */
 .pg-tbl tbody tr:hover td{background:#e8f4fd !important;}
@@ -343,7 +344,7 @@
 .pg-tb-del.pg-tb-del-on{opacity:1;pointer-events:all;max-width:180px;padding:7px 14px;border-width:1.5px;}
 .pg-tb-del:hover{background:rgba(239,68,68,.22);border-color:#fca5a5;color:#fff;}
 .pg-tb-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:0 4px;}
-.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
+.pg-notes-cell{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
@@ -592,14 +593,8 @@
                 if (empty) return `<span class="pg-mt">—</span>`;
                 if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
                 return `<span>${_e(v)}</span>`;
-            case "select": {
-                if (empty) return `<span class="pg-mt">—</span>`;
-                const _pal = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
-                const _opts = (col.options || []).filter(o => o);
-                const _idx  = _opts.indexOf(String(v));
-                const _cls  = _idx >= 0 ? _pal[_idx % _pal.length] : "pg-badge-gray";
-                return `<span class="pg-badge ${_cls}">${_e(v)}</span>`;
-            }
+            case "select":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             case "link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const val = String(v);
@@ -663,16 +658,8 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
-            case "dynselect": {
-                if (empty) return `<span class="pg-mt">—</span>`;
-                const _pal2 = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
-                const _baseOpts = col.options || [];
-                const _extra = (() => { try { return JSON.parse(localStorage.getItem(col.dynKey || "pg_dynselect") || "[]"); } catch(e) { return []; } })();
-                const _allOpts = [...new Set([..._baseOpts, ..._extra])].filter(Boolean);
-                const _idx2  = _allOpts.indexOf(String(v));
-                const _cls2  = _idx2 >= 0 ? _pal2[_idx2 % _pal2.length] : "pg-badge-gray";
-                return `<span class="pg-badge ${_cls2}">${_e(v)}</span>`;
-            }
+            case "dynselect":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             case "contact-link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const name = String(v);
@@ -709,7 +696,7 @@
             `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -734,7 +721,7 @@
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
     }
@@ -1766,6 +1753,7 @@
         ).join("");
         const rowsHtml = cfg.rows.map((r, i) => buildRow(cfg, r, i)).join("");
         const cardsHtml = _buildMobileCards(cfg.rows);
+        const bodyStyle = cfg.maxBodyHeight ? ` style="--pg-body-max-height:${_e(cfg.maxBodyHeight)}"` : "";
 
         el.innerHTML = `<div class="pg-shell">
   <div class="pg-nav-row">
@@ -1787,7 +1775,7 @@
       <button class="pg-tb-exp">${SVG.export} ${cfg.exportLabel || 'Export'}</button>
     </div>
   </div>
-  <div class="pg-tbl-outer">
+  <div class="pg-tbl-outer"${bodyStyle}>
     <table class="pg-tbl" data-tab="0">
       <thead>${buildHeader(cfg)}</thead>
       <tbody>${rowsHtml}</tbody>
@@ -1867,6 +1855,15 @@
             _eDrop.remove();
             _eDrop = null;
         }
+    }
+
+    function _growEditToValue(el) {
+        if (!_eFl || !_eTd || !el || el.tagName !== "INPUT") return;
+        const type = el.type || "text";
+        if (!["text", "url", "search", "tel", "email"].includes(type)) return;
+        const base = _eTd.getBoundingClientRect().width;
+        const text = el.value || el.placeholder || "";
+        _eFl.style.width = Math.max(base, Math.min(640, (text.length * 8) + 40)) + "px";
     }
 
     function _openEdit(root, td) {
@@ -2313,6 +2310,8 @@
         _eIn  = el;
         _eTd  = td;
         _eRoot = root;
+        _growEditToValue(el);
+        el.addEventListener("input", () => _growEditToValue(el));
         el.focus();
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
         if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
@@ -2855,22 +2854,20 @@
         }, { passive: true });
 
         // ── Row number selection ─────────────────────────────────
-        tbody.addEventListener("mousedown", e => {
+        root.addEventListener("click", e => {
             const numTd = e.target.closest(".pg-f-num-cell");
-            if (!numTd) return;
+            if (!numTd || !root.contains(numTd)) return;
             e.preventDefault();
-            const tr   = numTd.closest("tr");
+            e.stopPropagation();
+            const tr = numTd.closest("tr");
+            if (!tr || !tbody.contains(tr)) return;
             const rows = Array.from(tbody.children);
-            _dragSelStart  = rows.indexOf(tr);
-            _dragSelActive = true;
-            if (e.shiftKey) {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 _toggleRow(root, tr);
-            } else {
-                const wasSel  = tr.classList.contains("pg-row-sel");
-                const selOnly = root.querySelectorAll(".pg-row-sel").length === 1 && wasSel;
-                rows.forEach(r => r.classList.remove("pg-row-sel"));
-                if (!selOnly) { _toggleRow(root, tr, true); } else { _refreshToolbar(root); }
+                return;
             }
+            rows.forEach(r => r.classList.remove("pg-row-sel"));
+            _toggleRow(root, tr, true);
         });
 
         document.addEventListener("mousemove", e => {

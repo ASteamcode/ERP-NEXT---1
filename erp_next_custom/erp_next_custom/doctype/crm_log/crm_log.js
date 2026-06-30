@@ -126,7 +126,7 @@ function crm_rebuild_location(frm) {
 // (description / updates) are skipped so Enter still inserts newlines there.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CRM_MULTILINE_FIELDS = new Set(["description", "updates"]);
+const CRM_MULTILINE_FIELDS = new Set(["description", "updates", "follow_up_notes"]);
 
 function crm_bind_enter_navigation(frm) {
 	CRM_TAB_ORDER.forEach((fieldname) => {
