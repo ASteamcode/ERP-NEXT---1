@@ -53,14 +53,14 @@
 .pg-qs-c3{background:#014486;}
 .pg-qs-c4{background:#0e7490;}
 /* table wrapper — z-index must stay below nav (nav is z-index:20) */
-.pg-tbl-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
-.pg-tbl-outer::-webkit-scrollbar{height:4px;}
+.pg-tbl-outer{overflow:auto;max-height:var(--pg-body-max-height,none);padding-bottom:56px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
+.pg-tbl-outer::-webkit-scrollbar{height:4px;width:6px;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
 
 /* table */
-.pg-tbl{width:100%;border-collapse:separate;border-spacing:0;}
+.pg-tbl{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:8px;}
 .pg-tbl thead tr{background:#1e3f85;}
-.pg-tbl th{background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
+.pg-tbl th{position:sticky;top:0;z-index:4;background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
 .pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;}
 .pg-tbl td:last-child{border-right:none;}
@@ -69,12 +69,13 @@
 .pg-f{position:sticky;z-index:2;}
 .pg-tbl td.pg-f{background:#fff;}
 .pg-tr-alt td.pg-f{background:#f8faff;}
-.pg-tbl th.pg-f{z-index:3;background:#1e3f85;}
+.pg-tbl th.pg-f{z-index:5;background:#1e3f85;}
 .pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.10);}
 .pg-tbl th.pg-f-shadow{box-shadow:4px 0 10px -2px rgba(0,0,0,.08);}
 
 /* variable cols — all always visible; tabs scroll into view */
 .pg-v{min-width:0;width:auto;white-space:nowrap;position:relative;z-index:0;}
+.pg-tbl th.pg-v{z-index:4;background:#1e3f85;}
 
 /* row hover — obvious for non-technical users */
 .pg-tbl tbody tr:hover td{background:#e8f4fd !important;}
@@ -343,7 +344,7 @@
 .pg-tb-del.pg-tb-del-on{opacity:1;pointer-events:all;max-width:180px;padding:7px 14px;border-width:1.5px;}
 .pg-tb-del:hover{background:rgba(239,68,68,.22);border-color:#fca5a5;color:#fff;}
 .pg-tb-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:0 4px;}
-.pg-notes-cell{display:block;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
+.pg-notes-cell{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:text;font-size:12px;color:#374151;line-height:1.4;}.pg-notes-tip{position:fixed;z-index:9999;background:#fff;color:#374151;font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:360px;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.15);border:1px solid #e5e7eb;opacity:0;transition:opacity 0s;}
 .pg-notes-tip.pg-notes-tip-on{opacity:1;}
 .pg-ic-cell{display:inline-flex;align-items:center;gap:4px;}
 .pg-ic-icon{width:12px;height:12px;flex-shrink:0;opacity:.4;stroke:#475569;}
@@ -379,15 +380,17 @@
 
   /* Add button → blue square icon */
   .pg-tb-add{
-    width:46px!important;min-width:46px;height:46px!important;
-    border-radius:14px!important;padding:0!important;
-    background:linear-gradient(135deg,#2563eb,#4f46e5)!important;
+    flex-shrink:0!important;
+    width:44px!important;min-width:44px;height:44px!important;
+    border-radius:12px!important;padding:0!important;
+    background:linear-gradient(135deg,#1e3f85,#284f9e);
     color:#fff!important;border:none!important;
-    box-shadow:0 4px 14px rgba(37,99,235,.40)!important;
+    box-shadow:0 8px 20px rgba(30,63,133,.25);
     display:inline-flex;align-items:center;justify-content:center;
     font-size:0!important;
   }
-  .pg-tb-add svg{width:22px;height:22px;}
+  .pg-tb-add svg{width:22px!important;
+                 height:22px!important;}
 
   /* Search */
   .pg-search-wrap{width:100%;}
@@ -399,7 +402,7 @@
     box-shadow:0 1px 4px rgba(0,0,0,.06)!important;
   }
   .pg-search::placeholder{color:#94a3b8!important;}
-  .pg-search:focus{border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.10)!important;}
+  .pg-search:focus{border-color:#1e3f85!important;box-shadow:0 0 0 3px rgba(30,63,133,.12);}
   .pg-search-icon{left:12px!important;color:#94a3b8!important;width:15px;height:15px;}
   .pg-search-wrap:focus-within .pg-search-icon{color:#2563eb!important;}
 
@@ -425,10 +428,10 @@
   /* Avatar */
   .pg-mob-av{
     width:44px;height:44px;min-width:44px;border-radius:50%;
-    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    background:linear-gradient(135deg,#1e3f85,#284f9e);
     color:#fff;display:flex;align-items:center;justify-content:center;
     font-size:17px;font-weight:800;flex-shrink:0;
-    box-shadow:0 2px 8px rgba(37,99,235,.30);
+    box-shadow:0 6px 18px rgba(30,63,133,.29);
   }
 
   /* Name + company */
@@ -445,7 +448,7 @@
   .pg-mob-badge-gray  {background:#f3f4f6;color:#6b7280;}
   .pg-mob-badge-green {background:#ecfdf5;color:#059669;}
   .pg-mob-badge-red   {background:#fef2f2;color:#dc2626;}
-  .pg-mob-chevron{width:18px;height:18px;color:#94a3b8;transition:transform .25s,color .15s;flex-shrink:0;}
+  .pg-mob-chevron{width:18px;height:18px;color:#1e3f85;transition:transform .25s,color .15s;flex-shrink:0;}
   .pg-mob-expanded .pg-mob-chevron{transform:rotate(180deg);color:#2563eb;}
 
   /* Action row */
@@ -458,10 +461,15 @@
     font-size:15px;
   }
   .pg-mob-action:hover{transform:scale(1.1);}
-  .pg-mob-action-phone{background:#eff6ff;color:#2563eb;}
-  .pg-mob-action-wa   {background:#f0fdf4;color:#16a34a;}
-  .pg-mob-action-maps {background:#fef2f2;color:#ef4444;}
-  .pg-mob-action-edit {background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;}
+  .pg-mob-action-phone{background:#eff6ff;color:#1e3f85;border-color:#1e3f75;border:1.5px solid #1e3985;box-shadow:0 2px 8px rgba(37,99,235,.12);}
+  .pg-mob-action-wa   {background:#f0fdf4;color:#16a34a;border:1.5px solid #1e3985;border-color:#1e3985;box-shadow:0 2px 8px rgba(37,99,235,.12);}
+  .pg-mob-action-maps {background:#fef2f2;color:#1e3f85;border-color:#1e3f85;border:1.5px solid #1e3f85;box-shadow:0 2px 8px rgba(37,99,235,.12);}
+  .pg-mob-action-edit {background:#fff;color:#1e3f85;border:1.5px solid #1e3985;border-color:#1e3f85;  box-shadow:0 2px 8px rgba(37,99,235,.12);}
+  .pg-mob-action-edit:hover{
+    background:#edf2fb;
+    color:#143b80;
+    border-color:#143b80;
+}
 
   /* Expandable detail panel */
   .pg-mob-details{
@@ -473,7 +481,7 @@
 
   .pg-mob-section{
     font-size:10px;font-weight:800;color:#2563eb;
-    text-transform:uppercase;letter-spacing:.6px;
+  S  text-transform:uppercase;letter-spacing:.6px;
     margin:10px 0 6px;padding-bottom:4px;
     border-bottom:1px solid #e8edf8;
   }
@@ -485,12 +493,13 @@
 
   .pg-mob-view-btn{
     display:block;width:100%;margin-top:12px;padding:10px;
-    border-radius:12px;background:#2563eb;color:#fff;
+    border-radius:12px;background:#1e3f85;color:#fff;
     text-align:center;font-weight:700;font-size:13px;
     text-decoration:none;border:none;cursor:pointer;
-    transition:background .15s;
+    transition:background .15s,transform:.15s;
   }
-  .pg-mob-view-btn:hover{background:#1d4ed8;}
+  .pg-mob-view-btn:hover{background:#1d4ed8; color:#fff;
+    transform:translateY(-1px);}
 
   /* ── Frappe dialog overrides on mobile ── */
   .modal-dialog{max-width:420px!important;margin:18px auto!important;}
@@ -500,7 +509,7 @@
   }
   .modal-header{
     background:linear-gradient(135deg,#2563eb,#7c3aed)!important;
-    color:#fff!important;border:none!important;padding:18px!important;
+    color:#fff!important;border:none!important;padding:18px!important;background:#1e3f85!important;
   }
   .modal-title{color:#fff!important;font-weight:800!important;}
   .modal-header .btn-modal-close,.modal-header .close{color:rgba(255,255,255,.8)!important;opacity:1!important;}
@@ -535,7 +544,7 @@
   /* Section picker buttons inside our edit menu */
   .pg-mob-section-btn{
     display:block;width:100%;margin-bottom:10px;padding:14px 16px;
-    border:none;border-radius:14px;background:#eff6ff;color:#2563eb;
+    border:1px solid  #2e8ef0!important;;border-radius:14px;background:#eff6ff;color:#1e3f85;
     font-weight:800;font-size:14px;text-align:left;cursor:pointer;
     transition:background .15s;
   }
@@ -592,14 +601,8 @@
                 if (empty) return `<span class="pg-mt">—</span>`;
                 if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
                 return `<span>${_e(v)}</span>`;
-            case "select": {
-                if (empty) return `<span class="pg-mt">—</span>`;
-                const _pal = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
-                const _opts = (col.options || []).filter(o => o);
-                const _idx  = _opts.indexOf(String(v));
-                const _cls  = _idx >= 0 ? _pal[_idx % _pal.length] : "pg-badge-gray";
-                return `<span class="pg-badge ${_cls}">${_e(v)}</span>`;
-            }
+            case "select":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             case "link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const val = String(v);
@@ -663,16 +666,8 @@
                 const owner    = row.owner || "";
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
-            case "dynselect": {
-                if (empty) return `<span class="pg-mt">—</span>`;
-                const _pal2 = ["pg-badge-blue","pg-badge-indigo","pg-badge-purple","pg-badge-teal","pg-badge-emerald","pg-badge-amber","pg-badge-orange"];
-                const _baseOpts = col.options || [];
-                const _extra = (() => { try { return JSON.parse(localStorage.getItem(col.dynKey || "pg_dynselect") || "[]"); } catch(e) { return []; } })();
-                const _allOpts = [...new Set([..._baseOpts, ..._extra])].filter(Boolean);
-                const _idx2  = _allOpts.indexOf(String(v));
-                const _cls2  = _idx2 >= 0 ? _pal2[_idx2 % _pal2.length] : "pg-badge-gray";
-                return `<span class="pg-badge ${_cls2}">${_e(v)}</span>`;
-            }
+            case "dynselect":
+                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
             case "contact-link": {
                 if (empty) return `<span class="pg-mt">—</span>`;
                 const name = String(v);
@@ -709,7 +704,7 @@
             `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -734,7 +729,7 @@
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
     }
@@ -1689,13 +1684,18 @@
     }
 
     // ── Mobile card builder ────────────────────────────────────────
-    const _MOB_STATUS_CLS = {
-        "Lead":          "pg-mob-badge-blue",
-        "In Discussion": "pg-mob-badge-amber",
-        "Contacted":     "pg-mob-badge-gray",
-        "Converted":     "pg-mob-badge-green",
-        "Lost":          "pg-mob-badge-red",
-    };
+    const _MOB_STAGE_CLS = {
+    "Prospect":       "pg-mob-badge-gray",
+    "Outreached":     "pg-mob-badge-blue",
+    "Passby Visit":   "pg-mob-badge-indigo",
+    "Lead":           "pg-mob-badge-teal",
+    "Site Visit":     "pg-mob-badge-purple",
+    "Quotation":      "pg-mob-badge-orange",
+    "Negotiation":    "pg-mob-badge-yellow",
+    "Won":            "pg-mob-badge-green",
+    "Job Scheduled":  "pg-mob-badge-green",
+    "Lost":           "pg-mob-badge-red",
+};
 
     const _CHEVRON_SVG = `<svg class="pg-mob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
     const _PHONE_SVG   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.8a19.79 19.79 0 01-3-8.57A2 2 0 012.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.16 6.16l1.27-.45a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`;
@@ -1708,8 +1708,8 @@
             const last     = r.last  || "";
             const initials = ((first[0] || "") + (last[0] || "")).toUpperCase() || (r.company || "?")[0].toUpperCase();
             const name     = _e(r.name || "");
-            const status   = r.status || "";
-            const badgeCls = _MOB_STATUS_CLS[status] || "pg-mob-badge-gray";
+            const stage   = r.stage || "Prospect";
+            const badgeCls = _MOB_STAGE_CLS[stage] || "pg-mob-badge-gray";
             const digits   = String(r.mobile || "").replace(/\D/g, "");
             const phoneHtml = r.mobile
                 ? `<a class="pg-mob-action pg-mob-action-phone" href="tel:${_e(r.mobile)}">${_PHONE_SVG}</a>
@@ -1727,7 +1727,7 @@
       <div class="pg-mob-company">${_e(r.company || "")}</div>
     </div>
     <div class="pg-mob-side">
-      ${status ? `<span class="pg-mob-badge ${badgeCls}">${_e(status)}</span>` : ""}
+      ${stage ? `<span class="pg-mob-badge ${badgeCls}">${_e(stage)}</span>` : ""}
       ${_CHEVRON_SVG}
     </div>
   </div>
@@ -1744,7 +1744,7 @@
       ${r.email  ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Email</span><span class="pg-mob-val">${_e(r.email)}</span></div>` : ""}
       ${r.city   ? `<div class="pg-mob-section">Site</div><div class="pg-mob-row"><span class="pg-mob-lbl">Location</span><span class="pg-mob-val">${_e(r.city)}</span></div>` : ""}
       ${r.pstatus ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Project</span><span class="pg-mob-val">${_e(r.pstatus)}</span></div>` : ""}
-      <a class="pg-mob-view-btn" href="/app/prospect/${name}">View Full Record</a>
+      <a class="pg-mob-view-btn" href="/app/prospect/${encodeURIComponent(name)}">View Full Record</a>
     </div>
   </div>
 </div>`;
@@ -1766,6 +1766,7 @@
         ).join("");
         const rowsHtml = cfg.rows.map((r, i) => buildRow(cfg, r, i)).join("");
         const cardsHtml = _buildMobileCards(cfg.rows);
+        const bodyStyle = cfg.maxBodyHeight ? ` style="--pg-body-max-height:${_e(cfg.maxBodyHeight)}"` : "";
 
         el.innerHTML = `<div class="pg-shell">
   <div class="pg-nav-row">
@@ -1787,7 +1788,7 @@
       <button class="pg-tb-exp">${SVG.export} ${cfg.exportLabel || 'Export'}</button>
     </div>
   </div>
-  <div class="pg-tbl-outer">
+  <div class="pg-tbl-outer"${bodyStyle}>
     <table class="pg-tbl" data-tab="0">
       <thead>${buildHeader(cfg)}</thead>
       <tbody>${rowsHtml}</tbody>
@@ -1867,6 +1868,15 @@
             _eDrop.remove();
             _eDrop = null;
         }
+    }
+
+    function _growEditToValue(el) {
+        if (!_eFl || !_eTd || !el || el.tagName !== "INPUT") return;
+        const type = el.type || "text";
+        if (!["text", "url", "search", "tel", "email"].includes(type)) return;
+        const base = _eTd.getBoundingClientRect().width;
+        const text = el.value || el.placeholder || "";
+        _eFl.style.width = Math.max(base, Math.min(640, (text.length * 8) + 40)) + "px";
     }
 
     function _openEdit(root, td) {
@@ -2313,6 +2323,8 @@
         _eIn  = el;
         _eTd  = td;
         _eRoot = root;
+        _growEditToValue(el);
+        el.addEventListener("input", () => _growEditToValue(el));
         el.focus();
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
         if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
@@ -2723,43 +2735,92 @@
             {
                 label: "Contact Information",
                 fields: [
-                    { label: "First Name",    fn: "custom_first_name",     ft: "Data",     def: row.first    || "" },
-                    { label: "Last Name",     fn: "custom_last_name",      ft: "Data",     def: row.last     || "" },
-                    { label: "Role",          fn: "custom_position",       ft: "Data",     def: row.role     || "" },
-                    { label: "Status",        fn: "custom_prospect_status",ft: "Select",   def: row.status   || "Lead",
-                      options: "Lead\nIn Discussion\nContacted\nConverted\nLost" },
-                    { label: "Primary Mobile",fn: "custom_mobile",         ft: "Data",     def: row.mobile   || "" },
-                    { label: "Email",         fn: "custom_email",          ft: "Data",     def: row.email    || "" },
-                ],
-            },
+                      { label: "Owner", fn: "owner", ft: "Data", def: row.owner || "" },
+                      { label: "Title", fn: "custom_salutation", ft: "Select", def: row.title || "" },
+                      { label: "First Name", fn: "custom_first_name", ft: "Data", def: row.first || "" },
+                      { label: "Last Name", fn: "custom_last_name", ft: "Data", def: row.last || "" },
+
+                      { label: "Activity Type", fn: "custom_company_activity_type", ft: "Data", def: row.activity || "" },
+
+                      { label: "Source", fn: "custom_lead_source", ft: "Data", def: row.source || "" },
+
+                      { label: "Role", fn: "custom_position", ft: "Data", def: row.role || "" },
+
+                      {
+                       label: "Stage",
+                       fn: "custom_stage",
+                       ft: "Select",
+                       def: row.stage || "Prospect",
+                       options: "\nProspect\nOutreached\nPassby Visit\nLead\nSite Visit\nQuotation\nNegotiation\nWon\nJob Scheduled\nLost"
+                        },
+
+                      { label: "Primary Mobile", fn: "custom_mobile", ft: "Data", def: row.mobile || "" },
+
+                      { label: "Email", fn: "custom_email", ft: "Data", def: row.email || "" },
+                    ]
+             },
             {
                 label: "Site Information",
                 fields: [
-                    { label: "Site Location", fn: "custom_site_location",  ft: "Data",     def: row.city     || "" },
-                    { label: "Google Maps",   fn: "custom_maps_url",       ft: "Data",     def: row.maps     || "" },
-                    { label: "Area (sqm)",    fn: "custom_area",           ft: "Data",     def: row.area     || "" },
-                    { label: "Floors",        fn: "custom_floors",         ft: "Data",     def: row.floors   || "" },
-                ],
+                     { label: "Country", fn: "custom_site_country", ft: "Data", def: row.country || "" },
+
+                     { label: "District", fn: "custom_site_district", ft: "Data", def: row.district || "" },
+
+                     { label: "City", fn: "custom_site_city", ft: "Data", def: row.city || "" },
+
+                     { label: "Street", fn: "custom_site_street", ft: "Data", def: row.street || "" },
+
+                     { label: "Google Maps", fn: "custom_maps_url", ft: "Data", def: row.maps || "" },
+
+                     { label: "Description", fn: "custom_description", ft: "Small Text", def: row.description || "" },
+
+                     { label: "Files", fn: "files", ft: "Data", def: row.files || "" },
+
+                     { label: "Drawing", fn: "drawing", ft: "Data", def: row.drawing || "" },
+                 ]
             },
-            {
-                label: "Project Information",
-                fields: [
-                    { label: "Project Status",fn: "custom_project_status", ft: "Data",     def: row.pstatus  || "" },
-                    { label: "Scaffold Type", fn: "custom_scaffold_type",  ft: "Data",     def: row.scaffold || "" },
-                    { label: "Project Type",  fn: "custom_project_type",   ft: "Data",     def: row.ptype    || "" },
-                    { label: "Contract Value",fn: "custom_contract_value", ft: "Currency", def: row.contract || "" },
-                ],
-            },
-            {
-                label: "Social & Web",
-                fields: [
-                    { label: "Instagram", fn: "custom_instagram", ft: "Data", def: row.instagram || "" },
-                    { label: "LinkedIn",  fn: "custom_linkedin",  ft: "Data", def: row.linkedin  || "" },
-                    { label: "Facebook",  fn: "custom_facebook",  ft: "Data", def: row.facebook  || "" },
-                    { label: "Telegram",  fn: "custom_telegram",  ft: "Data", def: row.telegram  || "" },
-                    { label: "Website",   fn: "website",          ft: "Data", def: row.website   || "" },
-                ],
-            },
+           {
+    label: "Scope & Specs",
+    fields: [
+        { label: "Project Status", fn: "custom_project_status", ft: "Data", def: row.status || "" },
+        { label: "Start Date", fn: "custom_project_start", ft: "Date", def: row.pstart || "" },
+        { label: "Floors", fn: "custom_floors", ft: "Data", def: row.floors || "" },
+        { label: "Project Type", fn: "custom_project_type", ft: "Data", def: row.ptype || "" },
+        { label: "Scaffold Type", fn: "custom_scaffold_type", ft: "Data", def: row.scaffold || "" },
+        { label: "Area (sqm)", fn: "custom_area", ft: "Data", def: row.area || "" },
+        { label: "Scope Notes", fn: "custom_scope_notes", ft: "Small Text", def: row.scope_notes || "" },
+    ]
+},
+{
+    label: "Site Team",
+    fields: [
+         { label: "Contact Person #1", fn: "custom_architect", ft: "Data", def: row.architect || "" },
+
+        { label: "Contact Person #2", fn: "custom_project_owner", ft: "Data", def: row.cp1 || "" },
+
+        { label: "Contact Person #3", fn: "custom_site_engineer", ft: "Data", def: row.cp2 || "" },
+
+        { label: "Contact Person #4", fn: "custom_safety_officer", ft: "Data", def: row.cp3 || "" },
+
+        { label: "Contact Person #5", fn: "custom_contact_person_4", ft: "Data", def: row.cp4 || "" },
+
+        { label: "Workers on Site", fn: "custom_workers_count", ft: "Int", def: row.workers || "" },
+
+        { label: "Contract Value", fn: "custom_contract_value", ft: "Currency", def: row.contract || "" },
+    ]
+},
+          {
+    label: "Social & Web",
+    fields: [
+        { label: "Instagram", fn: "custom_instagram", ft: "Data", def: row.instagram || "" },
+        { label: "LinkedIn", fn: "custom_linkedin", ft: "Data", def: row.linkedin || "" },
+        { label: "Facebook", fn: "custom_facebook", ft: "Data", def: row.facebook || "" },
+        { label: "Telegram", fn: "custom_telegram", ft: "Data", def: row.telegram || "" },
+        { label: "Website", fn: "website", ft: "Data", def: row.website || "" },
+        { label: "TikTok", fn: "custom_tiktok", ft: "Data", def: row.tiktok || "" },
+        { label: "X", fn: "custom_x", ft: "Data", def: row.x || "" },
+    ]
+},
         ];
 
         // Build menu dialog
@@ -2855,22 +2916,20 @@
         }, { passive: true });
 
         // ── Row number selection ─────────────────────────────────
-        tbody.addEventListener("mousedown", e => {
+        root.addEventListener("click", e => {
             const numTd = e.target.closest(".pg-f-num-cell");
-            if (!numTd) return;
+            if (!numTd || !root.contains(numTd)) return;
             e.preventDefault();
-            const tr   = numTd.closest("tr");
+            e.stopPropagation();
+            const tr = numTd.closest("tr");
+            if (!tr || !tbody.contains(tr)) return;
             const rows = Array.from(tbody.children);
-            _dragSelStart  = rows.indexOf(tr);
-            _dragSelActive = true;
-            if (e.shiftKey) {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 _toggleRow(root, tr);
-            } else {
-                const wasSel  = tr.classList.contains("pg-row-sel");
-                const selOnly = root.querySelectorAll(".pg-row-sel").length === 1 && wasSel;
-                rows.forEach(r => r.classList.remove("pg-row-sel"));
-                if (!selOnly) { _toggleRow(root, tr, true); } else { _refreshToolbar(root); }
+                return;
             }
+            rows.forEach(r => r.classList.remove("pg-row-sel"));
+            _toggleRow(root, tr, true);
         });
 
         document.addEventListener("mousemove", e => {

@@ -113,13 +113,14 @@
 
     // ── Grid template ──────────────────────────────────────────────────────────
     function gridTpl(cols, colWidths) {
-        const tracks = cols.map(c => {
-            if (colWidths[c.field]) return `${colWidths[c.field]}px`;
-            if (c.fr != null)       return `${c.fr}fr`;
-            return `${c.width || 120}px`;
-        });
-        return ["42px", ...tracks].join(" ");
-    }
+    const tracks = cols.map(c => {
+        const key = c.field || c.key;
+        if (colWidths[key]) return `${colWidths[key]}px`;
+        return `${c.width || 120}px`;
+    });
+
+    return ["42px", ...tracks].join(" ");
+    }   
 
     // ── Rownum cell HTML ───────────────────────────────────────────────────────
     function rnCell(doc, ri) {
