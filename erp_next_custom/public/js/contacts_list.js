@@ -1,9 +1,10 @@
-// contacts_list.js — Contact list view: horizontal carousel + vertical list
+// contacts_list.js — Contact list view: list, thumbnail cards, and horizontal carousel
 // Clean light theme. Built so a non-technical user reads: name → person → call/email.
 "use strict";
 
 const CONTACT_DOCTYPE = "Contact";
 const CC_VIEW_KEY = "cc_view_mode";
+const CC_VIEW_DEFAULTED_KEY = "cc_view_defaulted_to_list";
 
 const _CC_FIELDS = [
     "name", "salutation", "first_name", "last_name", "full_name", "image",
@@ -120,10 +121,19 @@ function _ccInfoRow(icon, label, value) {
     if (!value) return "";
     return `<div class="cc-info-row"><span class="cc-info-ic">${icon}</span><span class="cc-info-text"><span class="cc-info-label">${label}</span><span class="cc-info-val">${frappe.utils.escape_html(value)}</span></span></div>`;
 }
+function _ccContactMeta(d) {
+    return [d.designation, d.department].filter(Boolean).join(" · ");
+}
+function _ccLocation(d) {
+    return [d.custom_city, d.custom_country].filter(Boolean).join(", ") || d.custom_site_address || "";
+}
+function _ccPrimaryPhone(d) {
+    return d.mobile_no || d.phone || "";
+}
 
 // CARD 1 — Quick Actions. Call & Email sit at the top, biggest thing on the page.
 function _ccActionsCard(d) {
-    const phone = d.mobile_no || d.phone || "";
+    const phone = _ccPrimaryPhone(d);
     const email = d.email_id || "";
     const waDigits = phone.replace(/[^\d]/g, "");
     const socials = _CC_SOCIALS.filter(s => d[s.key]);
@@ -151,8 +161,8 @@ function _ccActionsCard(d) {
 
 // CARD 2 — Profile. Who this person is, at a glance.
 function _ccProfileCard(d) {
-    const role = [d.designation, d.department].filter(Boolean).join(" · ");
-    const loc = [d.custom_city, d.custom_country].filter(Boolean).join(", ");
+    const role = _ccContactMeta(d);
+    const loc = _ccLocation(d);
     const stage = d.custom_lifecycle_stage || "";
     const pstatus = d.custom_prospect_status || "";
     const badges = [
@@ -264,7 +274,13 @@ function _cc_fill_height(host) {
 
 function _cc_render(host) {
     _cc_fill_height(host);
-    const savedView = localStorage.getItem(CC_VIEW_KEY) || "horizontal";
+    let savedView = localStorage.getItem(CC_VIEW_KEY);
+    if (!localStorage.getItem(CC_VIEW_DEFAULTED_KEY)) {
+        savedView = "vertical";
+        localStorage.setItem(CC_VIEW_KEY, savedView);
+        localStorage.setItem(CC_VIEW_DEFAULTED_KEY, "1");
+    }
+    if (!["vertical", "cards", "horizontal"].includes(savedView)) savedView = "vertical";
     host.innerHTML = `
 <div class="cc-shell" data-view="${savedView}">
     <div class="cc-toolbar">
@@ -273,11 +289,14 @@ function _cc_render(host) {
             <input class="cc-search" placeholder="Search by name, company or email…" />
         </div>
         <div class="cc-view-toggle">
-            <button class="cc-view-btn" data-view="horizontal" title="Gallery view">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="4" height="6" rx="1"/><rect x="10" y="6" width="4" height="12" rx="1"/><rect x="17" y="9" width="4" height="6" rx="1"/></svg>
-            </button>
             <button class="cc-view-btn" data-view="vertical" title="List view">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            </button>
+            <button class="cc-view-btn" data-view="cards" title="Card view">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+            <button class="cc-view-btn" data-view="horizontal" title="Carousel view">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="4" height="6" rx="1"/><rect x="10" y="6" width="4" height="12" rx="1"/><rect x="17" y="9" width="4" height="6" rx="1"/></svg>
             </button>
         </div>
     </div>
@@ -299,6 +318,9 @@ function _cc_render(host) {
         <div class="cc-vertical">
             <div class="cc-vlist"></div>
             <div class="cc-vdetail"></div>
+        </div>
+        <div class="cc-cards">
+            <div class="cc-card-grid"></div>
         </div>
     </div>
 </div>`;
@@ -337,6 +359,7 @@ function _cc_apply_filter(q, force) {
     }
     _cc_render_horizontal(_cc_host);
     _cc_render_vertical(_cc_host);
+    _cc_render_cards(_cc_host);
 }
 
 function _cc_render_horizontal(host) {
@@ -463,6 +486,45 @@ function _cc_render_vertical(host) {
     }
 }
 
+function _cc_render_cards(host) {
+    const grid = host.querySelector(".cc-card-grid");
+    if (!grid) return;
+    if (!_cc_filtered.length) {
+        grid.innerHTML = `<div class="cc-empty-state">No contacts match your search.</div>`;
+        return;
+    }
+    grid.innerHTML = _cc_filtered.map(d => {
+        const phone = _ccPrimaryPhone(d);
+        const email = d.email_id || "";
+        const meta = _ccContactMeta(d);
+        const loc = _ccLocation(d);
+        const stage = d.custom_lifecycle_stage || d.custom_prospect_status || d.status || "";
+        return `
+        <article class="cc-tile" data-name="${frappe.utils.escape_html(d.name)}">
+            <div class="cc-tile-top">
+                ${_ccAvatar(d, 56, "square")}
+                <div class="cc-tile-id">
+                    <div class="cc-tile-name">${frappe.utils.escape_html(_ccFullName(d))}</div>
+                    <div class="cc-tile-company">${frappe.utils.escape_html(d.company_name || "No company")}</div>
+                </div>
+            </div>
+            ${stage ? `<div class="cc-tile-badge"><span class="pg-badge ${_CC_STAGE_BADGE[stage] || _CC_PSTATUS_BADGE[stage] || _CC_CSTATUS_BADGE[stage] || "pg-badge-gray"}">${frappe.utils.escape_html(stage)}</span></div>` : ""}
+            <div class="cc-tile-lines">
+                ${meta ? `<div class="cc-tile-line">${_CC_IC.user}<span>${frappe.utils.escape_html(meta)}</span></div>` : ""}
+                ${loc ? `<div class="cc-tile-line">${_CC_IC.location}<span>${frappe.utils.escape_html(loc)}</span></div>` : ""}
+                ${phone ? `<div class="cc-tile-line">${_CC_IC.phone}<span>${frappe.utils.escape_html(phone)}</span></div>` : ""}
+                ${email ? `<div class="cc-tile-line">${_CC_IC.mail}<span>${frappe.utils.escape_html(email)}</span></div>` : ""}
+            </div>
+            <div class="cc-tile-actions">
+                ${phone ? `<a class="cc-tile-btn" href="tel:${phone}" title="Call">${_CC_IC.phone}</a>` : ""}
+                ${email ? `<button class="cc-tile-btn cc-action-mail" data-email="${frappe.utils.escape_html(email)}" data-contact="${frappe.utils.escape_html(d.name)}" title="Email">${_CC_IC.mail}</button>` : ""}
+                <a class="cc-tile-open" href="/desk/contact/${encodeURIComponent(d.name)}">Open</a>
+            </div>
+        </article>`;
+    }).join("");
+    _cc_bind_actions(grid);
+}
+
 (function () {
     if (document.getElementById("cc-styles")) return;
     const s = document.createElement("style");
@@ -517,7 +579,6 @@ function _cc_render_vertical(host) {
 .cc-vertical { flex-direction:row; }
 .cc-shell[data-view="horizontal"] .cc-horizontal { display:flex; }
 .cc-shell[data-view="vertical"] .cc-vertical { display:flex; }
-
 /* ============ horizontal — name header + carousel ============ */
 .cc-stage-name { text-align:center; font-size:24px; font-weight:700; letter-spacing:-.01em; color:var(--cc-ink); padding:8px 20px 0; flex:none; min-height:30px; }
 .cc-strip-row { display:flex; align-items:center; flex:none; width:100%; padding:0 18px; box-sizing:border-box; }
@@ -608,6 +669,30 @@ function _cc_render_vertical(host) {
 .pg-badge-amber { background:#fdf2e0; color:#b5740d; }
 .pg-badge-red { background:#fdeaea; color:#cc3b3b; }
 
+
+
+/* ============ thumbnail card view ============ */
+.cc-cards { position:absolute; inset:0; display:none; overflow-y:auto; padding:18px 28px 32px; box-sizing:border-box; }
+.cc-shell[data-view="cards"] .cc-cards { display:block; }
+.cc-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; align-items:start; }
+.cc-tile { min-height:236px; display:flex; flex-direction:column; gap:14px; background:var(--cc-surface); border:1px solid var(--cc-line); border-radius:8px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05); transition:box-shadow .14s,border-color .14s,transform .14s; }
+.cc-tile:hover { border-color:#cbd4e1; box-shadow:0 8px 20px rgba(16,24,40,.08); transform:translateY(-1px); }
+.cc-tile-top { display:flex; align-items:center; gap:12px; min-width:0; }
+.cc-tile-id { min-width:0; }
+.cc-tile-name { font-size:15px; font-weight:700; color:var(--cc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cc-tile-company { font-size:12.5px; color:var(--cc-ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cc-tile-badge { min-height:21px; }
+.cc-tile-lines { display:flex; flex-direction:column; gap:8px; min-height:84px; }
+.cc-tile-line { display:flex; align-items:center; gap:8px; min-width:0; color:var(--cc-ink-soft); font-size:12.5px; }
+.cc-tile-line svg { width:14px; height:14px; flex:none; color:var(--cc-ink-mute); }
+.cc-tile-line span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cc-tile-actions { display:flex; align-items:center; gap:8px; margin-top:auto; }
+.cc-tile-btn { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:1px solid var(--cc-line); border-radius:7px; background:var(--cc-surface); color:var(--cc-ink-soft); cursor:pointer; text-decoration:none; }
+.cc-tile-btn:hover { color:var(--cc-accent); border-color:#c7d6ff; background:var(--cc-accent-soft); }
+.cc-tile-btn svg { width:15px; height:15px; }
+.cc-tile-open { margin-left:auto; font-size:13px; font-weight:600; color:var(--cc-accent); text-decoration:none; }
+.cc-tile-open:hover { text-decoration:underline; }
+
 /* ============ vertical list (master–detail) ============ */
 .cc-vlist { flex:none; width:340px; overflow-y:auto; padding:16px 14px 28px; box-sizing:border-box; border-right:1px solid var(--cc-line); background:var(--cc-bg); }
 .cc-vletter { position:sticky; top:0; z-index:2; background:var(--cc-bg); padding:12px 4px 6px; font-size:12px; font-weight:700; color:var(--cc-ink-mute); }
@@ -637,6 +722,7 @@ function _cc_render_vertical(host) {
     .cc-view-toggle{align-self:center;}
     .cc-stage-name{font-size:20px;}
     .cc-detail{padding:4px 16px 24px;}
+    .cc-cards{padding:16px;}
 }
 @media (prefers-reduced-motion:reduce){
     .cc-shell,.cc-card,.cc-action-btn,.cc-chevron,.cc-qgrid{transition:none;animation:none;}
