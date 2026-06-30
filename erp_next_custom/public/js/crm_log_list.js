@@ -7,51 +7,86 @@ const CL_DOCTYPE = "CRM Log";
 
 const _CL_CFG = {
     tabs: ["Log Details", "Contact Info", "Site", "Notes & Outcome", "Links"],
+
     fixed: [
-    { key:"num",     label:"#",       cls:"pg-f-num",   width:34,  type:"rownum" },
-
-    { key:"status",  label:"Status",  cls:"pg-f-stat",  width:85, frappe_field:"status", type:"status",
-      map:{ Open:"pg-badge-blue", Scheduled:"pg-badge-indigo", Viewed:"pg-badge-teal", Cancelled:"pg-badge-gray", Done:"pg-badge-lime" } },
-
-    { key:"log_date", label:"Date & Time", cls:"pg-f-date", width:140, type:"text" },
-
-    { key:"prefix",  label:"Pre",     cls:"pg-f-pre",   width:48, frappe_field:"prefix", type:"select", options:["","Mr","Ms","Mrs","Dr","Eng","Arch"] },
-
-    { key:"first",   label:"First",   cls:"pg-f-first", width:85, frappe_field:"first_name" },
-
-    { key:"last",    label:"Last",    cls:"pg-f-last",  width:85, frappe_field:"last_name" },
-
-    { key:"company", label:"Company", cls:"pg-f-co",    width:140, frappe_field:"company_name", type:"company", companySource:"client", shadow:true },
-
-    { key:"mobile", label:"Mobile", cls:"pg-f-mobile", width:115, type:"phone", frappe_field:"mobile" },
-],
-    cols: [
-        // Tab 0 — Log Details: when, what kind, who owns it
-        { tab:0, key:"description", label:"Description", type:"notes", frappe_field:"description", width:240 },
-        { tab:0, key:"owner_initials", label:"Owner",     type:"owner"                                                                             },
-        { tab:0, key:"log_type",    label:"Call Type",    type:"select", frappe_field:"log_type",  options:["","Inbound call","Quotation","Field","Job","Transport","Yard"] },
-        { tab:0, key:"category",    label:"Category",     type:"select", frappe_field:"category",  options:["","Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"] },
-        // Tab 1 — Contact Info: how to reach them
+        { key:"num", label:"#", cls:"pg-f-num", width:34, type:"rownum" },
+        { key:"log_date", label:"Date & Time", cls:"pg-f-date", width:132, type:"text" },
+        { key:"status", label:"Status", cls:"pg-f-stat", width:74, frappe_field:"status", type:"status",
+            map:{
+                Open:"pg-badge-blue",
+                Scheduled:"pg-badge-indigo",
+                Viewed:"pg-badge-teal",
+                Cancelled:"pg-badge-gray",
+                Done:"pg-badge-lime"
+            }
+        },
         
-        { tab:1, key:"tel",         label:"Tel",          type:"phone",  frappe_field:"tel"         },
-        { tab:1, key:"email",       label:"Email",        type:"link",   frappe_field:"email"       },
-        // Tab 2 — Site: where the project is
-        { tab:2, key:"site_loc",    label:"Location",     type:"text",            frappe_field:"site_location", width:200 },
-        { tab:2, key:"maps",        label:"Maps",         type:"maps",            frappe_field:"google_maps_url" },
-        { tab:2, key:"loc_country", label:"Country",      type:"locautocomplete", frappe_field:"loc_country",   locField:"country",  width:90 },
-        { tab:2, key:"loc_dist",    label:"District",     type:"locautocomplete", frappe_field:"loc_district",  locField:"district", width:110 },
-        { tab:2, key:"loc_city",    label:"City",         type:"locautocomplete", frappe_field:"loc_city",      locField:"city",     width:90 },
-        { tab:2, key:"loc_street",  label:"Street",       type:"locautocomplete", frappe_field:"loc_street",    locField:"street",   width:130 },
-        // Tab 3 — Notes & Outcome: what happened
-        
-        { tab:3, key:"updates",     label:"Updates",      type:"notes",  frappe_field:"updates",     width:240 },
-        { tab:3, key:"drawing",     label:"Drawing",      type:"drawing"                             },
-        { tab:3, key:"files",       label:"Files",        type:"files"                               },
-        // Tab 4 — Links: connect to CRM ecosystem
-        { tab:4, key:"crm_lead",    label:"Lead",         type:"text",   frappe_field:"crm_lead",    icon:"lead_ic"  },
-        { tab:4, key:"crm_contact", label:"Contact",      type:"text",   frappe_field:"crm_contact", icon:"person"   },
-        { tab:4, key:"crm_customer",label:"Customer",     type:"text",   frappe_field:"crm_customer",icon:"building" },
     ],
+
+    cols: [
+        // Tab 0 — Log Details
+        { tab:0, key:"prefix", label:"Pre", type:"select", frappe_field:"prefix", width:48, plain:true,
+            options:["","Mr","Ms","Mrs","Dr","Eng","Arch"]
+        },
+
+        { tab:0, key:"first", label:"First", type:"text", frappe_field:"first_name", width:80 },
+
+        { tab:0, key:"last", label:"Last", type:"text", frappe_field:"last_name", width:80 },
+
+        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:120 },
+
+        { tab:0, key:"mobile", label:"Mobile", type:"phone", frappe_field:"mobile", width:100 },
+
+        { tab:0, key:"site_loc", label:"Location", type:"text", frappe_field:"site_location", width:130 },
+
+        { tab:0, key:"description", label:"Description", type:"notes", frappe_field:"description", width:420 },
+
+        { tab:0, key:"owner_initials", label:"Owner", type:"owner", width:70 },
+
+        { tab:0, key:"log_type", label:"Call Type", type:"select", frappe_field:"log_type", width:130,
+            options:["","Inbound call","Quotation","Field","Job","Transport","Yard"]
+        },
+
+        { tab:0, key:"category", label:"Category", type:"select", frappe_field:"category", width:130,
+            options:["","Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"]
+        },
+
+        // Tab 1 — Contact Info
+        { tab:1, key:"tel", label:"Tel", type:"phone", frappe_field:"tel", width:120 },
+
+        { tab:1, key:"email", label:"Email", type:"link", frappe_field:"email", width:190 },
+
+        // Tab 2 — Site
+        
+        { tab:2, key:"maps", label:"Maps", type:"maps", frappe_field:"google_maps_url", width:80 },
+
+        { tab:2, key:"loc_country", label:"Country", type:"locautocomplete", frappe_field:"loc_country", locField:"country", width:90 },
+
+        { tab:2, key:"loc_dist", label:"District", type:"locautocomplete", frappe_field:"loc_district", locField:"district", width:110 },
+
+        { tab:2, key:"loc_city", label:"City", type:"locautocomplete", frappe_field:"loc_city", locField:"city", width:90 },
+
+        { tab:2, key:"loc_street", label:"Street", type:"locautocomplete", frappe_field:"loc_street", locField:"street", width:130 },
+
+        // Tab 3 — Notes & Outcome
+        { tab:3, key:"updates", label:"Updates", type:"notes", frappe_field:"updates", width:260 },
+
+        { tab:3, key:"follow_up_date", label:"Follow Up Date", type:"date", frappe_field:"follow_up_date", width:130 },
+
+        { tab:3, key:"follow_up_notes", label:"Follow Up Notes", type:"notes", frappe_field:"follow_up_notes", width:260 },
+
+        { tab:3, key:"drawing", label:"Drawing", type:"drawing", width:100 },
+
+        { tab:3, key:"files", label:"Files", type:"files", width:100 },
+
+        // Tab 4 — Links
+        { tab:4, key:"crm_lead", label:"Lead", type:"text", frappe_field:"crm_lead", icon:"lead_ic", width:150 },
+
+        { tab:4, key:"crm_contact", label:"Contact", type:"text", frappe_field:"crm_contact", icon:"person", width:150 },
+
+        { tab:4, key:"crm_customer", label:"Customer", type:"text", frappe_field:"crm_customer", icon:"building", width:150 },
+    ],
+
     rows: [],
     locFields: { country: "loc_country", district: "loc_district", city: "loc_city", street: "loc_street" },
     locKeys: { country: "loc_country", district: "loc_dist", city: "loc_city", street: "loc_street" },
@@ -59,6 +94,7 @@ const _CL_CFG = {
     doctype: CL_DOCTYPE,
     searchPlaceholder: "Search logs…",
     exportLabel: "Export Logs",
+    maxBodyHeight: "calc(100vh - 300px)",
 };
 
 const _CL_FIELDS = [
@@ -66,7 +102,7 @@ const _CL_FIELDS = [
     "log_type","category","assigned_to","owner",
     "mobile","tel","email",
     "site_location","google_maps_url","loc_country","loc_city","loc_district","loc_street",
-    "description","updates","has_drawing",
+    "description","updates","follow_up_date","follow_up_notes","has_drawing",
     "crm_lead","crm_contact","crm_customer",
 ];
 
@@ -121,11 +157,18 @@ function _cl_updateLocationCells(name, row, fields) {
 
 function _cl_fmtDateTime(v) {
     if (!v) return "";
-    const d = new Date(v);
-    if (isNaN(d.getTime())) return v;
-    const date = d.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
-    const time = d.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
-    return `${date} ${time}`;
+
+    try {
+        const value = String(v).replace("T", " ");
+        const [datePart, timePart = "00:00:00"] = value.split(" ");
+
+        const [year, month, day] = datePart.split("-");
+        const [hour = "00", minute = "00"] = timePart.split(":");
+
+        return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year} ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+    } catch {
+        return v;
+    }
 }
 
 function _cl_initials(email) {
@@ -143,7 +186,7 @@ function _cl_render(lv) {
     GL.pgRender(lv, {
         doctype: CL_DOCTYPE,
         fields:  _CL_FIELDS,
-        orderBy: "date desc",
+        orderBy: "creation asc",
         mapFn(d, i) {
             const ownerEmail = d.owner || d.assigned_to || "";
             return {
@@ -160,6 +203,8 @@ function _cl_render(lv) {
                 loc_country: d.loc_country || "Lebanon", loc_city: d.loc_city || "", loc_dist: d.loc_district || "", loc_street: d.loc_street || "",
                 description: d.description ? d.description.replace(/<[^>]*>/g, "") : "",
                 updates:     d.updates     ? d.updates.replace(/<[^>]*>/g, "")     : "",
+                follow_up_date: d.follow_up_date || "",
+                follow_up_notes: d.follow_up_notes ? d.follow_up_notes.replace(/<[^>]*>/g, "") : "",
                 has_drawing: d.has_drawing || 0,
                 crm_lead: d.crm_lead || "", crm_contact: d.crm_contact || "", crm_customer: d.crm_customer || "",
             };
@@ -168,7 +213,7 @@ function _cl_render(lv) {
         onAddRow(reload) {
             frappe.call({
                 method: "frappe.client.insert",
-                args: { doc: { doctype: CL_DOCTYPE, status: "Open", first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" } },
+                args: { doc: { doctype: CL_DOCTYPE, status: "Open", date: frappe.datetime.now_datetime(), first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" } },
                 callback(r) { if (!r.exc) { frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5); reload(); } },
             });
         },
