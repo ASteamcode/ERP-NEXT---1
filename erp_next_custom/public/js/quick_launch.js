@@ -1,6 +1,13 @@
 (function () {
     "use strict";
 
+    const QUICK_LAUNCH_ENABLED = false;
+
+    function removeQuickLaunch() {
+        document.getElementById("ql-fab")?.remove();
+        document.getElementById("ql-style")?.remove();
+    }
+
     // ── SVG icons ─────────────────────────────────────────────────────────────
     const ICON = {
         // 3-column kanban grid
@@ -131,6 +138,10 @@
 
     // ── Build & inject ────────────────────────────────────────────────────────
     function inject() {
+        if (!QUICK_LAUNCH_ENABLED) {
+            removeQuickLaunch();
+            return;
+        }
         if (document.getElementById("ql-fab")) return;
 
         const style = document.createElement("style");
@@ -223,6 +234,10 @@
 
     // Re-inject if navigated away (Frappe SPA)
     $(document).on("page-change", () => {
+        if (!QUICK_LAUNCH_ENABLED) {
+            removeQuickLaunch();
+            return;
+        }
         if (frappe.session?.user && frappe.session.user !== "Guest") {
             if (!document.getElementById("ql-fab")) inject();
         }

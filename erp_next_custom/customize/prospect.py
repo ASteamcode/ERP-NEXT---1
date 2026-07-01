@@ -129,6 +129,7 @@ FIELDS = [
         "fieldtype": "Data",
         "label": "Country",
         "insert_after": "custom_site_section",
+        "default": "Lebanon",
     },
     {
         "fieldname": "custom_site_district",

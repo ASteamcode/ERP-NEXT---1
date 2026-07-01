@@ -1,9 +1,64 @@
 // prospect_list.js — Prospect list view powered by PG (prospect_grid.js)
 "use strict";
 
-// Draft row state — survives re-renders until committed to server
-let _draftRow   = null; // { name:"__draft__", ...keyedFields }
-let _draftExtra = {};   // frappe_field → value buffered before company_name is known
+// Draft row state - one permanent top quick-entry row plus Add Row drafts at the bottom
+let _draftRow = null;
+let _draftExtra = {};
+let _bottomDraftRows = [];
+let _bottomDraftExtra = {};
+let _draftSeq = 0;
+let _draftSaving = new Set();
+let _pendingDraftFocus = null;
+
+function _isDraftName(name) {
+    return !!name && String(name).startsWith("__draft__");
+}
+
+function _makeDraftRow(name = "__draft__top") {
+    return { name, custom_prospect_status: "Lead" };
+}
+
+function _ensureDraftRow() {
+    if (!_draftRow) {
+        _draftRow = _makeDraftRow();
+        _draftExtra = {};
+    }
+    return _draftRow;
+}
+
+function _newBottomDraftRow() {
+    const row = _makeDraftRow(`__draft__bottom_${Date.now()}_${++_draftSeq}`);
+    _bottomDraftRows.push(row);
+    _bottomDraftExtra[row.name] = {};
+    return row;
+}
+
+function _draftRowFor(name) {
+    if (name === "__draft__top") return _ensureDraftRow();
+    return _bottomDraftRows.find(r => r.name === name) || null;
+}
+
+function _draftExtraFor(name) {
+    if (name === "__draft__top") return _draftExtra;
+    _bottomDraftExtra[name] = _bottomDraftExtra[name] || {};
+    return _bottomDraftExtra[name];
+}
+
+function _resetDraft(name) {
+    if (name === "__draft__top") {
+        _draftRow = _makeDraftRow();
+        _draftExtra = {};
+        return;
+    }
+    _bottomDraftRows = _bottomDraftRows.filter(r => r.name !== name);
+    delete _bottomDraftExtra[name];
+}
+
+function _displayRowsWithDraft(rows) {
+    const savedRows = (rows || []).filter(r => r && !_isDraftName(r.name));
+    const bottomRows = _bottomDraftRows.filter(r => !_draftSaving.has(r.name));
+    return [_ensureDraftRow(), ...savedRows, ...bottomRows];
+}
 
 function _ffToKey(frappe_field) {
     const all = [..._PROSPECT_CFG.fixed, ..._PROSPECT_CFG.cols];
@@ -11,13 +66,17 @@ function _ffToKey(frappe_field) {
     return col ? col.key : null;
 }
 
-function _focusDraftCompany(host) {
-    // After re-render, click-open the company cell in the draft row
+function _focusDraftCell(host, draftName = "__draft__top", scrollToRow = false) {
     requestAnimationFrame(() => {
-        const tr = host && host.querySelector('tr[data-row-name="__draft__"]');
+        const selector = `tr[data-row-name="${CSS.escape(draftName)}"]`;
+        const tr = host && host.querySelector(selector);
         if (!tr) return;
-        const companyTd = tr.querySelector('.pg-f-co.pg-ed');
-        if (companyTd) companyTd.click();
+        if (scrollToRow) tr.scrollIntoView({ block: "nearest", inline: "nearest" });
+        const target = tr.querySelector('.pg-f-first.pg-ed[data-val=""]')
+            || tr.querySelector('.pg-f-co.pg-ed[data-val=""]')
+            || tr.querySelector('.pg-f-first.pg-ed')
+            || tr.querySelector('.pg-f-co.pg-ed');
+        if (target) target.click();
     });
 }
 
@@ -75,9 +134,9 @@ const _PROSPECT_CFG = {
     fixed: [
         { key: "num",     label: "#",          cls: "pg-f-num",   width: 42,  type: "rownum" },
         { key: "title",   label: "Title",      cls: "pg-f-title", width: 54,  frappe_field: "custom_salutation", type: "select", options: ["", "Mr", "Ms", "Mrs", "Dr", "Arch", "Eng"] },
-        { key: "first",   label: "First Name", cls: "pg-f-first", width: 105, frappe_field: "custom_first_name"  },
+        { key: "first",   label: "First Name", cls: "pg-f-first", width: 105, frappe_field: "custom_first_name", required: true },
         { key: "last",    label: "Last Name",  cls: "pg-f-last",  width: 110, frappe_field: "custom_last_name"   },
-        { key: "company", label: "Company",    cls: "pg-f-co",    width: 188, frappe_field: "company_name", type: "company", shadow: true, lockWidth: true },
+        { key: "company", label: "Company",    cls: "pg-f-co",    width: 188, frappe_field: "company_name", type: "company", shadow: true, lockWidth: true, required: true },
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
@@ -218,8 +277,8 @@ function _pl_fetch(listview, offset) {
                   icon: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,11 5,7 9,9 15,3"/><polyline points="11,3 15,3 15,7"/></svg>` },
             ];
 
-            // Prepend unsaved draft row if one exists
-            const displayRows = _draftRow ? [...rows, _draftRow] : rows;
+            // Keep an empty optimistic draft row at the top so users can start typing immediately.
+            const displayRows = _displayRowsWithDraft(rows);
 
             const cfg = Object.assign({}, _PROSPECT_CFG, {
                 rows: displayRows,
@@ -230,34 +289,41 @@ function _pl_fetch(listview, offset) {
 
                 onEdit(name, frappe_field, value) {
                     // ── Draft row handling ──────────────────────────────
-                    if (name === "__draft__") {
+                    if (_isDraftName(name)) {
+                        if (_draftSaving.has(name)) return;
+                        const draftRow = _draftRowFor(name);
+                        const draftExtra = _draftExtraFor(name);
+                        if (!draftRow) return;
+
                         // Buffer into display row + extra fields map
                         const key = _ffToKey(frappe_field);
-                        if (key) _draftRow[key] = value;
-                        if (value && value.trim()) {
-                            _draftExtra[frappe_field] = value;
+                        const cleanValue = value == null ? "" : String(value);
+                        if (key) draftRow[key] = cleanValue;
+                        if (cleanValue.trim()) {
+                            draftExtra[frappe_field] = cleanValue;
                         } else {
-                            delete _draftExtra[frappe_field];
+                            delete draftExtra[frappe_field];
                         }
 
                         // Save only when BOTH company_name AND custom_first_name are filled
-                        const hasCompany = !!(_draftExtra["company_name"]  || "").trim();
-                        const hasFirst   = !!(_draftExtra["custom_first_name"] || "").trim();
+                        const hasCompany = !!(draftExtra["company_name"] || "").trim();
+                        const hasFirst = !!(draftExtra["custom_first_name"] || "").trim();
                         if (!hasCompany || !hasFirst) return;
 
-                        // Pack everything into one insert — no separate set_value calls
+                        // Pack everything into one insert - no separate set_value calls
                         const doc = Object.assign(
                             { doctype: "Prospect", custom_prospect_status: "Lead" },
-                            _draftExtra
+                            draftExtra
                         );
-                        _draftRow   = null;
-                        _draftExtra = {};
+                        _draftSaving.add(name);
+                        _resetDraft(name);
 
                         frappe.call({
                             method: "frappe.client.insert",
                             args: { doc },
-                            callback() { _pl_render(listview); },
-                            error()    {
+                            callback() { _draftSaving.delete(name); _pl_render(listview); },
+                            error() {
+                                _draftSaving.delete(name);
                                 frappe.show_alert({ message: "Failed to save new row", indicator: "red" }, 4);
                                 _pl_render(listview);
                             },
@@ -293,26 +359,30 @@ function _pl_fetch(listview, offset) {
                 },
 
                 onAddRow(reload) {
-                    if (_draftRow) { _focusDraftCompany(host); return; }
-                    _draftRow   = { name: "__draft__", custom_prospect_status: "Lead" };
-                    _draftExtra = {};
+                    const row = _newBottomDraftRow();
+                    _pendingDraftFocus = row.name;
                     reload();
-                    _focusDraftCompany(host);
                 },
 
                 onDeleteRows(names, reload) {
-                    const label = names.length === 1 ? "1 prospect" : `${names.length} prospects`;
+                    const draftNames = names.filter(_isDraftName);
+                    const savedNames = names.filter(n => !_isDraftName(n));
+                    const clearDrafts = () => draftNames.forEach(_resetDraft);
+                    if (!savedNames.length) { clearDrafts(); reload(); return; }
+
+                    const label = savedNames.length === 1 ? "1 prospect" : `${savedNames.length} prospects`;
                     frappe.confirm(
                         `Delete ${label}? This cannot be undone.`,
                         () => {
+                            clearDrafts();
                             let done = 0;
-                            names.forEach(n => {
+                            savedNames.forEach(n => {
                                 frappe.call({
                                     method: "frappe.client.delete",
                                     args: { doctype: "Prospect", name: n },
                                     callback() {
                                         done++;
-                                        if (done === names.length) {
+                                        if (done === savedNames.length) {
                                             frappe.show_alert({ message: `Deleted ${label}`, indicator: "orange" }, 3);
                                             reload();
                                         }
@@ -438,6 +508,11 @@ function _pl_fetch(listview, offset) {
             });
             PG.mount(host, cfg);
             PG.renderStats(host, _qs_cards);
+            if (_pendingDraftFocus) {
+                const focusName = _pendingDraftFocus;
+                _pendingDraftFocus = null;
+                _focusDraftCell(host, focusName, true);
+            }
 
             // ── Patch existing contact cells to show salutation ──────
             const _SAL_PREFIXES = new Set(["Mr","Ms","Mrs","Dr","Arch","Eng","Prof"]);
@@ -476,13 +551,10 @@ function _pl_fetch(listview, offset) {
     const s = document.createElement("style");
     s.id = "pl-styles";
     s.textContent = `
-.gl-host { padding: 12px 16px 32px; box-sizing: border-box; }
+.gl-host { padding: 12px 16px 0; box-sizing: border-box; }
 .pl-loading { padding: 48px; text-align: center; color: #9ca3af; font-size: 13px; }
 
 /* Draft (unsaved) row highlight */
-tr[data-row-name="__draft__"] td { background: #f0f7ff !important; }
-tr[data-row-name="__draft__"] td.pg-f-num-cell { color: #2563eb !important; }
-tr[data-row-name="__draft__"] td.pg-f-num-cell::after { content: " ✦"; font-size: 8px; }
 
 /* Strip all native Frappe chrome from the Prospect list page */
 .page-container[data-page-route="List/Prospect/List"] .page-head,

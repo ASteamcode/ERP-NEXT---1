@@ -9,7 +9,7 @@ const _CL_CFG = {
     tabs: ["Log Details", "Contact Info", "Site", "Notes & Outcome", "Links"],
 
     fixed: [
-        { key:"num", label:"#", cls:"pg-f-num", width:34, type:"rownum" },
+        { key:"num", label:"#", cls:"pg-f-num", width:42, type:"rownum" },
         { key:"log_date", label:"Date & Time", cls:"pg-f-date", width:132, type:"text" },
         { key:"status", label:"Status", cls:"pg-f-stat", width:74, frappe_field:"status", type:"status",
             map:{
@@ -29,11 +29,11 @@ const _CL_CFG = {
             options:["","Mr","Ms","Mrs","Dr","Eng","Arch"]
         },
 
-        { tab:0, key:"first", label:"First", type:"text", frappe_field:"first_name", width:80 },
+        { tab:0, key:"first", label:"First", type:"text", frappe_field:"first_name", width:80, required:true },
 
         { tab:0, key:"last", label:"Last", type:"text", frappe_field:"last_name", width:80 },
 
-        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:140, lockWidth:true },
+        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:140, lockWidth:true, required:true },
 
         { tab:0, key:"mobile", label:"Mobile", type:"phone", frappe_field:"mobile", width:100 },
 
@@ -109,6 +109,67 @@ const _CL_FIELDS = [
 
 let _cl_draftRow = null;
 let _cl_draftExtra = {};
+let _cl_bottomDraftRows = [];
+let _cl_bottomDraftExtra = {};
+let _cl_draftSeq = 0;
+let _cl_draftSaving = new Set();
+let _cl_pendingDraftFocus = null;
+
+function _cl_isDraftName(name) {
+    return !!name && String(name).startsWith("__draft__");
+}
+
+function _cl_makeDraftRow(name = "__draft__top") {
+    return {
+        name,
+        status: "Open",
+        log_date: _cl_fmtDateTime(frappe.datetime.now_datetime()),
+        loc_country: "Lebanon",
+        site_loc: "Lebanon",
+    };
+}
+
+function _cl_ensureDraftRow() {
+    if (!_cl_draftRow) {
+        _cl_draftRow = _cl_makeDraftRow();
+        _cl_draftExtra = {};
+    }
+    return _cl_draftRow;
+}
+
+function _cl_newBottomDraftRow() {
+    const row = _cl_makeDraftRow(`__draft__bottom_${Date.now()}_${++_cl_draftSeq}`);
+    _cl_bottomDraftRows.push(row);
+    _cl_bottomDraftExtra[row.name] = {};
+    return row;
+}
+
+function _cl_draftRowFor(name) {
+    if (name === "__draft__top") return _cl_ensureDraftRow();
+    return _cl_bottomDraftRows.find(r => r.name === name) || null;
+}
+
+function _cl_draftExtraFor(name) {
+    if (name === "__draft__top") return _cl_draftExtra;
+    _cl_bottomDraftExtra[name] = _cl_bottomDraftExtra[name] || {};
+    return _cl_bottomDraftExtra[name];
+}
+
+function _cl_resetDraft(name) {
+    if (name === "__draft__top") {
+        _cl_draftRow = _cl_makeDraftRow();
+        _cl_draftExtra = {};
+        return;
+    }
+    _cl_bottomDraftRows = _cl_bottomDraftRows.filter(r => r.name !== name);
+    delete _cl_bottomDraftExtra[name];
+}
+
+function _cl_displayRowsWithDraft(rows) {
+    const savedRows = (rows || []).filter(r => r && !_cl_isDraftName(r.name));
+    const bottomRows = _cl_bottomDraftRows.filter(r => !_cl_draftSaving.has(r.name));
+    return [_cl_ensureDraftRow(), ...savedRows, ...bottomRows];
+}
 
 function _cl_ffToKey(frappe_field) {
     const all = [..._CL_CFG.fixed, ..._CL_CFG.cols];
@@ -116,14 +177,18 @@ function _cl_ffToKey(frappe_field) {
     return col ? col.key : null;
 }
 
-function _cl_focusDraftFirst(host) {
+function _cl_focusDraftFirst(host, draftName = "__draft__top", scrollToRow = false) {
     setTimeout(() => {
         requestAnimationFrame(() => {
-            const tr = host && host.querySelector('tr[data-row-name="__draft__"]');
+            const selector = `tr[data-row-name="${CSS.escape(draftName)}"]`;
+            const tr = host && host.querySelector(selector);
             if (!tr) return;
-            const firstTd = tr.querySelector('td[data-ff="first_name"]');
-            const companyTd = tr.querySelector('td[data-ff="company_name"]');
-            (firstTd || companyTd)?.click();
+            if (scrollToRow) tr.scrollIntoView({ block: "nearest", inline: "nearest" });
+            const target = tr.querySelector('td[data-ff="first_name"][data-val=""]')
+                || tr.querySelector('td[data-ff="company_name"][data-val=""]')
+                || tr.querySelector('td[data-ff="first_name"]')
+                || tr.querySelector('td[data-ff="company_name"]');
+            if (target) target.click();
         });
     }, 250);
 }
@@ -233,17 +298,23 @@ function _cl_render(lv) {
         },
         cfg: _CL_CFG,
         extendRows(rows) {
-            return _cl_draftRow ? [...rows, _cl_draftRow] : rows;
+            return _cl_displayRowsWithDraft(rows);
         },
         onEdit(name, frappe_field, value, ctx) {
-            if (name === "__draft__") {
-                const key = _cl_ffToKey(frappe_field);
-                if (key) _cl_draftRow[key] = value;
-                if (value && String(value).trim()) _cl_draftExtra[frappe_field] = value;
-                else delete _cl_draftExtra[frappe_field];
+            if (_cl_isDraftName(name)) {
+                if (_cl_draftSaving.has(name)) return Promise.resolve();
+                const draftRow = _cl_draftRowFor(name);
+                const draftExtra = _cl_draftExtraFor(name);
+                if (!draftRow) return Promise.resolve();
 
-                const hasFirst = !!(_cl_draftExtra.first_name || "").trim();
-                const hasCompany = !!(_cl_draftExtra.company_name || "").trim();
+                const key = _cl_ffToKey(frappe_field);
+                const cleanValue = value == null ? "" : String(value);
+                if (key) draftRow[key] = cleanValue;
+                if (cleanValue.trim()) draftExtra[frappe_field] = cleanValue;
+                else delete draftExtra[frappe_field];
+
+                const hasFirst = !!(draftExtra.first_name || "").trim();
+                const hasCompany = !!(draftExtra.company_name || "").trim();
                 if (!hasFirst || !hasCompany) return Promise.resolve();
 
                 const doc = Object.assign({
@@ -252,19 +323,21 @@ function _cl_render(lv) {
                     date: frappe.datetime.now_datetime(),
                     loc_country: "Lebanon",
                     site_location: "Lebanon",
-                }, _cl_draftExtra);
+                }, draftExtra);
 
-                _cl_draftRow = null;
-                _cl_draftExtra = {};
+                _cl_draftSaving.add(name);
+                _cl_resetDraft(name);
 
                 return frappe.call({
                     method: "frappe.client.insert",
                     args: { doc },
                     callback(r) {
+                        _cl_draftSaving.delete(name);
                         if (!r.exc) frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5);
                         ctx.reload();
                     },
                     error() {
+                        _cl_draftSaving.delete(name);
                         frappe.show_alert({ message: "Failed to save new log", indicator: "red" }, 4);
                         ctx.reload();
                     },
@@ -273,19 +346,38 @@ function _cl_render(lv) {
             return frappe.db.set_value(CL_DOCTYPE, name, frappe_field, value)
                 .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
         },
-        onAddRow(reload, lv) {
-            const host = GL.bootstrap(lv, { doctype: CL_DOCTYPE });
-            if (_cl_draftRow) { _cl_focusDraftFirst(host); return; }
-            _cl_draftRow = {
-                name: "__draft__",
-                status: "Open",
-                log_date: _cl_fmtDateTime(frappe.datetime.now_datetime()),
-                loc_country: "Lebanon",
-                site_loc: "Lebanon",
-            };
-            _cl_draftExtra = {};
+        onAddRow(reload) {
+            const row = _cl_newBottomDraftRow();
+            _cl_pendingDraftFocus = row.name;
             reload();
-            _cl_focusDraftFirst(host);
+        },
+        onDeleteRows(names, reload) {
+            const draftNames = names.filter(_cl_isDraftName);
+            const savedNames = names.filter(n => !_cl_isDraftName(n));
+            const clearDrafts = () => draftNames.forEach(_cl_resetDraft);
+            if (!savedNames.length) { clearDrafts(); reload(); return; }
+
+            const lbl = savedNames.length === 1 ? "1 crm log" : `${savedNames.length} records`;
+            frappe.confirm(`Delete ${lbl}? This cannot be undone.`, () => {
+                clearDrafts();
+                let done = 0;
+                savedNames.forEach(n => frappe.call({
+                    method: "frappe.client.delete",
+                    args: { doctype: CL_DOCTYPE, name: n },
+                    callback() {
+                        if (++done === savedNames.length) {
+                            frappe.show_alert({ message: "Deleted", indicator: "orange" }, 2);
+                            reload();
+                        }
+                    },
+                }));
+            });
+        },
+        afterMount(host) {
+            if (!_cl_pendingDraftFocus) return;
+            const focusName = _cl_pendingDraftFocus;
+            _cl_pendingDraftFocus = null;
+            _cl_focusDraftFirst(host, focusName, true);
         },
         onLocFill(name, geoFields, changedLocField, rows) {
             const row = rows.find(r => r.name === name);
@@ -327,7 +419,7 @@ function _cl_render(lv) {
     if (document.getElementById("cl-pg-styles")) return;
     const s = document.createElement("style"); s.id = "cl-pg-styles";
     s.textContent = `
-.gl-host{padding:12px 16px 32px;box-sizing:border-box;}
+.gl-host{padding:12px 16px 0;box-sizing:border-box;}
 .pl-loading{padding:48px;text-align:center;color:#9ca3af;font-size:13px;}
 .page-container[data-page-route="List/CRM Log/List"] .list-row-head,
 .page-container[data-page-route="List/CRM Log/List"] .list-headers,
@@ -335,9 +427,6 @@ function _cl_render(lv) {
 .page-container[data-page-route="List/CRM Log/List"] .page-head,
 .page-container[data-page-route="List/CRM Log/List"] .page-form,
 .page-container[data-page-route="List/CRM Log/List"] header.frappe-list-head { display:none !important; }
-.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td { background:#f0f7ff !important; }
-.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td.pg-f-num-cell { color:#2563eb !important; }
-.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td.pg-f-num-cell::after { content:" ✦"; font-size:8px; }
     `;
     document.head.appendChild(s);
 })();
