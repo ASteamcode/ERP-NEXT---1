@@ -1862,14 +1862,15 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     const _PIN_SVG     = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
     const _EDIT_SVG    = `<i class="fa fa-pencil" style="font-size:14px"></i>`;
 
-    function _buildMobileCards(rows) {
+    function _buildMobileCards(rows, cfg) {
+        const doctype = cfg && cfg.doctype;
         return rows.map(r => {
             const first    = r.first || "";
             const last     = r.last  || "";
             const initials = ((first[0] || "") + (last[0] || "")).toUpperCase() || (r.company || "?")[0].toUpperCase();
             const name     = _e(r.name || "");
-            const stage   = r.stage || "Prospect";
-            const badgeCls = _MOB_STAGE_CLS[stage] || "pg-mob-badge-gray";
+            const stage   = r.stage || r.status || (doctype === "CRM Log" ? "Open" : "Prospect");
+            const badgeCls = _MOB_STAGE_CLS[stage] || (doctype === "CRM Log" ? "pg-mob-badge-blue" : "pg-mob-badge-gray");
             const digits   = String(r.mobile || "").replace(/\D/g, "");
             const phoneHtml = r.mobile
                 ? `<a class="pg-mob-action pg-mob-action-phone" href="tel:${_e(r.mobile)}">${_PHONE_SVG}</a>
@@ -1878,6 +1879,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             const mapsHtml = r.maps
                 ? `<a class="pg-mob-action pg-mob-action-maps" href="${_e(r.maps)}" target="_blank">${_PIN_SVG}</a>`
                 : "";
+            const detailsHtml = doctype === "CRM Log" ? _buildCrmLogMobileDetails(r, name) : _buildProspectMobileDetails(r, name);
 
             return `<div class="pg-mob-card" data-row-name="${name}">
   <div class="pg-mob-head">
@@ -1896,19 +1898,65 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     ${mapsHtml}
     <button class="pg-mob-action pg-mob-action-edit" data-name="${name}">${_EDIT_SVG}</button>
   </div>
-  <div class="pg-mob-details">
-    <div class="pg-mob-details-inner">
-      <div class="pg-mob-section">Contact</div>
-      ${r.role   ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Role</span><span class="pg-mob-val">${_e(r.role)}</span></div>` : ""}
-      ${r.mobile ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Mobile</span><span class="pg-mob-val">${_e(r.mobile)}</span></div>` : ""}
-      ${r.email  ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Email</span><span class="pg-mob-val">${_e(r.email)}</span></div>` : ""}
-      ${r.city   ? `<div class="pg-mob-section">Site</div><div class="pg-mob-row"><span class="pg-mob-lbl">Location</span><span class="pg-mob-val">${_e(r.city)}</span></div>` : ""}
-      ${r.pstatus ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Project</span><span class="pg-mob-val">${_e(r.pstatus)}</span></div>` : ""}
-      <a class="pg-mob-view-btn" href="/app/prospect/${encodeURIComponent(name)}">View Full Record</a>
-    </div>
-  </div>
+${detailsHtml}
 </div>`;
         }).join("");
+    }
+
+    function _mobRow(label, value) {
+        return value ? `<div class="pg-mob-row"><span class="pg-mob-lbl">${_e(label)}</span><span class="pg-mob-val">${_e(value)}</span></div>` : "";
+    }
+
+    function _buildProspectMobileDetails(r, name) {
+        return `<div class="pg-mob-details">
+    <div class="pg-mob-details-inner">
+      <div class="pg-mob-section">Contact Information</div>
+      ${_mobRow("Owner", r.owner)}
+      ${_mobRow("Title", r.title)}
+      ${_mobRow("First Name", r.first)}
+      ${_mobRow("Last Name", r.last)}
+      ${_mobRow("Company", r.company)}
+      ${_mobRow("Activity Type", r.activity)}
+      ${_mobRow("Source", r.source)}
+      ${_mobRow("Role", r.role)}
+      ${_mobRow("Stage", r.stage)}
+      ${_mobRow("Primary Mobile", r.mobile)}
+      ${_mobRow("Email", r.email)}
+      <button class="pg-mob-view-btn" data-name="${name}" type="button">View Full Record</button>
+    </div>
+  </div>`;
+    }
+
+    function _buildCrmLogMobileDetails(r, name) {
+        return `<div class="pg-mob-details">
+    <div class="pg-mob-details-inner">
+      <div class="pg-mob-section">Log Details</div>
+      ${_mobRow("Status", r.status)}
+      ${_mobRow("Date & Time", r.log_date)}
+      ${_mobRow("Call Type", r.log_type)}
+      ${_mobRow("Category", r.category)}
+      ${_mobRow("Owner", r.owner)}
+      <div class="pg-mob-section">Contact Information</div>
+      ${_mobRow("Prefix", r.prefix)}
+      ${_mobRow("First Name", r.first)}
+      ${_mobRow("Last Name", r.last)}
+      ${_mobRow("Company", r.company)}
+      ${_mobRow("Mobile", r.mobile)}
+      ${_mobRow("Tel", r.tel)}
+      ${_mobRow("Email", r.email)}
+      <div class="pg-mob-section">Site & Outcome</div>
+      ${_mobRow("Location", r.site_loc)}
+      ${_mobRow("Description", r.description)}
+      ${_mobRow("Updates", r.updates)}
+      ${_mobRow("Follow Up Date", r.follow_up_date)}
+      ${_mobRow("Follow Up Notes", r.follow_up_notes)}
+      <div class="pg-mob-section">Links</div>
+      ${_mobRow("Lead", r.crm_lead)}
+      ${_mobRow("Contact", r.crm_contact)}
+      ${_mobRow("Customer", r.crm_customer)}
+      <button class="pg-mob-view-btn" data-name="${name}" type="button">View Full Record</button>
+    </div>
+  </div>`;
     }
 
     // ── Mount ──────────────────────────────────────────────────────
@@ -1928,7 +1976,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             `<button class="pg-pill${i===0?" active":""}" data-tab="${i}">${label}</button>`
         ).join("");
         const rowsHtml = cfg.rows.map((r, i) => buildRow(cfg, r, i)).join("");
-        const cardsHtml = _buildMobileCards(cfg.rows);
+        const cardsHtml = _buildMobileCards(cfg.rows, cfg);
         const bodyStyle = cfg.maxBodyHeight ? ` style="--pg-body-max-height:${_e(cfg.maxBodyHeight)}"` : "";
 
         el.innerHTML = `<div class="pg-shell">
@@ -2926,7 +2974,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
 
                       { label: "Source", fn: "custom_lead_source", ft: "Data", def: row.source || "" },
 
-                      { label: "Role", fn: "custom_position", ft: "Data", def: row.role || "" },
+                      { label: "Role", fn: "custom_position", ft: "Autocomplete", def: row.role || "" },
 
                       {
                        label: "Stage",
@@ -2964,9 +3012,9 @@ body.pg-col-resizing *{cursor:col-resize!important;}
            {
     label: "Scope & Specs",
     fields: [
-        { label: "Project Status", fn: "custom_project_status", ft: "Data", def: row.status || "" },
+        { label: "Project Status", fn: "custom_project_status", ft: "Select", def: row.status || "", options: "\nEmpty Lot\nExcavation\nConcrete structure\nTopped out\nFinishing\nMEP\nCompleted" },
         { label: "Start Date", fn: "custom_project_start", ft: "Date", def: row.pstart || "" },
-        { label: "Floors", fn: "custom_floors", ft: "Data", def: row.floors || "" },
+        { label: "Floors", fn: "custom_floors", ft: "Int", def: row.floors || "" },
         { label: "Project Type", fn: "custom_project_type", ft: "Data", def: row.ptype || "" },
         { label: "Scaffold Type", fn: "custom_scaffold_type", ft: "Data", def: row.scaffold || "" },
         { label: "Area (sqm)", fn: "custom_area", ft: "Data", def: row.area || "" },
@@ -3185,6 +3233,8 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             // Notes cells open immediately on hover — no click needed
             on(root, "mouseenter", e => {
                 const td = e.target.closest("td.pg-ed");
+                const field = td?.dataset?.field || td?.dataset?.ff || td?.dataset?.key;
+                if (field === "custom_description" || field === "custom_follow_up_notes") return;
                 if (!td || td.dataset.ctype !== "notes") return;
                 clearTimeout(_hoverCloseTimer);
                 if (_eTd === td) return; // already editing this cell
@@ -3413,11 +3463,19 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         on(root, "click", e => {
             const card = e.target.closest(".pg-mob-card");
             if (!card) return;
-            if (e.target.closest(".pg-mob-action")) return;
+            if (e.target.closest(".pg-mob-action, .pg-mob-view-btn")) return;
             card.classList.toggle("pg-mob-expanded");
         });
 
-        // ── Mobile card edit button ──────────────────────────────
+        // ── Mobile card view/edit buttons ────────────────────────
+        on(root, "click", e => {
+            const viewBtn = e.target.closest(".pg-mob-view-btn");
+            if (!viewBtn) return;
+            e.stopPropagation();
+            const name = viewBtn.dataset.name;
+            if (name) frappe.set_route("Form", cfg.doctype || "Prospect", name);
+        });
+
         on(root, "click", e => {
             const btn = e.target.closest(".pg-mob-action-edit");
             if (!btn) return;
