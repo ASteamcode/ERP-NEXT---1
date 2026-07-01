@@ -1962,6 +1962,7 @@
                 });
                 PG.mount(host, cfg);
                 if (opts.statsFn) PG.renderStats(host, opts.statsFn(raw));
+                if (opts.afterMount) opts.afterMount(host, cfg, rows, raw, lv);
             },
         });
     }

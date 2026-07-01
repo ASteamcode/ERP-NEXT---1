@@ -53,12 +53,13 @@
 .pg-qs-c3{background:#014486;}
 .pg-qs-c4{background:#0e7490;}
 /* table wrapper — z-index must stay below nav (nav is z-index:20) */
-.pg-tbl-outer{overflow:auto;max-height:var(--pg-body-max-height,none);padding-bottom:56px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
-.pg-tbl-outer::-webkit-scrollbar{height:4px;width:6px;}
+.pg-tbl-outer{overflow:auto;max-height:var(--pg-body-max-height,none);padding-bottom:0;box-sizing:border-box;scrollbar-width:none;scrollbar-color:transparent transparent;position:relative;z-index:0;}
+.pg-tbl-outer::-webkit-scrollbar{width:6px;height:0;}
+.pg-tbl-outer::-webkit-scrollbar:horizontal{height:0;background:transparent;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
 
 /* table */
-.pg-tbl{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:8px;}
+.pg-tbl{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;margin-bottom:0;}
 .pg-tbl thead tr{background:#1e3f85;}
 .pg-tbl th{position:sticky;top:0;z-index:4;background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
@@ -88,10 +89,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
 /* row selection */
 .pg-tbl .pg-row-sel td,.pg-tbl .pg-row-sel td.pg-f{background:#dbeafe !important;}
 .pg-tbl .pg-row-sel:hover td,.pg-tbl .pg-row-sel:hover td.pg-f{background:#bfdbfe !important;}
-.pg-f-num-cell{cursor:pointer;user-select:none;text-align:center;font-size:11px;font-weight:700;transition:color .12s;}
+.pg-f-num-cell{cursor:pointer;user-select:none;text-align:center;font-size:11px;font-weight:700;transition:color .12s;padding:0!important;}
 .pg-f-num-cell:hover{color:#2563eb;}
-.pg-row-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:#eff6ff;color:#284f9e;font-size:11px;font-weight:800;transition:all .15s;}
+.pg-row-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:0 auto;border-radius:8px;background:#eff6ff;color:#284f9e;font-size:11px;font-weight:800;transition:all .15s;}
 .pg-row-sel .pg-f-num-cell .pg-row-num{background:#284f9e;color:#fff;}
+.pg-req-missing{display:inline-flex;align-items:center;justify-content:center;color:#2563eb;font-size:15px;font-weight:900;line-height:1;}
 
 /* inline edit */
 .pg-ed{cursor:text;}
@@ -604,15 +606,17 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     function renderCell(col, row) {
         const v = row[col.key];
         const empty = v == null || v === "" || v === "—";
+        const missingRequired = _isDraftRowName(row.name) && col.required && empty;
+        const emptyHtml = missingRequired ? `<span class="pg-req-missing" title="Required field">✦</span>` : `<span class="pg-mt">—</span>`;
         switch (col.type) {
             case "text":
-                if (empty) return `<span class="pg-mt">—</span>`;
+                if (empty) return emptyHtml;
                 if (col.icon && SVG[col.icon]) return `<span class="pg-ic-cell">${SVG[col.icon]}<span>${_e(v)}</span></span>`;
                 return `<span>${_e(v)}</span>`;
             case "select":
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span>${_e(v)}</span>`;
             case "link": {
-                if (empty) return `<span class="pg-mt">—</span>`;
+                if (empty) return emptyHtml;
                 const val = String(v);
                 // Email → compose button
                 if (col.key === "email" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
@@ -631,10 +635,10 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             }
             case "date": {
                 const fmt = v ? frappe.datetime.str_to_user(v) : "";
-                return fmt ? `<span>${_e(fmt)}</span>` : `<span class="pg-mt">—</span>`;
+                return fmt ? `<span>${_e(fmt)}</span>` : emptyHtml;
             }
             case "phone": {
-                if (empty) return `<span class="pg-mt">—</span>`;
+                if (empty) return emptyHtml;
                 const digits = String(v).replace(/\D/g, "");
                 const waUrl  = `https://wa.me/${digits}`;
                 return (
@@ -644,14 +648,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                 );
             }
             case "num":
-                return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-num-val">${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span class="pg-num-val">${_e(v)}</span>`;
             case "status": {
                 const cls = (col.map || {})[v] || "pg-badge-gray";
-                return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-badge ${cls}">${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span class="pg-badge ${cls}">${_e(v)}</span>`;
             }
             case "maps": {
                 const url = v || "";
-                if (!url) return `<span class="pg-mt">—</span>`;
+                if (!url) return emptyHtml;
                 return (
                     `<span class="pg-maps-cell">` +
                     `<a class="pg-maps-btn" href="${_e(url)}" target="_blank" onclick="event.stopPropagation()">${SVG.pin}<span>Open in Maps</span></a>` +
@@ -664,7 +668,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                 return `<span class="pg-files"><button class="pg-file-btn" title="Upload file">${SVG.upload}</button><button class="pg-file-btn pg-cam-btn" title="Take photo">${SVG.camera}</button></span>`;
             case "drawing": {
                 const docname = row.name || "";
-                const disabled = !docname || docname === "__draft__" || String(docname).startsWith("__new");
+                const disabled = !docname || _isDraftRowName(docname) || String(docname).startsWith("__new");
                 if (disabled) {
                     return `<button class="fd-icon-btn fd-draw-btn fd-draw-btn--disabled" disabled title="Save required fields before drawing">${SVG.pen}</button>`;
                 }
@@ -673,7 +677,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                     : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(docname)}" title="Drawing">${SVG.pen}</button>`;
             }
             case "notes":
-                return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-notes-cell" data-notes="${_e(String(v))}">${_e(String(v))}</span>`;
+                return empty ? emptyHtml : `<span class="pg-notes-cell" data-notes="${_e(String(v))}">${_e(String(v))}</span>`;
             case "owner": {
                 const initials = v || "?";
                 const color    = _ownerColor(initials);
@@ -681,9 +685,9 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                 return `<span class="pg-owner-av" style="background:${color}" data-owner="${_e(owner)}" data-initials="${_e(initials)}" data-color="${_e(color)}">${_e(initials)}</span>`;
             }
             case "dynselect":
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span>${_e(v)}</span>`;
             case "contact-link": {
-                if (empty) return `<span class="pg-mt">—</span>`;
+                if (empty) return emptyHtml;
                 const name = String(v);
                 if (col.noAvatar) return `<span class="pg-cl-name" data-contact-name="${_e(name)}" data-row-owner="${_e(row.owner||"")}">${_e(name)}</span>`;
                 const words = name.trim().split(/\s+/);
@@ -697,12 +701,12 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             case "form-link": {
                 const dt = col.link_doctype || cfg.doctype || "";
                 return v ? `<a class="pg-form-link" data-doctype="${_e(dt)}" data-docname="${_e(v)}">${_e(v)}</a>`
-                         : `<span class="pg-mt">—</span>`;
+                         : emptyHtml;
             }
             case "locautocomplete":
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span>${_e(v)}</span>`;
             default:
-                return empty ? `<span class="pg-mt">—</span>` : `<span>${_e(v)}</span>`;
+                return empty ? emptyHtml : `<span>${_e(v)}</span>`;
         }
     }
 
@@ -738,6 +742,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     }
 
     function _manualWidth(cfg, col) {
+        if (col.type === "rownum") return null;
         const key = _colWidthKey(col);
         const saved = cfg._colWidths && Number(cfg._colWidths[key]);
         return saved > 0 ? saved : null;
@@ -759,6 +764,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     }
 
     function _resizeHandle(col, zone) {
+        if (col.type === "rownum" || col.resize === false || col.lockResize) return "";
         return `<span class="pg-rz" data-zone="${zone}" data-key="${_e(_colWidthKey(col))}" title="Resize column"></span>`;
     }
 
@@ -785,7 +791,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                 return `<td class="pg-f ${f.cls||""}" data-ckey="${_e(_colWidthKey(f))}" data-row-name="${_e(name)}"${_colWidthStyle(cfg, f)}>${renderCell(f, row)}</td>`;
             }
             const ed = cfg.editable && f.frappe_field;
-            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}" data-ckey="${_e(_colWidthKey(f))}"${_colWidthStyle(cfg, f)}${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
+            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}" data-ckey="${_e(_colWidthKey(f))}"${_colWidthStyle(cfg, f)}${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}"`:""} data-row-name="${_e(name)}">${renderCell(f, row)}</td>`;
         }).join("");
         // Variable cols
         const vars = cfg.cols.map(c => {
@@ -2843,26 +2849,47 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             return;
         }
 
-        const hDir  = direction === "right" ? 1 : -1;
-        // All columns always visible — navigate across the full row
-        const allEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-            td.dataset.rowName === rowName
-        );
-        const idx  = allEd.indexOf(fromTd);
-        if (idx === -1) return;
-        const next = allEd[idx + hDir];
-        if (next) { _openEdit(root, next); return; }
+        const hDir = direction === "right" ? 1 : -1;
+        const tabCount = (root._pgCfg && root._pgCfg.tabs ? root._pgCfg.tabs.length : 1);
+        const curTab = Math.max(0, Math.min(tabCount - 1, parseInt(tbl.getAttribute("data-tab") || 0, 10)));
+        const rowCells = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td => td.dataset.rowName === rowName);
+        const fixedEd = rowCells.filter(td => td.classList.contains("pg-f"));
+        const tabEd = n => rowCells.filter(td => td.classList.contains(`pg-v-${n}`));
+        const currentEd = [...fixedEd, ...tabEd(curTab)];
+        const idx = currentEd.indexOf(fromTd);
 
-        // Past end/start of row → jump to first/last cell of next/prev row
+        if (idx !== -1) {
+            const next = currentEd[idx + hDir];
+            if (next) { _openEdit(root, next); return; }
+        }
+
+        if (hDir > 0 && curTab < tabCount - 1) {
+            const targetTab = curTab + 1;
+            const pill = root.querySelector(`.pg-pill[data-tab="${targetTab}"]`);
+            if (pill) _activatePill(root, pill, tabCount);
+            const target = tabEd(targetTab)[0];
+            if (target) requestAnimationFrame(() => _openEdit(root, target));
+            return;
+        }
+
+        if (hDir < 0 && curTab > 0 && !fixedEd.includes(fromTd)) {
+            const targetTab = curTab - 1;
+            const pill = root.querySelector(`.pg-pill[data-tab="${targetTab}"]`);
+            if (pill) _activatePill(root, pill, tabCount);
+            const prevTabCells = tabEd(targetTab);
+            const target = prevTabCells[prevTabCells.length - 1];
+            if (target) requestAnimationFrame(() => _openEdit(root, target));
+            return;
+        }
+
+        // Past the final tab/start of the row -> jump to first/last editable cell of the adjacent row.
         const rows    = Array.from(tbl.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
         const curRow  = fromTd.closest("tr");
         const rowIdx  = rows.indexOf(curRow);
         const nextIdx = rowIdx + hDir;
         if (nextIdx < 0 || nextIdx >= rows.length) return;
         const nextRowName = rows[nextIdx].dataset.rowName;
-        const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td =>
-            td.dataset.rowName === nextRowName
-        );
+        const newEd = Array.from(tbl.querySelectorAll("td.pg-ed")).filter(td => td.dataset.rowName === nextRowName);
         const target = hDir > 0 ? newEd[0] : newEd[newEd.length - 1];
         if (target) _openEdit(root, target);
     }
@@ -3054,22 +3081,23 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             if (pill) _activatePill(root, pill, tabCount);
         });
 
-        // ── Scroll: close edit + track active tab from position ────
+        // ── Scroll: close edit + track the active tab during user scroll ────
         let _scrollRaf = null;
         on(outer, "scroll", () => {
             if (_eIn) _closeEdit(true);
             if (_scrollRaf) return;
             _scrollRaf = requestAnimationFrame(() => {
                 _scrollRaf = null;
-                const tbl2   = root.querySelector(".pg-tbl");
+                if (Date.now() < (root._pgProgrammaticScrollUntil || 0)) return;
+                const tbl2 = root.querySelector(".pg-tbl");
                 const fixedW = (cfg.fixed || []).reduce((s, f) => s + _widthFor(cfg, f, f.type === "rownum" ? 42 : 120), 0);
-                const sl     = outer.scrollLeft;
-                let activeN  = 0;
+                const sl = outer.scrollLeft;
+                let activeN = 0;
                 for (let i = tabCount - 1; i >= 0; i--) {
                     const th = tbl2.querySelector(`th.pg-v-${i}`);
                     if (th && (th.offsetLeft - fixedW) <= sl + 20) { activeN = i; break; }
                 }
-                const cur = parseInt(tbl2.getAttribute("data-tab") || 0);
+                const cur = parseInt(tbl2.getAttribute("data-tab") || 0, 10);
                 if (activeN !== cur) {
                     const pill2 = root.querySelector(`.pg-pill[data-tab="${activeN}"]`);
                     if (pill2) _activatePill(root, pill2, tabCount, true);
@@ -3367,7 +3395,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             e.stopPropagation();
             if (btn.disabled || btn.classList.contains("fd-draw-btn--disabled")) return;
             const name = btn.dataset.name;
-            if (!name || name === "__draft__" || name.startsWith("__new") || typeof frappe_drawing === "undefined") return;
+            if (!name || _isDraftRowName(name) || name.startsWith("__new") || typeof frappe_drawing === "undefined") return;
             frappe_drawing.open({
                 doctype: "Prospect",
                 docname: name,
@@ -3511,13 +3539,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         const newN  = parseInt(pill.dataset.tab);
         root.querySelectorAll(".pg-pill").forEach(p => p.classList.remove("active"));
         pill.classList.add("active");
-        _positionInd(pill);
+        _positionInd(pill, true);
         tbl.setAttribute("data-tab", newN);
         if (!skipScroll && outer) {
+            root._pgProgrammaticScrollUntil = Date.now() + 650;
             const firstTh = tbl.querySelector(`th.pg-v-${newN}`);
             if (firstTh) {
-                const fixedW = (root._pgCfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
-                outer.scrollTo({ left: Math.max(0, firstTh.offsetLeft - fixedW), behavior: "instant" });
+                const fixedW = (root._pgCfg.fixed || []).reduce((s, f) => s + _widthFor(root._pgCfg, f, f.type === "rownum" ? 42 : 120), 0);
+                outer.scrollTo({ left: Math.max(0, firstTh.offsetLeft - fixedW), behavior: "smooth" });
             }
         }
     }
@@ -3527,6 +3556,10 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         const cur = parseInt(tbl.getAttribute("data-tab") || 0);
         const nxt = deltaX > 0 ? Math.min(tabCount-1, cur+1) : Math.max(0, cur-1);
         if (nxt !== cur) root.querySelector(`.pg-pill[data-tab="${nxt}"]`).click();
+    }
+
+    function _isDraftRowName(name) {
+        return !!name && String(name).startsWith("__draft__");
     }
 
     function _e(s) {
