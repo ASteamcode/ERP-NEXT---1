@@ -1,4 +1,4 @@
-/* ─────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    ProspectGrid (PG) — pill-tab sticky spreadsheet with inline editing
    Config: { tabs, fixed, cols, rows,
              editable?, doctype?,
@@ -1891,19 +1891,28 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     <button class="pg-mob-action pg-mob-action-edit" data-name="${name}">${_EDIT_SVG}</button>
   </div>
   <div class="pg-mob-details">
-    <div class="pg-mob-details-inner">
-      <div class="pg-mob-section">Contact</div>
-      ${r.role   ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Role</span><span class="pg-mob-val">${_e(r.role)}</span></div>` : ""}
-      ${r.mobile ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Mobile</span><span class="pg-mob-val">${_e(r.mobile)}</span></div>` : ""}
-      ${r.email  ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Email</span><span class="pg-mob-val">${_e(r.email)}</span></div>` : ""}
-      ${r.city   ? `<div class="pg-mob-section">Site</div><div class="pg-mob-row"><span class="pg-mob-lbl">Location</span><span class="pg-mob-val">${_e(r.city)}</span></div>` : ""}
-      ${r.pstatus ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Project</span><span class="pg-mob-val">${_e(r.pstatus)}</span></div>` : ""}
-      <a class="pg-mob-view-btn" href="/app/prospect/${encodeURIComponent(name)}">View Full Record</a>
-    </div>
+  <div class="pg-mob-details-inner">
+    <div class="pg-mob-section">Contact Information</div>
+
+    ${r.owner ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Owner</span><span class="pg-mob-val">${_e(r.owner)}</span></div>` : ""}
+    ${r.title ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Title</span><span class="pg-mob-val">${_e(r.title)}</span></div>` : ""}
+    ${r.first ? `<div class="pg-mob-row"><span class="pg-mob-lbl">First Name</span><span class="pg-mob-val">${_e(r.first)}</span></div>` : ""}
+    ${r.last ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Last Name</span><span class="pg-mob-val">${_e(r.last)}</span></div>` : ""}
+    ${r.company ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Company</span><span class="pg-mob-val">${_e(r.company)}</span></div>` : ""}
+    ${r.activity ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Activity Type</span><span class="pg-mob-val">${_e(r.activity)}</span></div>` : ""}
+    ${r.source ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Source</span><span class="pg-mob-val">${_e(r.source)}</span></div>` : ""}
+    ${r.role ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Role</span><span class="pg-mob-val">${_e(r.role)}</span></div>` : ""}
+    ${r.stage ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Stage</span><span class="pg-mob-val">${_e(r.stage)}</span></div>` : ""}
+    ${r.mobile ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Primary Mobile</span><span class="pg-mob-val">${_e(r.mobile)}</span></div>` : ""}
+    ${r.email ? `<div class="pg-mob-row"><span class="pg-mob-lbl">Email</span><span class="pg-mob-val">${_e(r.email)}</span></div>` : ""}
+
+    <button class="pg-mob-view-btn" data-name="${_e(name)}" type="button">View Full Record</button>
   </div>
+</div>
 </div>`;
         }).join("");
     }
+  
 
     // ── Mount ──────────────────────────────────────────────────────
     function mount(el, cfg) {
@@ -2894,7 +2903,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
 
                       { label: "Source", fn: "custom_lead_source", ft: "Data", def: row.source || "" },
 
-                      { label: "Role", fn: "custom_position", ft: "Data", def: row.role || "" },
+                      { label: "Role", fn: "custom_position", ft: "Autocomplete", def: row.role || "" },
 
                       {
                        label: "Stage",
@@ -2932,9 +2941,9 @@ body.pg-col-resizing *{cursor:col-resize!important;}
            {
     label: "Scope & Specs",
     fields: [
-        { label: "Project Status", fn: "custom_project_status", ft: "Data", def: row.status || "" },
+        { label: "Project Status", fn: "custom_project_status", ft: "Select", def: row.status || "", options: "\nEmpty Lot\nExcavation\nConcrete structure\nTopped out\nFinishing\nMEP\nCompleted" },
         { label: "Start Date", fn: "custom_project_start", ft: "Date", def: row.pstart || "" },
-        { label: "Floors", fn: "custom_floors", ft: "Data", def: row.floors || "" },
+        { label: "Floors", fn: "custom_floors", ft: "Int", def: row.floors || "" },
         { label: "Project Type", fn: "custom_project_type", ft: "Data", def: row.ptype || "" },
         { label: "Scaffold Type", fn: "custom_scaffold_type", ft: "Data", def: row.scaffold || "" },
         { label: "Area (sqm)", fn: "custom_area", ft: "Data", def: row.area || "" },
