@@ -54,6 +54,10 @@
 .pg-qs-c4{background:#0e7490;}
 /* table wrapper — z-index must stay below nav (nav is z-index:20) */
 .pg-tbl-outer{overflow:auto;max-height:var(--pg-body-max-height,none);padding-bottom:56px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#e5e7eb transparent;position:relative;z-index:0;}
+.pg-back-top{position:fixed;right:24px;bottom:26px;z-index:99980;width:42px;height:42px;border:0;border-radius:50%;background:#1e3f85;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.22);cursor:pointer;opacity:0;pointer-events:none;transform:translateY(8px) scale(.96);transition:opacity .18s,transform .18s,box-shadow .18s;}
+.pg-back-top svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.pg-back-top:hover{box-shadow:0 10px 30px rgba(0,0,0,.28);transform:translateY(0) scale(1.04);}
+.pg-back-top.pg-back-top-show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
 .pg-tbl-outer::-webkit-scrollbar{height:4px;width:6px;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
 
@@ -378,17 +382,12 @@
   .pg-nav-left{gap:0;}
   .pg-nav-right{flex:1;}
 
-  /* Add button → blue square icon */
   .pg-tb-add{
-    width:46px!important;min-width:46px;height:46px!important;
-    border-radius:14px!important;padding:0!important;
-    background:linear-gradient(135deg,#2563eb,#4f46e5)!important;
-    color:#fff!important;border:none!important;
-    box-shadow:0 4px 14px rgba(37,99,235,.40)!important;
-    display:inline-flex;align-items:center;justify-content:center;
-    font-size:0!important;
+    padding:8px 14px!important;
+    border-radius:12px!important;
+    font-size:12px!important;
   }
-  .pg-tb-add svg{width:22px;height:22px;}
+  .pg-tb-add svg{width:15px;height:15px;}
 
   /* Search */
   .pg-search-wrap{width:100%;}
@@ -1780,20 +1779,54 @@
       <thead>${buildHeader(cfg)}</thead>
       <tbody>${rowsHtml}</tbody>
     </table>
+    <button class="pg-back-top" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
   </div>
   <div class="pg-mob-cards">${cardsHtml}</div>
 </div>`;
 
         // Apply sticky offsets
         const tblOuter = el.querySelector(".pg-tbl-outer");
-        cfg.fixed.forEach((f, fi) => {
-            tblOuter.querySelectorAll(`.pg-f:nth-child(${fi+1})`).forEach(cell => {
-                cell.style.position = "sticky";
-                cell.style.left     = f._left + "px";
-                cell.style.minWidth = (f.width||120) + "px";
-                cell.style.width    = (f.width||120) + "px";
+        const applyStickyOffsets = (scope) => {
+            cfg.fixed.forEach((f, fi) => {
+                scope.querySelectorAll(`.pg-f:nth-child(${fi+1})`).forEach(cell => {
+                    cell.style.position = "sticky";
+                    cell.style.left     = f._left + "px";
+                    cell.style.minWidth = (f.width||120) + "px";
+                    cell.style.width    = (f.width||120) + "px";
+                });
             });
-        });
+        };
+        applyStickyOffsets(tblOuter);
+
+        const refreshMobileCards = () => {
+            const cards = el.querySelector(".pg-mob-cards");
+            if (cards) cards.innerHTML = _buildMobileCards(cfg.rows || []);
+        };
+
+        el._pgAppendRow = (row, opts = {}) => {
+            cfg.rows = cfg.rows || [];
+            if (!opts.skipState) cfg.rows.push(row);
+            const tbody = el.querySelector("tbody");
+            if (!tbody) return;
+            tbody.insertAdjacentHTML("beforeend", buildRow(cfg, row, cfg.rows.length - 1));
+            applyStickyOffsets(tbody.lastElementChild || tbody);
+            refreshMobileCards();
+            if (opts.scrollIntoView !== false) {
+                const outer = el.querySelector(".pg-tbl-outer");
+                if (outer) outer.scrollTo({ top: outer.scrollHeight, behavior: "smooth" });
+            }
+        };
+
+        el._pgReplaceRow = (oldName, row) => {
+            cfg.rows = (cfg.rows || []).map(r => r.name === oldName ? row : r);
+            const tr = Array.from(el.querySelectorAll("tbody tr")).find(rowEl => rowEl.dataset.rowName === oldName);
+            if (!tr) { el._pgAppendRow(row); return; }
+            const idx = cfg.rows.findIndex(r => r.name === row.name);
+            tr.outerHTML = buildRow(cfg, row, idx >= 0 ? idx : cfg.rows.length - 1);
+            const next = Array.from(el.querySelectorAll("tbody tr")).find(rowEl => rowEl.dataset.rowName === row.name);
+            if (next) applyStickyOffsets(next);
+            refreshMobileCards();
+        };
 
         // ── Load More button ───────────────────────────────────────
         const existingLM = el.querySelector(".pg-load-more-wrap");
@@ -2823,6 +2856,29 @@
         const tabCount = cfg.tabs.length;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
+        const backTop = root.querySelector(".pg-back-top");
+
+        if (backTop && outer) {
+            document.querySelectorAll("body > .pg-back-top").forEach(btn => btn.remove());
+            document.body.appendChild(backTop);
+            const innerScrolls = () => outer.scrollHeight > outer.clientHeight + 8;
+            const getTop = () => innerScrolls() ? outer.scrollTop : (window.pageYOffset || document.documentElement.scrollTop || 0);
+            const updateBackTop = () => {
+                if (!document.contains(root)) {
+                    window.removeEventListener("scroll", updateBackTop);
+                    return;
+                }
+                backTop.classList.toggle("pg-back-top-show", getTop() > 220);
+            };
+            backTop.addEventListener("click", e => {
+                e.preventDefault();
+                if (innerScrolls()) outer.scrollTo({ top: 0, behavior: "smooth" });
+                else window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+            updateBackTop();
+            outer.addEventListener("scroll", updateBackTop, { passive: true });
+            window.addEventListener("scroll", updateBackTop, { passive: true });
+        }
 
         // ── Pill click ──────────────────────────────────────────
         root.addEventListener("click", e => {
@@ -3180,7 +3236,12 @@
 
         // ── Toolbar buttons ─────────────────────────────────────
         root.querySelector(".pg-tb-add").addEventListener("click", () => {
-            if (cfg.onAddRow) cfg.onAddRow(() => _reload(root));
+            if (cfg.onAddRow) {
+                cfg.onAddRow(() => _reload(root), {
+                    appendRow: row => root._pgAppendRow && root._pgAppendRow(row),
+                    replaceRow: (oldName, row) => root._pgReplaceRow && root._pgReplaceRow(oldName, row),
+                });
+            }
         });
 
         root.querySelector(".pg-tb-del").addEventListener("click", () => {

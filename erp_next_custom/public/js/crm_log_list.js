@@ -20,7 +20,7 @@ const _CL_CFG = {
                 Done:"pg-badge-lime"
             }
         },
-        
+
     ],
 
     cols: [
@@ -36,10 +36,8 @@ const _CL_CFG = {
         { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:120 },
 
         { tab:0, key:"mobile", label:"Mobile", type:"phone", frappe_field:"mobile", width:100 },
-
-        { tab:0, key:"site_loc", label:"Location", type:"text", frappe_field:"site_location", width:130 },
-
         { tab:0, key:"description", label:"Description", type:"notes", frappe_field:"description", width:420 },
+        { tab:0, key:"site_loc", label:"Location", type:"text", frappe_field:"site_location", width:130 },
 
         { tab:0, key:"owner_initials", label:"Owner", type:"owner", width:70 },
 
@@ -51,13 +49,13 @@ const _CL_CFG = {
             options:["","Lead","Site Surveys","Measurements Take Off","Estimation","Quotation"]
         },
 
-        // Tab 1 — Contact Info
+        // Tab 1 — Contact
         { tab:1, key:"tel", label:"Tel", type:"phone", frappe_field:"tel", width:120 },
 
         { tab:1, key:"email", label:"Email", type:"link", frappe_field:"email", width:190 },
 
         // Tab 2 — Site
-        
+
         { tab:2, key:"maps", label:"Maps", type:"maps", frappe_field:"google_maps_url", width:80 },
 
         { tab:2, key:"loc_country", label:"Country", type:"locautocomplete", frappe_field:"loc_country", locField:"country", width:90 },
@@ -72,6 +70,8 @@ const _CL_CFG = {
         { tab:3, key:"updates", label:"Updates", type:"notes", frappe_field:"updates", width:260 },
 
         { tab:3, key:"follow_up_date", label:"Follow Up Date", type:"date", frappe_field:"follow_up_date", width:130 },
+
+
 
         { tab:3, key:"follow_up_notes", label:"Follow Up Notes", type:"notes", frappe_field:"follow_up_notes", width:260 },
 
@@ -210,11 +210,51 @@ function _cl_render(lv) {
             };
         },
         cfg: _CL_CFG,
-        onAddRow(reload) {
+        onAddRow(reload, lv, grid) {
+            const now = frappe.datetime.now_datetime();
+            const doc = { doctype: CL_DOCTYPE, status: "Open", date: now, first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" };
             frappe.call({
                 method: "frappe.client.insert",
-                args: { doc: { doctype: CL_DOCTYPE, status: "Open", date: frappe.datetime.now_datetime(), first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" } },
-                callback(r) { if (!r.exc) { frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5); reload(); } },
+                args: { doc },
+                callback(r) {
+                    if (r.exc) return;
+                    const saved = r.message || doc;
+                    const ownerEmail = saved.owner || frappe.session.user || "";
+                    const row = {
+                        name: saved.name,
+                        num: 0,
+                        status: saved.status || "Open",
+                        prefix: saved.prefix || "",
+                        first: saved.first_name || "New",
+                        last: saved.last_name || "",
+                        company: saved.company_name || "",
+                        log_date: _cl_fmtDateTime(saved.date || now),
+                        owner: ownerEmail,
+                        owner_initials: _cl_initials(ownerEmail),
+                        log_type: saved.log_type || "",
+                        category: saved.category || "",
+                        mobile: saved.mobile || "",
+                        tel: saved.tel || "",
+                        email: saved.email || "",
+                        site_loc: saved.site_location || "Lebanon",
+                        maps: saved.google_maps_url || "",
+                        loc_country: saved.loc_country || "Lebanon",
+                        loc_city: saved.loc_city || "",
+                        loc_dist: saved.loc_district || "",
+                        loc_street: saved.loc_street || "",
+                        description: "",
+                        updates: "",
+                        follow_up_date: "",
+                        follow_up_notes: "",
+                        has_drawing: 0,
+                        crm_lead: "",
+                        crm_contact: "",
+                        crm_customer: "",
+                    };
+                    if (grid && grid.appendRow) grid.appendRow(row);
+                    else reload();
+                    frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5);
+                },
             });
         },
         onLocFill(name, geoFields, changedLocField, rows) {

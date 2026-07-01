@@ -4,6 +4,7 @@
 // Draft row state — survives re-renders until committed to server
 let _draftRow   = null; // { name:"__draft__", ...keyedFields }
 let _draftExtra = {};   // frappe_field → value buffered before company_name is known
+let _draftGrid = null;
 
 function _ffToKey(frappe_field) {
     const all = [..._PROSPECT_CFG.fixed, ..._PROSPECT_CFG.cols];
@@ -103,6 +104,7 @@ const _PROSPECT_CFG = {
           } },
         { tab: 0, key: "mobile",   label: "Primary Mobile", type: "phone",  frappe_field: "custom_mobile"         },
         { tab: 0, key: "email",    label: "Email",          type: "link",   frappe_field: "custom_email"          },
+        { tab: 0, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 0, key: "follow_up_date", label: "Follow Up Date", type: "date", frappe_field: "custom_follow_up_date", width: 130 },
         { tab: 0, key: "follow_up_notes", label: "Follow Up Notes", type: "notes", frappe_field: "custom_follow_up_notes", width: 220 },
         { tab: 1, key: "site_country",  label: "Country",  type: "locautocomplete", frappe_field: "custom_site_country",  locField: "country",  width: 90  },
@@ -110,7 +112,6 @@ const _PROSPECT_CFG = {
         { tab: 1, key: "site_city",     label: "City",     type: "locautocomplete", frappe_field: "custom_site_city",     locField: "city",     width: 90  },
         { tab: 1, key: "site_street",   label: "Street",   type: "locautocomplete", frappe_field: "custom_site_street",   locField: "street",   width: 130 },
         { tab: 1, key: "maps",        label: "Google Maps",    type: "maps",   frappe_field: "custom_maps_url",   width: 130 },
-        { tab: 1, key: "description", label: "Description",   type: "notes",  frappe_field: "custom_description", width: 340 },
         { tab: 1, key: "files",       label: "Files",          type: "files"                                      },
         { tab: 1, key: "drawing",  label: "Drawing",        type: "drawing"                                       },
         { tab: 2, key: "pstatus",  label: "Project Status", type: "status", frappe_field: "custom_project_status",
@@ -122,7 +123,6 @@ const _PROSPECT_CFG = {
         { tab: 2, key: "scaffold", label: "Scaffold Type",  type: "select", frappe_field: "custom_scaffold_type",
           options: ["", "External Scaffolding", "Propping Scaffolding", "Adjustable Props", "Rental per Piece", "Sales per Piece", "Sales Used", "Mobile Scaffolding"] },
         { tab: 2, key: "area",     label: "Area (sqm)",     type: "num",    frappe_field: "custom_area"          },
-        { tab: 2, key: "scope_notes", label: "Notes",       type: "notes",  frappe_field: "custom_scope_notes", width: 200 },
         { tab: 3, key: "architect",  label: "Contact Person #1", type: "contact-link", frappe_field: "custom_architect",         contactPre: "", noAvatar: true },
         { tab: 3, key: "cp1",        label: "Contact Person #2", type: "contact-link", frappe_field: "custom_project_owner",     contactPre: "", noAvatar: true },
         { tab: 3, key: "cp2",        label: "Contact Person #3", type: "contact-link", frappe_field: "custom_site_engineer",     contactPre: "", noAvatar: true },
@@ -143,6 +143,7 @@ const _PROSPECT_CFG = {
     doctype: "Prospect",
     searchPlaceholder: "Search Sales REP CRM…",
     exportLabel: "Export Sales REP CRM",
+    maxBodyHeight: "calc(100vh - 300px)",
 };
 
 // ── Listview hook ──────────────────────────────────────────────────
@@ -246,19 +247,34 @@ function _pl_fetch(listview, offset) {
 
                         // Pack everything into one insert — no separate set_value calls
                         const doc = Object.assign(
-                            { doctype: "Prospect", custom_prospect_status: "Lead" },
+                            { doctype: "Prospect", custom_prospect_status: "Lead", custom_site_country: "Lebanon" },
                             _draftExtra
                         );
+                        const pendingDraft = Object.assign({}, _draftRow);
                         _draftRow   = null;
                         _draftExtra = {};
 
                         frappe.call({
                             method: "frappe.client.insert",
                             args: { doc },
-                            callback() { _pl_render(listview); },
+                            callback(r) {
+                                const saved = Object.assign({}, pendingDraft, {
+                                    name: r.message && r.message.name,
+                                    custom_prospect_status: "Lead",
+                                });
+                                _pl_allRows.push(saved);
+                                if (_draftGrid && _draftGrid.replaceRow) _draftGrid.replaceRow("__draft__", saved);
+                                else _pl_render(listview);
+                                frappe.show_alert({ message: "Row added", indicator: "green" }, 1.5);
+                            },
                             error()    {
+                                _draftRow = pendingDraft;
+                                _draftExtra = Object.assign({}, doc);
+                                delete _draftExtra.doctype;
+                                delete _draftExtra.custom_prospect_status;
                                 frappe.show_alert({ message: "Failed to save new row", indicator: "red" }, 4);
-                                _pl_render(listview);
+                                if (_draftGrid && _draftGrid.replaceRow) _draftGrid.replaceRow("__draft__", pendingDraft);
+                                else _pl_render(listview);
                             },
                         });
                         return;
@@ -291,11 +307,13 @@ function _pl_fetch(listview, offset) {
                     if (Object.keys(toFill).length) _fillLocationCells(name, row, toFill);
                 },
 
-                onAddRow(reload) {
+                onAddRow(reload, grid) {
+                    _draftGrid = grid || _draftGrid;
                     if (_draftRow) { _focusDraftCompany(host); return; }
-                    _draftRow   = { name: "__draft__", custom_prospect_status: "Lead" };
-                    _draftExtra = {};
-                    reload();
+                    _draftRow   = { name: "__draft__", custom_prospect_status: "Lead", site_country: "Lebanon" };
+                    _draftExtra = { custom_site_country: "Lebanon" };
+                    if (grid && grid.appendRow) grid.appendRow(_draftRow);
+                    else reload();
                     _focusDraftCompany(host);
                 },
 
