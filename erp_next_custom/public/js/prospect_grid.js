@@ -57,6 +57,10 @@
 .pg-tbl-outer::-webkit-scrollbar{width:6px;height:0;}
 .pg-tbl-outer::-webkit-scrollbar:horizontal{height:0;background:transparent;}
 .pg-tbl-outer::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:99px;}
+.pg-back-top{position:fixed;right:24px;bottom:26px;z-index:99980;width:42px;height:42px;border:0;border-radius:50%;background:#1e3f85;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.22);cursor:pointer;opacity:0;pointer-events:none;transform:translateY(8px) scale(.96);transition:opacity .18s,transform .18s,box-shadow .18s;}
+.pg-back-top svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.pg-back-top:hover{box-shadow:0 10px 30px rgba(0,0,0,.28);transform:translateY(0) scale(1.04);}
+.pg-back-top.pg-back-top-show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
 
 /* table */
 .pg-tbl{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;margin-bottom:0;}
@@ -2004,12 +2008,42 @@ ${detailsHtml}
       <thead>${buildHeader(cfg)}</thead>
       <tbody>${rowsHtml}</tbody>
     </table>
+    <button class="pg-back-top" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
   </div>
   <div class="pg-mob-cards">${cardsHtml}</div>
 </div>`;
 
         // Apply sticky offsets and any user-saved column widths
         _applyColWidths(el, cfg);
+
+        const refreshMobileCards = () => {
+            const cards = el.querySelector(".pg-mob-cards");
+            if (cards) cards.innerHTML = _buildMobileCards(cfg.rows || [], cfg);
+        };
+
+        el._pgAppendRow = (row, opts = {}) => {
+            cfg.rows = cfg.rows || [];
+            if (!opts.skipState) cfg.rows.push(row);
+            const tbody = el.querySelector("tbody");
+            if (!tbody) return;
+            tbody.insertAdjacentHTML("beforeend", buildRow(cfg, row, cfg.rows.length - 1));
+            _applyColWidths(el, cfg);
+            refreshMobileCards();
+            if (opts.scrollIntoView !== false) {
+                const outer = el.querySelector(".pg-tbl-outer");
+                if (outer) outer.scrollTo({ top: outer.scrollHeight, behavior: "smooth" });
+            }
+        };
+
+        el._pgReplaceRow = (oldName, row) => {
+            cfg.rows = (cfg.rows || []).map(r => r.name === oldName ? row : r);
+            const tr = Array.from(el.querySelectorAll("tbody tr")).find(rowEl => rowEl.dataset.rowName === oldName);
+            if (!tr) { el._pgAppendRow(row); return; }
+            const idx = cfg.rows.findIndex(r => r.name === row.name);
+            tr.outerHTML = buildRow(cfg, row, idx >= 0 ? idx : cfg.rows.length - 1);
+            _applyColWidths(el, cfg);
+            refreshMobileCards();
+        };
 
         // ── Load More button ───────────────────────────────────────
         const existingLM = el.querySelector(".pg-load-more-wrap");
@@ -3115,6 +3149,7 @@ ${detailsHtml}
         const tabCount = cfg.tabs.length;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
+        const backTop = root.querySelector(".pg-back-top");
         const on = (target, type, handler, opts) => {
             if (!target) return;
             const options = typeof opts === "boolean" ? { capture: opts } : Object.assign({}, opts || {});
@@ -3122,6 +3157,23 @@ ${detailsHtml}
             target.addEventListener(type, handler, options);
         };
         _wireColResize(root, cfg);
+
+        if (backTop && outer) {
+            const innerScrolls = () => outer.scrollHeight > outer.clientHeight + 8;
+            const getTop = () => innerScrolls() ? outer.scrollTop : (window.pageYOffset || document.documentElement.scrollTop || 0);
+            const updateBackTop = () => {
+                if (!document.contains(root)) return;
+                backTop.classList.toggle("pg-back-top-show", getTop() > 220);
+            };
+            on(backTop, "click", e => {
+                e.preventDefault();
+                if (innerScrolls()) outer.scrollTo({ top: 0, behavior: "smooth" });
+                else window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+            on(outer, "scroll", updateBackTop, { passive: true });
+            on(window, "scroll", updateBackTop, { passive: true });
+            requestAnimationFrame(updateBackTop);
+        }
 
         // ── Pill click ──────────────────────────────────────────
         on(root, "click", e => {
@@ -3503,7 +3555,12 @@ ${detailsHtml}
 
         // ── Toolbar buttons ─────────────────────────────────────
         on(root.querySelector(".pg-tb-add"), "click", () => {
-            if (cfg.onAddRow) cfg.onAddRow(() => _reload(root));
+            if (cfg.onAddRow) {
+                cfg.onAddRow(() => _reload(root), {
+                    appendRow: row => root._pgAppendRow && root._pgAppendRow(row),
+                    replaceRow: (oldName, row) => root._pgReplaceRow && root._pgReplaceRow(oldName, row),
+                });
+            }
         });
 
         on(root.querySelector(".pg-tb-del"), "click", () => {

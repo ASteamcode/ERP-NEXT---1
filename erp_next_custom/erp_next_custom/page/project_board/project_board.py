@@ -214,7 +214,7 @@ def get_prospects(limit=500, offset=0):
             "stage":    r.custom_stage or "Prospect",
             "mobile":   r.custom_mobile or "",
             "email":    r.custom_email or "",
-            "site_country":  r.custom_site_country  or "",
+            "site_country":  r.custom_site_country  or "Lebanon",
             "site_district": r.custom_site_district or "",
             "site_city":     r.custom_site_city     or "",
             "site_street":   r.custom_site_street   or "",

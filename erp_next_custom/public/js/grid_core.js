@@ -1946,7 +1946,10 @@
                         return frappe.db.set_value(opts.doctype, name, ff, val)
                             .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
                     },
-                    onAddRow: opts.onAddRow ? (reload) => opts.onAddRow(reload, lv) : undefined,
+                    onAddRow: opts.onAddRow ? (reload, grid) => opts.onAddRow(reload, lv, {
+                        appendRow: row => grid && grid.appendRow && grid.appendRow(row),
+                        replaceRow: (oldName, row) => grid && grid.replaceRow && grid.replaceRow(oldName, row),
+                    }) : undefined,
                     onLocFill: opts.onLocFill ? (name, geoFields, changedLocField) => opts.onLocFill(name, geoFields, changedLocField, rows, lv) : undefined,
                     onDeleteRows(names, reload) {
                         const lbl = names.length === 1 ? `1 ${opts.doctype.toLowerCase()}` : `${names.length} records`;
