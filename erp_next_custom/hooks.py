@@ -90,7 +90,7 @@ after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
 
 # website user home page (by Role)
 role_home_page = {
-    "Project Board": "project-board",
+    "Project Board": "desk",
 }
 # role_home_page = {
 # 	"Role": "home_page"
