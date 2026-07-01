@@ -3357,6 +3357,9 @@ body.pg-col-resizing *{cursor:col-resize!important;}
                 const td = e.target.closest("td.pg-ed");
                 const field = td?.dataset?.field || td?.dataset?.ff || td?.dataset?.key;
                 if (field === "custom_description" || field === "custom_follow_up_notes") return;
+
+if (field === "custom_description" || field === "custom_follow_up_notes") return;
+ (Update prospect mobile grid)
                 if (!td || td.dataset.ctype !== "notes") return;
                 clearTimeout(_hoverCloseTimer);
                 if (_eTd === td) return; // already editing this cell
