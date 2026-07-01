@@ -33,7 +33,7 @@ const _CL_CFG = {
 
         { tab:0, key:"last", label:"Last", type:"text", frappe_field:"last_name", width:80 },
 
-        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:112, lockWidth:true },
+        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:140, lockWidth:true },
 
         { tab:0, key:"mobile", label:"Mobile", type:"phone", frappe_field:"mobile", width:100 },
 
@@ -95,6 +95,7 @@ const _CL_CFG = {
     searchPlaceholder: "Search logs…",
     exportLabel: "Export Logs",
     maxBodyHeight: "calc(100vh - 300px)",
+    colWidthKey: "crm_log_pg_col_widths",
 };
 
 const _CL_FIELDS = [

@@ -266,9 +266,14 @@
 
     /** Drawing button — delegates visuals to frappe_drawing.render_btn */
     function renderDrawingBtn(name, hasDrawing) {
+        const docname = name || "";
+        const disabled = !docname || docname === "__draft__" || String(docname).startsWith("__new");
+        if (disabled) {
+            return `<button class="gl-icon-btn fd-draw-btn fd-draw-btn--disabled" disabled title="${__("Save required fields before drawing")}">${SVG.pen}</button>`;
+        }
         return typeof frappe_drawing !== "undefined"
-            ? frappe_drawing.render_btn(name, hasDrawing)
-            : `<button class="gl-icon-btn fd-draw-btn" data-name="${name}">${SVG.pen}</button>`;
+            ? frappe_drawing.render_btn(docname, hasDrawing)
+            : `<button class="gl-icon-btn fd-draw-btn" data-name="${docname}">${SVG.pen}</button>`;
     }
 
     /** Measurement / MTO button with badge */
@@ -1087,8 +1092,9 @@
     function bindDrawings($grid, { doctype, drawingField = "drawing", hasDrawingField = "has_drawing" }, listview, rerenderFn) {
         $grid.on("click.gl-dr", ".fd-draw-btn", function (e) {
             e.stopPropagation();
+            if (this.disabled || this.classList.contains("fd-draw-btn--disabled")) return;
             const docname = $(this).attr("data-name");
-            if (typeof frappe_drawing === "undefined") return;
+            if (!docname || docname === "__draft__" || String(docname).startsWith("__new") || typeof frappe_drawing === "undefined") return;
             frappe_drawing.open({
                 doctype, docname,
                 drawing_field: drawingField,
@@ -1717,6 +1723,7 @@
 .gl-icon-btn--dim        { opacity: 0.3; cursor: default; pointer-events: none; }
 .gl-map-open:hover       { color: var(--erpnx-accent); }
 .fd-draw-btn--has        { color: var(--erpnx-accent); }
+.fd-draw-btn--disabled,.fd-draw-btn:disabled { opacity:.45; cursor:not-allowed; color:#94a3b8; }
 
 /* ── Badge ────────────────────────────────────────────────────────────────── */
 .gl-badge {

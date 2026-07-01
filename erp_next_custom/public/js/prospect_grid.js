@@ -62,7 +62,11 @@
 .pg-tbl thead tr{background:#1e3f85;}
 .pg-tbl th{position:sticky;top:0;z-index:4;background:transparent;font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.70);padding:0 14px;height:40px;text-align:left;border-bottom:none;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap;}
 .pg-tbl th:last-child{border-right:none;}
-.pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;}
+.pg-rz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:30;touch-action:none;}
+.pg-rz:hover,.pg-rz.pg-rz-active{background:rgba(255,255,255,.28);}
+body.pg-col-resizing{cursor:col-resize!important;user-select:none;}
+body.pg-col-resizing *{cursor:col-resize!important;}
+.pg-tbl td{font-size:12.5px;color:#1e293b;padding:0 14px;height:46px;border-bottom:1px solid #f1f5f9;white-space:nowrap;vertical-align:middle;background:#fff;position:relative;border-right:1px solid #f1f5f9;overflow:hidden;text-overflow:ellipsis;}
 .pg-tbl td:last-child{border-right:none;}
 .pg-tr-alt td{background:#f8faff;}
 /* sticky fixed cols */
@@ -100,6 +104,8 @@
 .pg-ac-item{padding:7px 13px;cursor:pointer;font-size:12.5px;color:#374151;white-space:nowrap;}
 .pg-ac-item:hover,.pg-ac-item.pg-ac-active{background:#eff6ff;color:#1e40af;}
 .pg-ac-create{color:#2563eb;border-top:1px solid #e8e8f0;margin-top:2px;}
+.pg-clip-tip{position:fixed;z-index:100000;background:#fff;color:#1e293b;border:1.5px solid #dbe4f0;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);padding:8px 10px;font-size:12.5px;line-height:1.4;max-width:min(420px,calc(100vw - 24px));white-space:normal;overflow-wrap:anywhere;pointer-events:none;opacity:0;transform:translateY(-2px);transition:opacity .12s,transform .12s;}
+.pg-clip-tip.pg-clip-tip-on{opacity:1;transform:none;}
 
 /* contact popup action bar */
 .pg-cp-actions{display:flex;gap:6px;padding:10px 14px 12px;border-top:1px solid rgba(0,0,0,.06);margin-top:2px;}
@@ -284,6 +290,8 @@
 .fd-icon-btn.fd-draw-btn:hover{background:#eff6ff;border-color:#2563eb;color:#2563eb;border-style:solid;}
 .fd-icon-btn.fd-draw-btn.fd-draw-btn--has{background:#eff6ff;border-color:#2563eb;border-style:solid;color:#2563eb;}
 .fd-icon-btn.fd-draw-btn.fd-draw-btn--has:hover{background:#dbeafe;}
+.fd-icon-btn.fd-draw-btn.fd-draw-btn--disabled,.fd-icon-btn.fd-draw-btn:disabled{opacity:.45;cursor:not-allowed;background:#f1f5f9;border-color:#e2e8f0;color:#94a3b8;border-style:dashed;}
+.fd-icon-btn.fd-draw-btn.fd-draw-btn--disabled:hover,.fd-icon-btn.fd-draw-btn:disabled:hover{background:#f1f5f9;border-color:#e2e8f0;color:#94a3b8;}
 
 /* WhatsApp button */
 .pg-wa-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f0fdf4;color:#16a34a;text-decoration:none;transition:background .15s,color .15s;flex-shrink:0;margin-left:4px;}
@@ -654,10 +662,16 @@
             }
             case "files":
                 return `<span class="pg-files"><button class="pg-file-btn" title="Upload file">${SVG.upload}</button><button class="pg-file-btn pg-cam-btn" title="Take photo">${SVG.camera}</button></span>`;
-            case "drawing":
+            case "drawing": {
+                const docname = row.name || "";
+                const disabled = !docname || docname === "__draft__" || String(docname).startsWith("__new");
+                if (disabled) {
+                    return `<button class="fd-icon-btn fd-draw-btn fd-draw-btn--disabled" disabled title="Save required fields before drawing">${SVG.pen}</button>`;
+                }
                 return typeof frappe_drawing !== "undefined"
-                    ? frappe_drawing.render_btn(_e(row.name || ""), row.has_drawing)
-                    : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(row.name||'')}" title="Drawing">${SVG.pen}</button>`;
+                    ? frappe_drawing.render_btn(_e(docname), row.has_drawing)
+                    : `<button class="fd-icon-btn fd-draw-btn" data-name="${_e(docname)}" title="Drawing">${SVG.pen}</button>`;
+            }
             case "notes":
                 return empty ? `<span class="pg-mt">—</span>` : `<span class="pg-notes-cell" data-notes="${_e(String(v))}">${_e(String(v))}</span>`;
             case "owner": {
@@ -699,18 +713,61 @@
         ).join(",") + `{display:table-cell;animation:pg-col-in .15s cubic-bezier(.2,0,.2,1) both}`;
     }
 
+    function _colWidthKey(col) {
+        return col.frappe_field || col.key || col.label || "col";
+    }
+
+    function _widthStorageKey(cfg) {
+        if (cfg.colWidthKey) return cfg.colWidthKey;
+        const dt = (cfg.doctype || "grid").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        return `pg_col_widths_${dt}`;
+    }
+
+    function _loadColWidths(cfg) {
+        try {
+            const raw = localStorage.getItem(_widthStorageKey(cfg));
+            return raw ? JSON.parse(raw) || {} : {};
+        } catch {
+            return {};
+        }
+    }
+
+    function _saveColWidths(cfg) {
+        try { localStorage.setItem(_widthStorageKey(cfg), JSON.stringify(cfg._colWidths || {})); }
+        catch { /* localStorage may be unavailable in strict contexts */ }
+    }
+
+    function _manualWidth(cfg, col) {
+        const key = _colWidthKey(col);
+        const saved = cfg._colWidths && Number(cfg._colWidths[key]);
+        return saved > 0 ? saved : null;
+    }
+
+    function _widthFor(cfg, col, fallback = 120) {
+        return _manualWidth(cfg, col) || Number(col.width) || fallback;
+    }
+
+    function _hasFixedWidth(cfg, col) {
+        const configured = col.lockWidth || col.autoFit === false || col.widthMode === "fixed" || !cfg.autoFit;
+        return !!(_manualWidth(cfg, col) || (col.width && configured));
+    }
+
     function _colWidthStyle(cfg, col) {
-        const fixed = col.lockWidth || col.autoFit === false || col.widthMode === "fixed";
-        if (!col.width || (cfg.autoFit && !fixed)) return "";
-        return ` style="min-width:${col.width}px;width:${col.width}px;max-width:${col.width}px"`;
+        if (!_hasFixedWidth(cfg, col)) return "";
+        const width = _widthFor(cfg, col);
+        return ` style="min-width:${width}px;width:${width}px;max-width:${width}px"`;
+    }
+
+    function _resizeHandle(col, zone) {
+        return `<span class="pg-rz" data-zone="${zone}" data-key="${_e(_colWidthKey(col))}" title="Resize column"></span>`;
     }
 
     function buildHeader(cfg) {
         const fixed = cfg.fixed.map(f =>
-            `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
+            `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}" data-ckey="${_e(_colWidthKey(f))}"${_colWidthStyle(cfg, f)}>${f.label}${_resizeHandle(f, "fixed")}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}"${_colWidthStyle(cfg, c)}>${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}" data-ckey="${_e(_colWidthKey(c))}"${_colWidthStyle(cfg, c)}>${c.label}${_resizeHandle(c, "var")}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -721,23 +778,97 @@
         const fixed = cfg.fixed.map(f => {
             const v = row[f.key];
             if (f.type === "rownum") {
-                return `<td class="pg-f ${f.cls||""} pg-f-num-cell" data-row-name="${_e(name)}" style="position:sticky;left:0;min-width:${f.width||42}px;width:${f.width||42}px"><span class="pg-row-num">${idx+1}</span></td>`;
+                return `<td class="pg-f ${f.cls||""} pg-f-num-cell" data-ckey="${_e(_colWidthKey(f))}" data-row-name="${_e(name)}" style="position:sticky;left:0;min-width:${_widthFor(cfg, f, 42)}px;width:${_widthFor(cfg, f, 42)}px;max-width:${_widthFor(cfg, f, 42)}px"><span class="pg-row-num">${idx+1}</span></td>`;
             }
             if (f.type === "owner") {
                 // render avatar; not editable
-                return `<td class="pg-f ${f.cls||""}" data-row-name="${_e(name)}">${renderCell(f, row)}</td>`;
+                return `<td class="pg-f ${f.cls||""}" data-ckey="${_e(_colWidthKey(f))}" data-row-name="${_e(name)}"${_colWidthStyle(cfg, f)}>${renderCell(f, row)}</td>`;
             }
             const ed = cfg.editable && f.frappe_field;
-            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}"${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}" data-ckey="${_e(f.key)}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
+            return `<td class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}${ed?" pg-ed":""}" data-ckey="${_e(_colWidthKey(f))}"${_colWidthStyle(cfg, f)}${ed?` data-ff="${_e(f.frappe_field)}" data-val="${_e(v!=null?String(v):"")}" data-ctype="${f.type||"text"}"`:""} data-row-name="${_e(name)}">${v!=null?_e(String(v)):"—"}</td>`;
         }).join("");
         // Variable cols
         const vars = cfg.cols.map(c => {
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${_colWidthStyle(cfg, c)}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}" data-ckey="${_e(_colWidthKey(c))}"${_colWidthStyle(cfg, c)}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
+    }
+
+    function _setCellWidth(cell, width) {
+        cell.style.minWidth = width + "px";
+        cell.style.width = width + "px";
+        cell.style.maxWidth = width + "px";
+    }
+
+    function _applyColWidths(root, cfg) {
+        const tblOuter = root.querySelector(".pg-tbl-outer");
+        if (!tblOuter) return;
+
+        let left = 0;
+        (cfg.fixed || []).forEach((f, fi) => {
+            const width = _widthFor(cfg, f, f.type === "rownum" ? 42 : 120);
+            f._left = left;
+            tblOuter.querySelectorAll(`tr > .pg-f:nth-child(${fi + 1})`).forEach(cell => {
+                cell.style.position = "sticky";
+                cell.style.left = left + "px";
+                _setCellWidth(cell, width);
+            });
+            left += width;
+        });
+
+        (cfg.cols || []).forEach((col, ci) => {
+            if (!_hasFixedWidth(cfg, col)) return;
+            const width = _widthFor(cfg, col);
+            const idx = (cfg.fixed || []).length + ci + 1;
+            tblOuter.querySelectorAll(`tr > :nth-child(${idx})`).forEach(cell => _setCellWidth(cell, width));
+        });
+    }
+
+    function _wireColResize(root, cfg) {
+        const table = root.querySelector(".pg-tbl");
+        if (!table || table._pgResizeWired) return;
+        table._pgResizeWired = true;
+
+        table.addEventListener("mousedown", e => {
+            const handle = e.target.closest(".pg-rz");
+            if (!handle || !table.contains(handle)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (_eIn) _closeEdit(true);
+
+            const th = handle.closest("th");
+            const key = handle.dataset.key;
+            if (!th || !key) return;
+
+            const startX = e.clientX;
+            const startW = th.getBoundingClientRect().width;
+            const minW = Number(th.dataset.minWidth) || 48;
+            cfg._colWidths = cfg._colWidths || {};
+            handle.classList.add("pg-rz-active");
+            document.body.classList.add("pg-col-resizing");
+
+            const onMove = ev => {
+                const next = Math.max(minW, Math.round(startW + ev.clientX - startX));
+                cfg._colWidths[key] = next;
+                _applyColWidths(root, cfg);
+            };
+
+            const onUp = () => {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+                handle.classList.remove("pg-rz-active");
+                document.body.classList.remove("pg-col-resizing");
+                _saveColWidths(cfg);
+                _applyColWidths(root, cfg);
+            };
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp, { once: true });
+        });
     }
 
     // ── Popup helpers ──────────────────────────────────────────────
@@ -1689,6 +1820,23 @@
         popup.style.top  = top  + "px";
     }
 
+    function _positionBelow(anchor, el, opts = {}) {
+        const r = anchor.getBoundingClientRect();
+        const minWidth = opts.minWidth || 220;
+        const maxWidth = opts.maxWidth || null;
+        const width = Math.max(r.width, minWidth);
+        const pw = Math.min(maxWidth || width, window.innerWidth - 16);
+        const ph = el.offsetHeight || opts.height || 160;
+        let left = r.left;
+        let top = r.bottom + 4;
+        if (left + pw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - pw - 8);
+        if (top + ph > window.innerHeight - 8 && r.top > ph + 12) top = Math.max(8, r.top - ph - 4);
+        el.style.left = left + "px";
+        el.style.top = top + "px";
+        el.style.minWidth = width + "px";
+        if (maxWidth) el.style.maxWidth = maxWidth + "px";
+    }
+
     // ── Mobile card builder ────────────────────────────────────────
     const _MOB_STAGE_CLS = {
     "Prospect":       "pg-mob-badge-gray",
@@ -1760,12 +1908,13 @@
     // ── Mount ──────────────────────────────────────────────────────
     function mount(el, cfg) {
         injectStyles();
+        cfg._colWidths = _loadColWidths(cfg);
         el._pgCfg = cfg;
 
         const n = cfg.tabs.length;
 
         let left = 0;
-        cfg.fixed.forEach(f => { f._left = left; left += (f.width || 120); });
+        cfg.fixed.forEach(f => { f._left = left; left += _widthFor(cfg, f, f.type === "rownum" ? 42 : 120); });
 
         const pillsHtml = cfg.tabs.map((label, i) =>
             `<button class="pg-pill${i===0?" active":""}" data-tab="${i}">${label}</button>`
@@ -1803,16 +1952,8 @@
   <div class="pg-mob-cards">${cardsHtml}</div>
 </div>`;
 
-        // Apply sticky offsets
-        const tblOuter = el.querySelector(".pg-tbl-outer");
-        cfg.fixed.forEach((f, fi) => {
-            tblOuter.querySelectorAll(`.pg-f:nth-child(${fi+1})`).forEach(cell => {
-                cell.style.position = "sticky";
-                cell.style.left     = f._left + "px";
-                cell.style.minWidth = (f.width||120) + "px";
-                cell.style.width    = (f.width||120) + "px";
-            });
-        });
+        // Apply sticky offsets and any user-saved column widths
+        _applyColWidths(el, cfg);
 
         // ── Load More button ───────────────────────────────────────
         const existingLM = el.querySelector(".pg-load-more-wrap");
@@ -1893,8 +2034,8 @@
         const ctype = td.dataset.ctype || "text";
         const val   = td.dataset.val   || "";
         const ckey  = td.dataset.ckey  || "";
-        const col   = (cfg.cols || []).find(c => c.key === ckey)
-                   || (cfg.fixed || []).find(f => f.key === ckey)
+        const col   = (cfg.cols || []).find(c => c.key === ckey || c.frappe_field === ckey || _colWidthKey(c) === ckey)
+                   || (cfg.fixed || []).find(f => f.key === ckey || f.frappe_field === ckey || _colWidthKey(f) === ckey)
                    || {};
 
         const rect = td.getBoundingClientRect();
@@ -1940,8 +2081,8 @@
 
             const drop = document.createElement("div");
             drop.className = "pg-ac-drop";
-            const tdRect2 = td.getBoundingClientRect();
-            drop.style.cssText = `top:${tdRect2.bottom + 2}px;left:${tdRect2.left}px;min-width:${Math.max(tdRect2.width, 220)}px;`;
+            drop.style.position = "fixed";
+            _positionBelow(td, drop, { minWidth: 220 });
             document.body.appendChild(drop);
             _setEditDrop(drop);
 
@@ -1965,6 +2106,7 @@
                     drop.appendChild(d);
                 }
                 drop.style.display = drop.children.length ? "block" : "none";
+                _positionBelow(td, drop, { minWidth: 220 });
             };
 
             el.addEventListener("focus", () => _renderDynDrop(""));
@@ -2004,8 +2146,8 @@
             }, cfg.locKeys || {}, col.locKeys || {});
             const drop = document.createElement("div");
             drop.className = "pg-ac-drop";
-            const _tdR = td.getBoundingClientRect();
-            drop.style.cssText = `top:${_tdR.bottom + 2}px;left:${_tdR.left}px;min-width:${Math.max(_tdR.width, 240)}px;max-width:320px;`;
+            drop.style.position = "fixed";
+            _positionBelow(td, drop, { minWidth: 240, maxWidth: 320 });
             document.body.appendChild(drop);
             _setEditDrop(drop);
 
@@ -2059,6 +2201,7 @@
                     drop.appendChild(d);
                 });
                 drop.style.display = drop.children.length ? "block" : "none";
+                _positionBelow(td, drop, { minWidth: 240, maxWidth: 320 });
             };
 
             const _searchLoc = (q) => {
@@ -2103,8 +2246,8 @@
             // Autocomplete dropdown
             const drop = document.createElement("div");
             drop.className = "pg-ac-drop";
-            const tdRect = td.getBoundingClientRect();
-            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 200)}px;`;
+            drop.style.position = "fixed";
+            _positionBelow(td, drop, { minWidth: 200 });
             document.body.appendChild(drop);
             _setEditDrop(drop);
 
@@ -2130,6 +2273,7 @@
                     drop.appendChild(d);
                 }
                 drop.style.display = drop.children.length ? "block" : "none";
+                _positionBelow(td, drop, { minWidth: 200 });
             };
 
             const _bgCreateCompany = (name) => {
@@ -2216,8 +2360,8 @@
             drop.className = "pg-ac-drop";
             drop.setAttribute("role", "listbox");
             drop.setAttribute("aria-label", "Contact suggestions");
-            const tdRect = td.getBoundingClientRect();
-            drop.style.cssText = `top:${tdRect.bottom + 2}px;left:${tdRect.left}px;min-width:${Math.max(tdRect.width, 240)}px;`;
+            drop.style.position = "fixed";
+            _positionBelow(td, drop, { minWidth: 240 });
             document.body.appendChild(drop);
             _setEditDrop(drop);
 
@@ -2252,6 +2396,7 @@
                     drop.appendChild(d);
                 }
                 drop.style.display = drop.children.length ? "block" : "none";
+                _positionBelow(td, drop, { minWidth: 240 });
             };
 
             const _query = (q) => {
@@ -2632,8 +2777,8 @@
     function _colCfgForTd(root, td) {
         const key = td.dataset.ckey || td.dataset.key;
         if (!key || !root._pgCfg) return null;
-        return (root._pgCfg.cols || []).find(c => c.key === key)
-            || (root._pgCfg.fixed || []).find(c => c.key === key)
+        return (root._pgCfg.cols || []).find(c => c.key === key || c.frappe_field === key || _colWidthKey(c) === key)
+            || (root._pgCfg.fixed || []).find(c => c.key === key || c.frappe_field === key || _colWidthKey(c) === key)
             || null;
     }
 
@@ -2660,12 +2805,11 @@
         const outer = root.querySelector(".pg-tbl-outer");
         const savedScroll = outer ? outer.scrollLeft : 0;
 
-        const col = (cfg.cols || []).find(c => c.key === ckey)
-                 || (cfg.fixed || []).find(f => f.key === ckey)
-                 || {};
-        const row = { [ckey || ""]: newVal, name };
-        if (ckey) {
-            td.innerHTML = renderCell(Object.assign({}, col, { key: ckey || "" }), row);
+        const col = _colCfgForTd(root, td) || {};
+        const rowKey = col.key || ckey || "";
+        const row = { [rowKey]: newVal, name };
+        if (rowKey) {
+            td.innerHTML = renderCell(Object.assign({}, col, { key: rowKey }), row);
         } else {
             td.textContent = newVal;
         }
@@ -2673,7 +2817,7 @@
         if (outer) outer.scrollLeft = savedScroll;
 
         const rowObj = (cfg.rows || []).find(r => r.name === name);
-        if (rowObj && ckey) rowObj[ckey] = newVal;
+        if (rowObj && rowKey) rowObj[rowKey] = newVal;
 
         if (cfg.onEdit && name && ff) cfg.onEdit(name, ff, newVal);
     }
@@ -2891,6 +3035,7 @@
         const tabCount = cfg.tabs.length;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
+        _wireColResize(root, cfg);
 
         // ── Pill click ──────────────────────────────────────────
         root.addEventListener("click", e => {
@@ -2906,7 +3051,7 @@
             _scrollRaf = requestAnimationFrame(() => {
                 _scrollRaf = null;
                 const tbl2   = root.querySelector(".pg-tbl");
-                const fixedW = (cfg.fixed || []).reduce((s, f) => s + (f.width || 120), 0);
+                const fixedW = (cfg.fixed || []).reduce((s, f) => s + _widthFor(cfg, f, f.type === "rownum" ? 42 : 120), 0);
                 const sl     = outer.scrollLeft;
                 let activeN  = 0;
                 for (let i = tabCount - 1; i >= 0; i--) {
@@ -3197,8 +3342,9 @@
             const btn = e.target.closest(".fd-draw-btn");
             if (!btn) return;
             e.stopPropagation();
+            if (btn.disabled || btn.classList.contains("fd-draw-btn--disabled")) return;
             const name = btn.dataset.name;
-            if (!name || typeof frappe_drawing === "undefined") return;
+            if (!name || name === "__draft__" || name.startsWith("__new") || typeof frappe_drawing === "undefined") return;
             frappe_drawing.open({
                 doctype: "Prospect",
                 docname: name,
@@ -3261,6 +3407,34 @@
             if (cfg.onExport) cfg.onExport(cfg.rows, () => _reload(root));
             else if (cfg.onExportLeads) cfg.onExportLeads(cfg.rows, () => _reload(root));
         });
+
+        // ── Clipped text hover preview ───────────────────────────
+        let _clipTip = null;
+        const _hideClipTip = () => {
+            if (_clipTip) _clipTip.classList.remove("pg-clip-tip-on");
+        };
+        root.addEventListener("mouseenter", ev => {
+            const td = ev.target.closest("td");
+            if (!td || !root.contains(td)) return;
+            if (td.classList.contains("pg-ed") && _eTd === td) return;
+            if (td.querySelector("button,a,input,select,textarea") || td.querySelector(".pg-notes-cell")) return;
+            const text = (td.dataset.val || td.textContent || "").trim();
+            if (!text || text === "—") return;
+            if (td.scrollWidth <= td.clientWidth + 2) return;
+            if (!_clipTip) {
+                _clipTip = document.createElement("div");
+                _clipTip.className = "pg-clip-tip";
+                document.body.appendChild(_clipTip);
+            }
+            _clipTip.textContent = text;
+            _clipTip.style.display = "block";
+            _positionBelow(td, _clipTip, { minWidth: Math.min(260, Math.max(td.getBoundingClientRect().width, 160)), maxWidth: 420, height: 90 });
+            _clipTip.classList.add("pg-clip-tip-on");
+        }, true);
+        root.addEventListener("mouseleave", ev => {
+            if (ev.target.closest("td")) _hideClipTip();
+        }, true);
+        outer.addEventListener("scroll", _hideClipTip, { passive: true });
 
         // ── Notes hover tooltip ──────────────────────────────────
         let _notesTooltip = null;
