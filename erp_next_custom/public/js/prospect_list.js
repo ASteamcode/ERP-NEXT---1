@@ -77,7 +77,7 @@ const _PROSPECT_CFG = {
         { key: "title",   label: "Title",      cls: "pg-f-title", width: 54,  frappe_field: "custom_salutation", type: "select", options: ["", "Mr", "Ms", "Mrs", "Dr", "Arch", "Eng"] },
         { key: "first",   label: "First Name", cls: "pg-f-first", width: 105, frappe_field: "custom_first_name"  },
         { key: "last",    label: "Last Name",  cls: "pg-f-last",  width: 110, frappe_field: "custom_last_name"   },
-        { key: "company", label: "Company",    cls: "pg-f-co",    width: 168, frappe_field: "company_name", type: "company", shadow: true },
+        { key: "company", label: "Company",    cls: "pg-f-co",    width: 188, frappe_field: "company_name", type: "company", shadow: true, lockWidth: true },
     ],
     cols: [
         { tab: 0, key: "owner_initials", label: "Owner", type: "owner"                                       },
@@ -143,6 +143,7 @@ const _PROSPECT_CFG = {
     doctype: "Prospect",
     searchPlaceholder: "Search Sales REP CRM…",
     exportLabel: "Export Sales REP CRM",
+    colWidthKey: "prospect_pg_col_widths",
 };
 
 // ── Listview hook ──────────────────────────────────────────────────

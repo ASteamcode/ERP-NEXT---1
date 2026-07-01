@@ -28,6 +28,7 @@ app_license = "mit"
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
 app_include_js = [
     "/assets/erp_next_custom/js/custom_sidebar_hover.js",
+    "/assets/erp_next_custom/js/offline_cache_v2.js",
     "/assets/erp_next_custom/js/grid_core.js",
     "/assets/erp_next_custom/js/prospect_grid.js",
     "/assets/erp_next_custom/js/prospect_mobile.js",
