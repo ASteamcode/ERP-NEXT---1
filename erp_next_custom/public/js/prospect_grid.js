@@ -1908,6 +1908,8 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     // ── Mount ──────────────────────────────────────────────────────
     function mount(el, cfg) {
         injectStyles();
+        if (el._pgAbort) el._pgAbort.abort();
+        el._pgAbort = new AbortController();
         cfg._colWidths = _loadColWidths(cfg);
         el._pgCfg = cfg;
 
@@ -1972,7 +1974,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             });
         }
 
-        _wire(el, cfg);
+        _wire(el, cfg, el._pgAbort.signal);
 
         requestAnimationFrame(() => {
             _positionInd(el.querySelector(".pg-pill.active"));
@@ -2478,10 +2480,13 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         el.addEventListener("input", () => _growEditToValue(el));
         el.focus();
         if (el.tagName === "INPUT") { try { el.select(); } catch(e){} }
-        if (el.tagName === "SELECT") { setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0); }
+        if (el.tagName === "SELECT") {
+            el.addEventListener("change", () => _closeEdit(true));
+            setTimeout(() => { try { el.showPicker(); } catch(e) { el.click(); } }, 0);
+        }
 
         el.addEventListener("focus",   () => { clearTimeout(_hoverCloseTimer); _hoverEdit = false; }); // click-in → no longer hover-managed
-        el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), 80); });
+        el.addEventListener("blur",    () => { setTimeout(() => _closeEdit(true), el.tagName === "SELECT" ? 250 : 80); });
         el.addEventListener("keydown", e => {
             if (e.key === "Escape") { _closeEdit(false); e.preventDefault(); return; }
             if (e.key === "Tab")   { _closeEdit(true); e.preventDefault(); return; }
@@ -2863,7 +2868,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     }
 
     // ── Row selection ──────────────────────────────────────────────
-    let _dragSelStart = -1, _dragSelActive = false;
+    let _dragSelStart = -1, _dragSelActive = false, _dragSelMode = "select", _dragSelPre = null;
 
     function _toggleRow(root, tr, force) {
         const on = force !== undefined ? force : !tr.classList.contains("pg-row-sel");
@@ -3031,21 +3036,27 @@ body.pg-col-resizing *{cursor:col-resize!important;}
     }
 
 // ── Full wiring ────────────────────────────────────────────────
-    function _wire(root, cfg) {
+    function _wire(root, cfg, signal) {
         const tabCount = cfg.tabs.length;
         const outer = root.querySelector(".pg-tbl-outer");
         const tbody = root.querySelector("tbody");
+        const on = (target, type, handler, opts) => {
+            if (!target) return;
+            const options = typeof opts === "boolean" ? { capture: opts } : Object.assign({}, opts || {});
+            if (signal) options.signal = signal;
+            target.addEventListener(type, handler, options);
+        };
         _wireColResize(root, cfg);
 
         // ── Pill click ──────────────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const pill = e.target.closest(".pg-pill");
             if (pill) _activatePill(root, pill, tabCount);
         });
 
         // ── Scroll: close edit + track active tab from position ────
         let _scrollRaf = null;
-        outer.addEventListener("scroll", () => {
+        on(outer, "scroll", () => {
             if (_eIn) _closeEdit(true);
             if (_scrollRaf) return;
             _scrollRaf = requestAnimationFrame(() => {
@@ -3067,23 +3078,29 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         }, { passive: true });
 
         // ── Row number selection ─────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "mousedown", e => {
             const numTd = e.target.closest(".pg-f-num-cell");
-            if (!numTd || !root.contains(numTd)) return;
+            if (!numTd || !root.contains(numTd) || e.button !== 0) return;
             e.preventDefault();
             e.stopPropagation();
             const tr = numTd.closest("tr");
             if (!tr || !tbody.contains(tr)) return;
             const rows = Array.from(tbody.children);
+            _dragSelStart = rows.indexOf(tr);
+            _dragSelActive = true;
+            _dragSelMode = tr.classList.contains("pg-row-sel") ? "deselect" : "select";
+            _dragSelPre = new Set(rows.filter(r => r.classList.contains("pg-row-sel")).map(r => r.dataset.rowName));
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
                 _toggleRow(root, tr);
                 return;
             }
             rows.forEach(r => r.classList.remove("pg-row-sel"));
+            _dragSelPre = new Set();
+            _dragSelMode = "select";
             _toggleRow(root, tr, true);
         });
 
-        document.addEventListener("mousemove", e => {
+        on(document, "mousemove", e => {
             if (!_dragSelActive) return;
             const numTd = e.target.closest(".pg-f-num-cell");
             if (!numTd || !numTd.closest("tbody")) return;
@@ -3092,27 +3109,33 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             if (curIdx < 0) return;
             const lo = Math.min(_dragSelStart, curIdx);
             const hi = Math.max(_dragSelStart, curIdx);
-            rows.forEach((r, i) => _toggleRow(root, r, i >= lo && i <= hi));
+            rows.forEach((r, i) => {
+                const inRange = i >= lo && i <= hi;
+                const preSelected = _dragSelPre && _dragSelPre.has(r.dataset.rowName);
+                const on = inRange ? _dragSelMode === "select" : !!preSelected;
+                _toggleRow(root, r, on);
+            });
         });
 
-        document.addEventListener("mouseup", () => { _dragSelActive = false; });
+        on(document, "mouseup", () => { _dragSelActive = false; _dragSelPre = null; });
 
         // ── Deselect on outside click or Escape ─────────────────
         const _clearSel = () => {
             root.querySelectorAll(".pg-row-sel").forEach(r => r.classList.remove("pg-row-sel"));
             _refreshToolbar(root);
         };
-        document.addEventListener("mousedown", e => {
+        on(document, "mousedown", e => {
             if (_dragSelActive) return;
+            if (e.target.closest(".pg-ac-drop,.pg-float-wrap,.pg-owner-popup,.pg-files-popup,.pg-maps-popup,.pg-modal-overlay,.pg-cm-overlay,.modal")) return;
             if (!root.contains(e.target)) _clearSel();
         });
-        document.addEventListener("keydown", e => {
+        on(document, "keydown", e => {
             if (e.key === "Escape" && !_eIn) _clearSel();
         });
 
         // ── Inline edit ─────────────────────────────────────────
         if (cfg.editable) {
-            root.addEventListener("click", e => {
+            on(root, "click", e => {
                 if (e.target.closest(".pg-maps-btn"))    return;
                 if (e.target.closest(".pg-map-copy"))    return;
                 if (e.target.closest(".pg-map-edit"))    return;
@@ -3132,7 +3155,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             });
 
             // Notes cells open immediately on hover — no click needed
-            root.addEventListener("mouseenter", e => {
+            on(root, "mouseenter", e => {
                 const td = e.target.closest("td.pg-ed");
                 if (!td || td.dataset.ctype !== "notes") return;
                 clearTimeout(_hoverCloseTimer);
@@ -3149,7 +3172,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             }, true);
 
             // Close on mouseleave of notes cell (grace period for moving to float)
-            root.addEventListener("mouseleave", e => {
+            on(root, "mouseleave", e => {
                 const td = e.target.closest("td.pg-ed");
                 if (!td || td.dataset.ctype !== "notes" || !_hoverEdit) return;
                 _hoverCloseTimer = setTimeout(() => { if (_hoverEdit) _closeEdit(true); }, 120);
@@ -3168,7 +3191,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         }
 
         // ── Form-link click → open document ─────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const a = e.target.closest(".pg-form-link");
             if (!a) return;
             e.stopPropagation();
@@ -3178,7 +3201,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Maps copy button ─────────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".pg-map-copy");
             if (!btn) return;
             e.stopPropagation();
@@ -3195,7 +3218,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Email compose button ─────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".pg-email-btn");
             if (!btn) return;
             e.stopPropagation();
@@ -3205,7 +3228,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── WhatsApp API compose button ──────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".pg-wa-api-btn");
             if (!btn) return;
             e.stopPropagation();
@@ -3215,7 +3238,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Maps edit button (opens text edit, not location popup) ──
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".pg-map-edit");
             if (!btn) return;
             e.stopPropagation();
@@ -3224,7 +3247,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Maps hover popup ─────────────────────────────────────
-        root.addEventListener("mouseenter", e => {
+        on(root, "mouseenter", e => {
             const btn = e.target.closest(".pg-maps-btn");
             if (!btn) return;
             const url = btn.getAttribute("href") || "";
@@ -3233,14 +3256,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _mapsTimer = setTimeout(() => _showMapsPopup(btn, url), 180);
         }, true);
 
-        root.addEventListener("mouseleave", e => {
+        on(root, "mouseleave", e => {
             if (!e.target.closest(".pg-maps-btn")) return;
             clearTimeout(_mapsTimer);
             _mapsTimer = setTimeout(_hideMapsPopup, 120);
         }, true);
 
         // ── Files hover popup ────────────────────────────────────
-        root.addEventListener("mouseenter", e => {
+        on(root, "mouseenter", e => {
             const filesCell = e.target.closest(".pg-files");
             if (!filesCell) return;
             const td   = filesCell.closest("td");
@@ -3250,14 +3273,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _filesTimer = setTimeout(() => _showFilesPopup(filesCell, name), 200);
         }, true);
 
-        root.addEventListener("mouseleave", e => {
+        on(root, "mouseleave", e => {
             if (!e.target.closest(".pg-files")) return;
             clearTimeout(_filesTimer);
             _filesTimer = setTimeout(_hideFilesPopup, 120);
         }, true);
 
         // ── Owner hover popup ────────────────────────────────────
-        root.addEventListener("mouseenter", e => {
+        on(root, "mouseenter", e => {
             const av = e.target.closest(".pg-owner-av");
             if (!av) return;
             const owner    = av.dataset.owner    || "";
@@ -3267,14 +3290,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _ownerTimer = setTimeout(() => _showOwnerPopup(av, owner, initials, color), 180);
         }, true);
 
-        root.addEventListener("mouseleave", e => {
+        on(root, "mouseleave", e => {
             if (!e.target.closest(".pg-owner-av")) return;
             clearTimeout(_ownerTimer);
             _ownerTimer = setTimeout(_hideOwnerPopup, 120);
         }, true);
 
         // ── Contact avatar hover popup ───────────────────────────
-        root.addEventListener("mouseenter", e => {
+        on(root, "mouseenter", e => {
             const av = e.target.closest(".pg-contact-av, .pg-cl-name");
             if (!av) return;
             const contactName = av.dataset.contactName || "";
@@ -3285,14 +3308,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _contactTimer = setTimeout(() => _showContactPopup(av, contactName, ini, color, root, rowOwner), 180);
         }, true);
 
-        root.addEventListener("mouseleave", e => {
+        on(root, "mouseleave", e => {
             if (!e.target.closest(".pg-contact-av, .pg-cl-name")) return;
             clearTimeout(_contactTimer);
             _contactTimer = setTimeout(_hideContactPopup, 120);
         }, true);
 
         // ── File upload / camera ────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const uploadBtn = e.target.closest(".pg-file-btn:not(.pg-cam-btn)");
             const camBtn    = e.target.closest(".pg-cam-btn");
             if (!uploadBtn && !camBtn) return;
@@ -3338,7 +3361,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Drawing button ──────────────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".fd-draw-btn");
             if (!btn) return;
             e.stopPropagation();
@@ -3359,7 +3382,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Mobile card expand/collapse ──────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const card = e.target.closest(".pg-mob-card");
             if (!card) return;
             if (e.target.closest(".pg-mob-action")) return;
@@ -3367,7 +3390,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
 
         // ── Mobile card edit button ──────────────────────────────
-        root.addEventListener("click", e => {
+        on(root, "click", e => {
             const btn = e.target.closest(".pg-mob-action-edit");
             if (!btn) return;
             e.stopPropagation();
@@ -3380,7 +3403,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         // ── Search ──────────────────────────────────────────────
         const $search = root.querySelector(".pg-search");
         if ($search) {
-            $search.addEventListener("input", () => {
+            on($search, "input", () => {
                 const q = $search.value.trim().toLowerCase();
                 root.querySelectorAll("tbody tr").forEach(tr => {
                     if (!q) { tr.style.display = ""; return; }
@@ -3393,17 +3416,17 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         }
 
         // ── Toolbar buttons ─────────────────────────────────────
-        root.querySelector(".pg-tb-add").addEventListener("click", () => {
+        on(root.querySelector(".pg-tb-add"), "click", () => {
             if (cfg.onAddRow) cfg.onAddRow(() => _reload(root));
         });
 
-        root.querySelector(".pg-tb-del").addEventListener("click", () => {
+        on(root.querySelector(".pg-tb-del"), "click", () => {
             const names = getSelected(root);
             if (!names.length) return;
             if (cfg.onDeleteRows) cfg.onDeleteRows(names, () => _reload(root));
         });
 
-        root.querySelector(".pg-tb-exp").addEventListener("click", () => {
+        on(root.querySelector(".pg-tb-exp"), "click", () => {
             if (cfg.onExport) cfg.onExport(cfg.rows, () => _reload(root));
             else if (cfg.onExportLeads) cfg.onExportLeads(cfg.rows, () => _reload(root));
         });
@@ -3413,7 +3436,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         const _hideClipTip = () => {
             if (_clipTip) _clipTip.classList.remove("pg-clip-tip-on");
         };
-        root.addEventListener("mouseenter", ev => {
+        on(root, "mouseenter", ev => {
             const td = ev.target.closest("td");
             if (!td || !root.contains(td)) return;
             if (td.classList.contains("pg-ed") && _eTd === td) return;
@@ -3431,14 +3454,14 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _positionBelow(td, _clipTip, { minWidth: Math.min(260, Math.max(td.getBoundingClientRect().width, 160)), maxWidth: 420, height: 90 });
             _clipTip.classList.add("pg-clip-tip-on");
         }, true);
-        root.addEventListener("mouseleave", ev => {
+        on(root, "mouseleave", ev => {
             if (ev.target.closest("td")) _hideClipTip();
         }, true);
-        outer.addEventListener("scroll", _hideClipTip, { passive: true });
+        on(outer, "scroll", _hideClipTip, { passive: true });
 
         // ── Notes hover tooltip ──────────────────────────────────
         let _notesTooltip = null;
-        root.addEventListener("mouseenter", ev => {
+        on(root, "mouseenter", ev => {
             const span = ev.target.closest(".pg-notes-cell");
             if (!span) return;
             const text = span.dataset.notes;
@@ -3457,7 +3480,7 @@ body.pg-col-resizing *{cursor:col-resize!important;}
             _notesTooltip.style.top  = top + "px";
             _notesTooltip.classList.add("pg-notes-tip-on");
         }, true);
-        root.addEventListener("mouseleave", ev => {
+        on(root, "mouseleave", ev => {
             if (!ev.target.closest(".pg-notes-cell") || !_notesTooltip) return;
             _notesTooltip.classList.remove("pg-notes-tip-on");
         }, true);

@@ -531,6 +531,7 @@
     function bindColResize($grid, cols, colWidths, getTpl, persistFn) {
         $grid.on("mousedown.gl-rz", ".gl-rh", function (e) {
             e.preventDefault();
+            e.stopPropagation();
             const ci      = parseInt($(this).attr("data-col"), 10);
             const col     = cols[ci];
             const startX  = e.clientX;
@@ -711,6 +712,7 @@
 
     function bindLinkEdit($grid, rows, saveFn, esm) {
         $grid.on("click.gl-le", ".gl-d-link", function (e) {
+            e.stopPropagation();
             if ($(this).find("input").length) return;
             const $s  = $(this);
             const name = $s.attr("data-name"), field = $s.attr("data-field");
