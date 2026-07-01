@@ -130,6 +130,250 @@ function _ccLocation(d) {
 function _ccPrimaryPhone(d) {
     return d.mobile_no || d.phone || "";
 }
+function _ccUiIcon(name, cls) {
+    return `<svg class="cc-ui-ic ${cls || ""}" aria-hidden="true"><use href="#icon-${name}"></use></svg>`;
+}
+
+const _CC_EXPORT_SCHEMAS = {
+    crm: {
+        label: "CRM CSV",
+        filename: "contacts_crm",
+        columns: [
+            ["Contact ID", d => d.name],
+            ["First Name", d => d.first_name],
+            ["Last Name", d => d.last_name],
+            ["Full Name", d => _ccFullName(d)],
+            ["Company", d => d.company_name],
+            ["Job Title", d => d.designation],
+            ["Department", d => d.department],
+            ["Email", d => d.email_id],
+            ["Mobile", d => d.mobile_no],
+            ["Phone", d => d.phone],
+            ["City", d => d.custom_city],
+            ["Country", d => d.custom_country],
+            ["Address", d => d.custom_site_address],
+            ["Website", d => d.custom_website],
+            ["Lifecycle Stage", d => d.custom_lifecycle_stage],
+            ["Prospect Status", d => d.custom_prospect_status],
+            ["Source URL", d => d.custom_source_url],
+            ["Facebook", d => d.custom_facebook],
+            ["Instagram", d => d.custom_instagram],
+            ["TikTok", d => d.custom_tiktok],
+            ["X", d => d.custom_x],
+            ["LinkedIn", d => d.custom_linkedin],
+        ],
+    },
+    mailchimp: {
+        label: "Mailchimp CSV",
+        filename: "contacts_mailchimp",
+        columns: [
+            ["Email Address", d => d.email_id],
+            ["First Name", d => d.first_name],
+            ["Last Name", d => d.last_name],
+            ["Phone Number", d => _ccPrimaryPhone(d)],
+            ["Company", d => d.company_name],
+            ["Address", d => d.custom_site_address],
+            ["City", d => d.custom_city],
+            ["Country", d => d.custom_country],
+            ["Tags", d => [d.custom_lifecycle_stage, d.custom_prospect_status].filter(Boolean).join(",")],
+        ],
+    },
+    drive: {
+        label: "Drive XLSX",
+        filename: "contacts_drive",
+        columns: [
+            ["Contact ID", d => d.name],
+            ["Full Name", d => _ccFullName(d)],
+            ["First Name", d => d.first_name],
+            ["Last Name", d => d.last_name],
+            ["Company", d => d.company_name],
+            ["Job Title", d => d.designation],
+            ["Email", d => d.email_id],
+            ["Mobile", d => d.mobile_no],
+            ["Phone", d => d.phone],
+            ["City", d => d.custom_city],
+            ["Country", d => d.custom_country],
+            ["Address", d => d.custom_site_address],
+            ["Website", d => d.custom_website],
+            ["Lifecycle Stage", d => d.custom_lifecycle_stage],
+            ["Prospect Status", d => d.custom_prospect_status],
+        ],
+    },
+    google_contacts: {
+        label: "Google Contacts CSV",
+        filename: "contacts_google_contacts",
+        columns: [
+            ["Name", d => _ccFullName(d)],
+            ["Given Name", d => d.first_name],
+            ["Family Name", d => d.last_name],
+            ["Organization 1 - Name", d => d.company_name],
+            ["Organization 1 - Title", d => d.designation],
+            ["E-mail 1 - Value", d => d.email_id],
+            ["Phone 1 - Value", d => _ccPrimaryPhone(d)],
+            ["Address 1 - Formatted", d => d.custom_site_address],
+            ["Website 1 - Value", d => d.custom_website],
+            ["Notes", d => [d.custom_lifecycle_stage, d.custom_prospect_status, d.custom_source_url].filter(Boolean).join(" | ")],
+        ],
+    },
+};
+const _CC_APP_ICONS = {
+    mailchimp: `<span class="cc-app-ic cc-app-mailchimp" aria-hidden="true">M</span>`,
+    drive: `<span class="cc-app-ic cc-app-drive" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#34a853" d="M8.1 3h7.8l6.1 10.6h-7.8z"/><path fill="#fbbc04" d="M2 13.6 8.1 3l6.1 10.6-3.9 6.8z"/><path fill="#4285f4" d="M10.3 20.4l3.9-6.8H22l-3.9 6.8z"/></svg></span>`,
+    google_contacts: `<span class="cc-app-ic cc-app-google" aria-hidden="true">G</span>`,
+};
+function _ccRowsForExport() {
+    return (_cc_filtered && _cc_filtered.length ? _cc_filtered : _cc_allRows).slice();
+}
+function _ccCell(v) {
+    return v == null ? "" : String(v).replace(/\r?\n/g, " ").trim();
+}
+function _ccBuildMatrix(schemaKey) {
+    const schema = _CC_EXPORT_SCHEMAS[schemaKey] || _CC_EXPORT_SCHEMAS.crm;
+    const rows = _ccRowsForExport();
+    return {
+        schema,
+        matrix: [schema.columns.map(c => c[0])].concat(rows.map(d => schema.columns.map(c => _ccCell(c[1](d))))),
+    };
+}
+function _ccCsvEscape(v) {
+    v = _ccCell(v);
+    return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+function _ccDownloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function _ccExportCsv(schemaKey) {
+    const { schema, matrix } = _ccBuildMatrix(schemaKey);
+    if (matrix.length <= 1) { frappe.show_alert({ message: "No contacts to export", indicator: "orange" }, 3); return; }
+    const csv = "\ufeff" + matrix.map(row => row.map(_ccCsvEscape).join(",")).join("\r\n");
+    _ccDownloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${schema.filename}.csv`);
+}
+function _ccXml(v) {
+    return _ccCell(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function _ccCrc32(bytes) {
+    let crc = -1;
+    for (let i = 0; i < bytes.length; i++) {
+        crc ^= bytes[i];
+        for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+    return (crc ^ -1) >>> 0;
+}
+function _ccU16(n) { return [n & 255, (n >>> 8) & 255]; }
+function _ccU32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
+function _ccZip(files) {
+    const enc = new TextEncoder();
+    const chunks = [];
+    const central = [];
+    let offset = 0;
+    files.forEach(file => {
+        const name = enc.encode(file.name);
+        const data = enc.encode(file.content);
+        const crc = _ccCrc32(data);
+        const local = new Uint8Array([
+            0x50,0x4b,0x03,0x04, ..._ccU16(20), ..._ccU16(0), ..._ccU16(0), ..._ccU16(0), ..._ccU16(0),
+            ..._ccU32(crc), ..._ccU32(data.length), ..._ccU32(data.length), ..._ccU16(name.length), ..._ccU16(0)
+        ]);
+        chunks.push(local, name, data);
+        central.push({ name, crc, size: data.length, offset });
+        offset += local.length + name.length + data.length;
+    });
+    const cdStart = offset;
+    central.forEach(file => {
+        const hdr = new Uint8Array([
+            0x50,0x4b,0x01,0x02, ..._ccU16(20), ..._ccU16(20), ..._ccU16(0), ..._ccU16(0), ..._ccU16(0), ..._ccU16(0),
+            ..._ccU32(file.crc), ..._ccU32(file.size), ..._ccU32(file.size), ..._ccU16(file.name.length), ..._ccU16(0), ..._ccU16(0),
+            ..._ccU16(0), ..._ccU16(0), ..._ccU32(0), ..._ccU32(file.offset)
+        ]);
+        chunks.push(hdr, file.name);
+        offset += hdr.length + file.name.length;
+    });
+    const cdSize = offset - cdStart;
+    chunks.push(new Uint8Array([0x50,0x4b,0x05,0x06, ..._ccU16(0), ..._ccU16(0), ..._ccU16(central.length), ..._ccU16(central.length), ..._ccU32(cdSize), ..._ccU32(cdStart), ..._ccU16(0)]));
+    return new Blob(chunks, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+function _ccExportXlsx(schemaKey) {
+    const { schema, matrix } = _ccBuildMatrix(schemaKey);
+    if (matrix.length <= 1) { frappe.show_alert({ message: "No contacts to export", indicator: "orange" }, 3); return; }
+    const sheetRows = matrix.map((row, r) => `<row r="${r + 1}">${row.map((v, c) => `<c r="${String.fromCharCode(65 + c)}${r + 1}" t="inlineStr"><is><t>${_ccXml(v)}</t></is></c>`).join("")}</row>`).join("");
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+    const files = [
+        { name: "[Content_Types].xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>` },
+        { name: "_rels/.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+        { name: "xl/workbook.xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Contacts" sheetId="1" r:id="rId1"/></sheets></workbook>` },
+        { name: "xl/_rels/workbook.xml.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>` },
+        { name: "xl/worksheets/sheet1.xml", content: sheet },
+    ];
+    _ccDownloadBlob(_ccZip(files), `${schema.filename}.xlsx`);
+}
+function _ccOpenImport() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel";
+    input.style.display = "none";
+    input.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        input.remove();
+        if (!file) return;
+        _ccCreateDataImportFromFile(file);
+    }, { once: true });
+    document.body.appendChild(input);
+    input.click();
+}
+function _ccCreateDataImportFromFile(file) {
+    frappe.show_alert({ message: `Uploading ${file.name}…`, indicator: "blue" }, 4);
+    const fd = new FormData();
+    fd.append("file", file, file.name);
+    fd.append("doctype", "Data Import");
+    fd.append("fieldname", "import_file");
+    fd.append("is_private", "1");
+    fd.append("folder", "Home/Attachments");
+    fetch("/api/method/upload_file", {
+        method: "POST",
+        headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+        body: fd,
+    }).then(r => r.json()).then(data => {
+        const fileUrl = data.message && data.message.file_url;
+        if (!fileUrl) throw new Error("Upload failed");
+        return frappe.call({
+            method: "frappe.client.insert",
+            args: {
+                doc: {
+                    doctype: "Data Import",
+                    reference_doctype: CONTACT_DOCTYPE,
+                    import_type: "Insert New Records",
+                    import_file: fileUrl,
+                    send_email: 0,
+                },
+            },
+        });
+    }).then(r => {
+        const name = r.message && r.message.name;
+        if (!name) throw new Error("Data Import creation failed");
+        frappe.show_alert({ message: "Contact import ready for review", indicator: "green" }, 3);
+        frappe.set_route("Form", "Data Import", name);
+    }).catch(e => {
+        frappe.show_alert({ message: e.message || "Import setup failed", indicator: "red" }, 5);
+    });
+}
+function _ccBindExchange(host) {
+    host.querySelectorAll(".cc-export-menu [data-export]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const [format, schema] = btn.dataset.export.split(":");
+            if (format === "xlsx") _ccExportXlsx(schema);
+            else _ccExportCsv(schema);
+        });
+    });
+    const importBtn = host.querySelector(".cc-import-btn");
+    if (importBtn) importBtn.addEventListener("click", _ccOpenImport);
+}
 
 // CARD 1 — Quick Actions. Call & Email sit at the top, biggest thing on the page.
 function _ccActionsCard(d) {
@@ -285,19 +529,41 @@ function _cc_render(host) {
 <div class="cc-shell" data-view="${savedView}">
     <div class="cc-toolbar">
         <div class="cc-search-wrap">
-            <svg class="cc-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            ${_ccUiIcon("search", "cc-search-icon")}
             <input class="cc-search" placeholder="Search by name, company or email…" />
         </div>
-        <div class="cc-view-toggle">
-            <button class="cc-view-btn" data-view="vertical" title="List view">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-            </button>
-            <button class="cc-view-btn" data-view="cards" title="Card view">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            </button>
-            <button class="cc-view-btn" data-view="horizontal" title="Carousel view">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="4" height="6" rx="1"/><rect x="10" y="6" width="4" height="12" rx="1"/><rect x="17" y="9" width="4" height="6" rx="1"/></svg>
-            </button>
+        <div class="cc-toolbar-right">
+            <div class="cc-view-toggle">
+                <button class="cc-view-btn" data-view="vertical" title="List view">
+                    ${_ccUiIcon("list")}
+                </button>
+                <button class="cc-view-btn" data-view="cards" title="Card view">
+                    ${_ccUiIcon("layout-grid")}
+                </button>
+                <button class="cc-view-btn" data-view="horizontal" title="Carousel view">
+                    ${_ccUiIcon("gallery-horizontal")}
+                </button>
+            </div>
+            <div class="cc-exchange">
+                <button class="cc-import-btn" title="Import contacts">
+                    ${_ccUiIcon("upload")}
+                    <span>Import</span>
+                </button>
+                <div class="cc-export-wrap">
+                    <button class="cc-export-btn" title="Export contacts">
+                        ${_ccUiIcon("download")}
+                        <span>Export</span>
+                    </button>
+                    <div class="cc-export-menu">
+                        <button data-export="csv:crm">CSV</button>
+                        <button data-export="xlsx:crm">XLSX</button>
+                        <div class="cc-export-sep"></div>
+                        <button data-export="csv:mailchimp">${_CC_APP_ICONS.mailchimp}<span>Mailchimp</span></button>
+                        <button data-export="xlsx:drive">${_CC_APP_ICONS.drive}<span>Drive</span></button>
+                        <button data-export="csv:google_contacts">${_CC_APP_ICONS.google_contacts}<span>Google Contacts</span></button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="cc-body">
@@ -343,6 +609,7 @@ function _cc_render(host) {
         const q = this.value;
         debounce = setTimeout(() => _cc_apply_filter(q), 180);
     });
+    _ccBindExchange(host);
 
     _cc_apply_filter("", true);
 }
@@ -564,8 +831,10 @@ function _cc_render_cards(host) {
 
 /* ============ toolbar ============ */
 .cc-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 28px 14px; flex:none; }
+.cc-toolbar-right { display:flex; align-items:center; gap:10px; min-width:0; }
 .cc-search-wrap { position:relative; width:360px; max-width:100%; }
 .cc-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--cc-ink-mute); pointer-events:none; }
+.cc-ui-ic { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; }
 .cc-search { width:100%; box-sizing:border-box; background:var(--cc-surface); border:1px solid var(--cc-line); border-radius:10px; padding:11px 14px 11px 40px; font-size:14px; color:var(--cc-ink); outline:none; transition:border-color .14s,box-shadow .14s; box-shadow:var(--cc-shadow); }
 .cc-search::placeholder { color:var(--cc-ink-mute); }
 .cc-search:focus { border-color:var(--cc-accent); box-shadow:0 0 0 4px var(--cc-accent-soft); }
@@ -573,6 +842,20 @@ function _cc_render_cards(host) {
 .cc-view-btn { display:flex; align-items:center; justify-content:center; width:34px; height:30px; border:none; border-radius:7px; background:transparent; color:var(--cc-ink-mute); cursor:pointer; transition:background .15s,color .15s; }
 .cc-view-btn:hover { color:var(--cc-ink-soft); }
 .cc-view-btn.active { background:var(--cc-accent); color:#fff; }
+.cc-exchange { display:flex; align-items:center; gap:8px; padding-left:10px; margin-left:2px; border-left:1px solid var(--cc-line); }
+.cc-import-btn,.cc-export-btn { height:38px; display:flex; align-items:center; gap:7px; border:1px solid var(--cc-line); border-radius:8px; background:var(--cc-surface); color:var(--cc-ink-soft); font-size:13px; font-weight:600; padding:0 12px; cursor:pointer; box-shadow:var(--cc-shadow); }
+.cc-import-btn svg,.cc-export-btn svg { flex:none; }
+.cc-import-btn:hover,.cc-export-btn:hover { color:var(--cc-accent); border-color:#c7d6ff; background:var(--cc-accent-soft); }
+.cc-export-wrap { position:relative; padding-bottom:8px; margin-bottom:-8px; }
+.cc-export-menu { position:absolute; right:0; top:100%; z-index:20; display:none; min-width:190px; padding:10px 6px 6px; background:var(--cc-surface); border:1px solid var(--cc-line); border-radius:8px; box-shadow:0 14px 32px rgba(16,24,40,.16); }
+.cc-export-wrap:hover .cc-export-menu,.cc-export-wrap:focus-within .cc-export-menu { display:block; }
+.cc-export-menu button { display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--cc-ink); text-align:left; font-size:13px; padding:8px 10px; border-radius:6px; cursor:pointer; }
+.cc-export-menu button:hover { background:var(--cc-accent-soft); color:var(--cc-accent); }
+.cc-export-sep { height:1px; background:var(--cc-line-soft); margin:5px 4px; }
+.cc-app-ic { width:18px; height:18px; flex:none; display:inline-flex; align-items:center; justify-content:center; }
+.cc-app-mailchimp { border-radius:50%; background:#ffe01b; color:#241c15; font-size:10px; font-weight:800; font-family:Arial,sans-serif; }
+.cc-app-drive svg { width:18px; height:18px; display:block; }
+.cc-app-google { border-radius:50%; background:#fff; color:#4285f4; border:1px solid #d7dce3; font-size:11px; font-weight:800; font-family:Arial,sans-serif; }
 
 .cc-body { flex:1; min-height:0; position:relative; }
 .cc-horizontal, .cc-vertical { position:absolute; inset:0; display:none; flex-direction:column; overflow:hidden; }
@@ -719,6 +1002,7 @@ function _cc_render_cards(host) {
 @media (max-width:600px){
     .cc-toolbar{flex-direction:column;align-items:stretch;}
     .cc-search-wrap{width:100%;}
+    .cc-toolbar-right{justify-content:center;flex-wrap:wrap;}
     .cc-view-toggle{align-self:center;}
     .cc-stage-name{font-size:20px;}
     .cc-detail{padding:4px 16px 24px;}
