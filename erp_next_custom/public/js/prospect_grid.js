@@ -699,12 +699,18 @@
         ).join(",") + `{display:table-cell;animation:pg-col-in .15s cubic-bezier(.2,0,.2,1) both}`;
     }
 
+    function _colWidthStyle(cfg, col) {
+        const fixed = col.lockWidth || col.autoFit === false || col.widthMode === "fixed";
+        if (!col.width || (cfg.autoFit && !fixed)) return "";
+        return ` style="min-width:${col.width}px;width:${col.width}px;max-width:${col.width}px"`;
+    }
+
     function buildHeader(cfg) {
         const fixed = cfg.fixed.map(f =>
             `<th class="pg-f ${f.cls||""}${f.shadow?" pg-f-shadow":""}">${f.label}</th>`
         ).join("");
         const vars = cfg.cols.map(c =>
-            `<th class="pg-v pg-v-${c.tab}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}>${c.label}</th>`
+            `<th class="pg-v pg-v-${c.tab}"${_colWidthStyle(cfg, c)}>${c.label}</th>`
         ).join("");
         return `<tr>${fixed}${vars}</tr>`;
     }
@@ -729,7 +735,7 @@
             const ed = cfg.editable && c.frappe_field && c.type !== "files" && c.type !== "drawing";
             const v  = row[c.key];
             const rawVal = v != null && v !== "—" ? String(v) : "";
-            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${!cfg.autoFit && c.width ? ` style="min-width:${c.width}px;width:${c.width}px"` : ""}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
+            return `<td class="pg-v pg-v-${c.tab}${ed?" pg-ed":""}"${_colWidthStyle(cfg, c)}${ed?` data-ff="${_e(c.frappe_field)}" data-val="${_e(rawVal)}" data-ctype="${c.type||"text"}" data-ckey="${c.key}"`:""} data-row-name="${_e(name)}">${renderCell(c, row)}</td>`;
         }).join("");
         return `<tr class="${idx%2?"pg-tr-alt":""}" data-row-name="${_e(name)}">${fixed}${vars}</tr>`;
     }

@@ -1927,11 +1927,14 @@
                 if (!document.contains(host)) return;
                 const raw  = r.message || [];
                 const rows = raw.map((d, i) => opts.mapFn(d, i));
+                const reload = () => pgRender(lv, opts);
+                const displayRows = opts.extendRows ? opts.extendRows(rows, raw, host, lv) : rows;
                 const cfg  = Object.assign({}, opts.cfg, {
-                    rows,
-                    onReload() { pgRender(lv, opts); },
+                    rows: displayRows,
+                    onReload() { reload(); },
                     onEdit(name, ff, val) {
-                        frappe.db.set_value(opts.doctype, name, ff, val)
+                        if (opts.onEdit) return opts.onEdit(name, ff, val, { rows, raw, host, lv, reload });
+                        return frappe.db.set_value(opts.doctype, name, ff, val)
                             .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
                     },
                     onAddRow: opts.onAddRow ? (reload) => opts.onAddRow(reload, lv) : undefined,

@@ -33,7 +33,7 @@ const _CL_CFG = {
 
         { tab:0, key:"last", label:"Last", type:"text", frappe_field:"last_name", width:80 },
 
-        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:120 },
+        { tab:0, key:"company", label:"Company", type:"company", frappe_field:"company_name", companySource:"client", shadow:true, width:112, lockWidth:true },
 
         { tab:0, key:"mobile", label:"Mobile", type:"phone", frappe_field:"mobile", width:100 },
 
@@ -105,6 +105,27 @@ const _CL_FIELDS = [
     "description","updates","follow_up_date","follow_up_notes","has_drawing",
     "crm_lead","crm_contact","crm_customer",
 ];
+
+let _cl_draftRow = null;
+let _cl_draftExtra = {};
+
+function _cl_ffToKey(frappe_field) {
+    const all = [..._CL_CFG.fixed, ..._CL_CFG.cols];
+    const col = all.find(c => c.frappe_field === frappe_field);
+    return col ? col.key : null;
+}
+
+function _cl_focusDraftFirst(host) {
+    setTimeout(() => {
+        requestAnimationFrame(() => {
+            const tr = host && host.querySelector('tr[data-row-name="__draft__"]');
+            if (!tr) return;
+            const firstTd = tr.querySelector('td[data-ff="first_name"]');
+            const companyTd = tr.querySelector('td[data-ff="company_name"]');
+            (firstTd || companyTd)?.click();
+        });
+    }, 250);
+}
 
 function _cl_joinLocation(row) {
     return [row.loc_country, row.loc_dist, row.loc_city, row.loc_street]
@@ -210,12 +231,60 @@ function _cl_render(lv) {
             };
         },
         cfg: _CL_CFG,
-        onAddRow(reload) {
-            frappe.call({
-                method: "frappe.client.insert",
-                args: { doc: { doctype: CL_DOCTYPE, status: "Open", date: frappe.datetime.now_datetime(), first_name: "New", loc_country: "Lebanon", site_location: "Lebanon" } },
-                callback(r) { if (!r.exc) { frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5); reload(); } },
-            });
+        extendRows(rows) {
+            return _cl_draftRow ? [...rows, _cl_draftRow] : rows;
+        },
+        onEdit(name, frappe_field, value, ctx) {
+            if (name === "__draft__") {
+                const key = _cl_ffToKey(frappe_field);
+                if (key) _cl_draftRow[key] = value;
+                if (value && String(value).trim()) _cl_draftExtra[frappe_field] = value;
+                else delete _cl_draftExtra[frappe_field];
+
+                const hasFirst = !!(_cl_draftExtra.first_name || "").trim();
+                const hasCompany = !!(_cl_draftExtra.company_name || "").trim();
+                if (!hasFirst || !hasCompany) return Promise.resolve();
+
+                const doc = Object.assign({
+                    doctype: CL_DOCTYPE,
+                    status: "Open",
+                    date: frappe.datetime.now_datetime(),
+                    loc_country: "Lebanon",
+                    site_location: "Lebanon",
+                }, _cl_draftExtra);
+
+                _cl_draftRow = null;
+                _cl_draftExtra = {};
+
+                return frappe.call({
+                    method: "frappe.client.insert",
+                    args: { doc },
+                    callback(r) {
+                        if (!r.exc) frappe.show_alert({ message: "Log added", indicator: "green" }, 1.5);
+                        ctx.reload();
+                    },
+                    error() {
+                        frappe.show_alert({ message: "Failed to save new log", indicator: "red" }, 4);
+                        ctx.reload();
+                    },
+                });
+            }
+            return frappe.db.set_value(CL_DOCTYPE, name, frappe_field, value)
+                .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
+        },
+        onAddRow(reload, lv) {
+            const host = GL.bootstrap(lv, { doctype: CL_DOCTYPE });
+            if (_cl_draftRow) { _cl_focusDraftFirst(host); return; }
+            _cl_draftRow = {
+                name: "__draft__",
+                status: "Open",
+                log_date: _cl_fmtDateTime(frappe.datetime.now_datetime()),
+                loc_country: "Lebanon",
+                site_loc: "Lebanon",
+            };
+            _cl_draftExtra = {};
+            reload();
+            _cl_focusDraftFirst(host);
         },
         onLocFill(name, geoFields, changedLocField, rows) {
             const row = rows.find(r => r.name === name);
@@ -265,6 +334,9 @@ function _cl_render(lv) {
 .page-container[data-page-route="List/CRM Log/List"] .page-head,
 .page-container[data-page-route="List/CRM Log/List"] .page-form,
 .page-container[data-page-route="List/CRM Log/List"] header.frappe-list-head { display:none !important; }
+.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td { background:#f0f7ff !important; }
+.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td.pg-f-num-cell { color:#2563eb !important; }
+.page-container[data-page-route="List/CRM Log/List"] tr[data-row-name="__draft__"] td.pg-f-num-cell::after { content:" ✦"; font-size:8px; }
     `;
     document.head.appendChild(s);
 })();
