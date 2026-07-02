@@ -27,15 +27,15 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erp_next_custom/css/erp_next_custom.css"
 app_include_js = [
-    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
-    "/assets/erp_next_custom/js/offline_cache_v2.js",
-    "/assets/erp_next_custom/js/grid_core.js",
-    "/assets/erp_next_custom/js/prospect_grid.js",
-    "/assets/erp_next_custom/js/prospect_mobile.js",
-    "/assets/erp_next_custom/js/frappe_drawing.js",
-    "/assets/erp_next_custom/js/ui_annotations.js",
-    "/assets/erp_next_custom/js/overview_offline.js",
-    "/assets/erp_next_custom/js/quick_launch.js",
+    "/assets/erp_next_custom/js/core/ui/sidebar_hover.js",
+    "/assets/erp_next_custom/js/core/offline/offline_cache_v2.js",
+    "/assets/erp_next_custom/js/core/grid/grid_core.js",
+    "/assets/erp_next_custom/js/doctypes/prospect/prospect_grid.js",
+    "/assets/erp_next_custom/js/doctypes/prospect/prospect_mobile.js",
+    "/assets/erp_next_custom/js/core/ui/drawing.js",
+    "/assets/erp_next_custom/js/core/ui/annotations.js",
+    "/assets/erp_next_custom/js/pages/desk/overview_offline.js",
+    "/assets/erp_next_custom/js/core/ui/quick_launch.js",
 ]
 
 # include js, css files in header of web template
@@ -50,27 +50,27 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-page_js = {"desktop": "public/js/desk_home.js"}
+page_js = {"desktop": "public/js/pages/desk/desk_home.js"}
 
 # include js in doctype views
 doctype_js = {
-    "Item":                  "public/js/item_form.js",
-    "Stock Entry":           "public/js/stock_entry.js",
+    "Item":                  "public/js/doctypes/item/item_form.js",
+    "Stock Entry":           "public/js/doctypes/stock_entry/stock_entry_form.js",
     "CRM Log":               "erp_next_custom/doctype/crm_log/crm_log.js",
     "Site Survey":           "erp_next_custom/doctype/site_survey/site_survey.js",
     "Measurement Take Off":  "erp_next_custom/doctype/measurement_take_off/measurement_take_off.js",
     "Custom Calendar Event": "erp_next_custom/doctype/custom_calendar_event/custom_calendar_event.js",
 }
 doctype_list_js = {
-    "Contact":     "public/js/contacts_list.js",
-    "Lead":        "public/js/leads_list.js",
-    "CRM Log":              "public/js/crm_log_list.js",
-    "Site Survey":          "public/js/site_survey_list.js",
-    "Measurement Take Off": "public/js/mto_list.js",
-    "Quotation":            "public/js/quotation_list.js",
-    "Item":        "public/js/item_list.js",
-    "Prospect":    "public/js/prospect_list.js",
-    "Stock Entry":           "public/js/stock_entry_form.js",
+    "Contact":              "public/js/doctypes/contact/contact_list.js",
+    "Lead":                 "public/js/doctypes/lead/lead_list.js",
+    "CRM Log":              "public/js/doctypes/crm_log/crm_log_list.js",
+    "Site Survey":          "public/js/doctypes/site_survey/site_survey_list.js",
+    "Measurement Take Off": "public/js/doctypes/measurement_take_off/measurement_take_off_list.js",
+    "Quotation":            "public/js/doctypes/quotation/quotation_list.js",
+    "Item":                 "public/js/doctypes/item/item_list.js",
+    "Prospect":             "public/js/doctypes/prospect/prospect_list.js",
+    "Stock Entry":          "public/js/doctypes/stock_entry/stock_entry_list.js",
 }
 
 after_migrate = ["erp_next_custom.setup.setup_custom_fields"]
