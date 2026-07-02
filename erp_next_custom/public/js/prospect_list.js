@@ -202,6 +202,7 @@ const _PROSPECT_CFG = {
     doctype: "Prospect",
     searchPlaceholder: "Search Sales REP CRM…",
     exportLabel: "Export Sales REP CRM",
+    maxBodyHeight: "calc(100vh - 300px)",
     colWidthKey: "prospect_pg_col_widths",
 };
 
@@ -358,8 +359,13 @@ function _pl_fetch(listview, offset) {
                     if (Object.keys(toFill).length) _fillLocationCells(name, row, toFill);
                 },
 
-                onAddRow(reload) {
+                onAddRow(reload, grid) {
                     const row = _newBottomDraftRow();
+                    if (grid && grid.appendRow) {
+                        grid.appendRow(row);
+                        requestAnimationFrame(() => _focusDraftCell(host, row.name, true));
+                        return;
+                    }
                     _pendingDraftFocus = row.name;
                     reload();
                 },
