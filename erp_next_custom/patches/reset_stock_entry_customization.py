@@ -1,4 +1,4 @@
-from erp_next_custom.customize import stock_entry
+from erp_next_custom.customize.doctypes.stock_entry import custom_fields as stock_entry
 
 
 def execute():

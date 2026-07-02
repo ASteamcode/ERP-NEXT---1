@@ -1,17 +1,22 @@
 /* ────────────────────────────────────────────────────────────────
-   ProspectGrid (PG) — pill-tab sticky spreadsheet with inline editing
+   GridShell — shared pill-tab spreadsheet shell with inline editing
    Config: { tabs, fixed, cols, rows,
              editable?, doctype?,
              onEdit?(name,field,val), onAddRow?(reload),
              onDeleteRows?(names,reload), onExportLeads?(rows,reload) }
-   window.PG = { mount, setTab, injectStyles, getSelected }
+   window.GridShell = { mount, setTab, injectStyles, getSelected, renderStats }
+   window.PG = window.GridShell  // backwards-compatible alias
 ───────────────────────────────────────────────────────────────── */
 (function () {
     "use strict";
 
-    const STYLE_VER = "pg-v2";
+    const STYLE_VER = "grid-shell-v1";
 
-    // ── CSS ────────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Visual Shell Styling
+    // Function: Owns shared table appearance, pill tabs, stats cards, scrollbars,
+    // sticky columns, mobile card styling, hover states, and animations.
+    // ========================================================================
     const CSS = `
 /* shell */
 .pg-shell{background:#fff;border-radius:14px;border:1.5px solid #dce4f0;overflow:hidden;box-shadow:0 4px 20px rgba(40,79,158,.10);}
@@ -589,7 +594,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         check:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><polyline points="2,8 6,12 14,4"/></svg>`,
     };
 
-    // ── Owner avatar color (deterministic from initials) ───────────
+    // ========================================================================
+    // Behavior: Visual Utility Helpers
+    // Function: Provides deterministic colors and style injection helpers used
+    // before any table or popup can render.
+    // ========================================================================
     const _OWNER_COLORS = ["#2563eb","#7c3aed","#db2777","#dc2626","#d97706","#059669","#0891b2","#4f46e5"];
     function _ownerColor(initials) {
         let h = 0;
@@ -606,7 +615,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         document.head.appendChild(s);
     }
 
-    // ── Cell renderers ─────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Cell Rendering
+    // Function: Converts typed row values into display HTML for status, links,
+    // phones, maps, files, owner avatars, contacts, notes, and empty states.
+    // ========================================================================
     function renderCell(col, row) {
         const v = row[col.key];
         const empty = v == null || v === "" || v === "—";
@@ -714,7 +727,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         }
     }
 
-    // ── Row / header builders ──────────────────────────────────────
+    // ========================================================================
+    // Behavior: Header, Row, And Column Layout
+    // Function: Builds fixed columns, tabbed columns, width persistence, resize
+    // handles, and the final table rows consumed by the shell.
+    // ========================================================================
     function buildTabRevealCSS(n) {
         return Array.from({ length: n }, (_, i) =>
             `.pg-tbl[data-tab="${i}"] .pg-v-${i}`
@@ -881,7 +898,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
     }
 
-    // ── Popup helpers ──────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Hover And Detail Popups
+    // Function: Positions and renders contact, owner, map, file, and expanded
+    // detail popups without each DocType duplicating overlay code.
+    // ========================================================================
     let _mapsPopup = null, _mapsTimer = null;
     let _filesPopup = null, _filesTimer = null;
     let _ownerPopup = null, _ownerTimer = null;
@@ -1195,7 +1216,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
     }
 
-    // ── Email compose panel ────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Email Compose
+    // Function: Opens the shared email composer, recipient tags, autocomplete,
+    // mailto fallback, and API send flow.
+    // ========================================================================
     function _openCompose(email, rowName, cfg) {
         const existing = document.querySelector(".pg-compose");
         if (existing) existing.remove();
@@ -1384,7 +1409,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         requestAnimationFrame(() => $subject.focus());
     }
 
-    // ── WhatsApp API compose panel ────────────────────────────────
+    // ========================================================================
+    // Behavior: WhatsApp Compose
+    // Function: Opens one-to-one WhatsApp messaging with recipient tags, contact
+    // autocomplete, wa.me fallback, and API send flow.
+    // ========================================================================
     function _openWaCompose(phone, rowName, cfg) {
         const existing = document.querySelector(".pg-wa-compose");
         if (existing) existing.remove();
@@ -1566,7 +1595,10 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         requestAnimationFrame(() => $body.focus());
     }
 
-    // ── WhatsApp API broadcast modal ──────────────────────────────
+    // ========================================================================
+    // Behavior: WhatsApp Broadcast
+    // Function: Handles multi-recipient selection and bulk WhatsApp sending.
+    // ========================================================================
     function _openWaBroadcast(cfg, onConfirm) {
         let _allProspects = [];
         let _selected     = new Set();
@@ -1653,7 +1685,10 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
     }
 
-    // ── Broadcast / bulk-select modal ─────────────────────────────
+    // ========================================================================
+    // Behavior: Email Broadcast
+    // Function: Handles multi-recipient selection for bulk email actions.
+    // ========================================================================
     function _openBroadcast(cfg, onConfirm) {
         let _allProspects = [];
         let _selected     = new Set();
@@ -1847,7 +1882,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         if (maxWidth) el.style.maxWidth = maxWidth + "px";
     }
 
-    // ── Mobile card builder ────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Shared Mobile Cards
+    // Function: Builds compact mobile cards and DocType-specific detail snippets
+    // for screens that use GridShell on small viewports.
+    // ========================================================================
     const _MOB_STAGE_CLS = {
     "Prospect":       "pg-mob-badge-gray",
     "Outreached":     "pg-mob-badge-blue",
@@ -1982,7 +2021,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
   </div>`;
     }
 
-    // ── Mount ──────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Shell Mount
+    // Function: Creates the complete GridShell DOM: toolbar, pill tabs, stats
+    // insertion point, table, rows, pagination hooks, and mobile cards.
+    // ========================================================================
     function mount(el, cfg) {
         injectStyles();
         if (el._pgAbort) el._pgAbort.abort();
@@ -2088,7 +2131,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         });
     }
 
-    // ── Tab switch ─────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Tab Switching And Selection
+    // Function: Moves the pill indicator, reveals tab columns, and exposes
+    // selected rows to DocType actions.
+    // ========================================================================
     function setTab(shellEl, n) {
         const pill = shellEl.querySelector(`.pg-pill[data-tab="${n}"]`);
         if (pill) pill.click();
@@ -2098,7 +2145,11 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         return Array.from(el.querySelectorAll(".pg-row-sel")).map(tr => tr.dataset.rowName);
     }
 
-    // ── Floating edit input (one shared per page) ──────────────────
+    // ========================================================================
+    // Behavior: Inline Cell Editing
+    // Function: Opens the floating editor, dropdowns, autocomplete, contact/modal
+    // editors, validation, save/cancel, and keyboard navigation.
+    // ========================================================================
     let _eFl = null;
     let _eIn = null;
     let _eTd = null;
@@ -3717,7 +3768,12 @@ body.pg-col-resizing *{cursor:col-resize!important;}
         host.insertBefore(strip, host.firstChild);
     }
 
-    // ── Public API ─────────────────────────────────────────────────
-    window.PG = { mount, setTab, injectStyles, getSelected, renderStats };
+    // ========================================================================
+    // Behavior: Public API
+    // Function: Exposes GridShell to DocType list files and keeps PG as a
+    // compatibility alias while callers migrate to the shared name.
+    // ========================================================================
+    window.GridShell = { mount, setTab, injectStyles, getSelected, renderStats };
+    window.PG = window.GridShell;
     injectStyles();
 })();

@@ -2,7 +2,7 @@
 // Served at /sw.js via Frappe www routing
 // no-cache: 1
 
-const VERSION = "achi-erp-offline-v6";
+const VERSION = "achi-erp-offline-v7";
 const APP_SHELL = `${VERSION}-shell`;
 const RUNTIME = `${VERSION}-runtime`;
 const API = `${VERSION}-api`;
@@ -14,27 +14,27 @@ const PRECACHE_URLS = [
     "/app",
     "/assets/erp_next_custom/manifest.json",
     "/assets/erp_next_custom/images/logo.jpg",
-    "/assets/erp_next_custom/js/custom_sidebar_hover.js",
-    "/assets/erp_next_custom/js/offline_cache_v2.js",
-    "/assets/erp_next_custom/js/grid_core.js",
-    "/assets/erp_next_custom/js/prospect_grid.js",
-    "/assets/erp_next_custom/js/prospect_mobile.js",
-    "/assets/erp_next_custom/js/frappe_drawing.js",
-    "/assets/erp_next_custom/js/ui_annotations.js",
-    "/assets/erp_next_custom/js/overview_offline.js",
-    "/assets/erp_next_custom/js/quick_launch.js",
-    "/assets/erp_next_custom/js/contacts_list.js",
-    "/assets/erp_next_custom/js/crm_log_list.js",
-    "/assets/erp_next_custom/js/leads_list.js",
-    "/assets/erp_next_custom/js/prospect_list.js",
-    "/assets/erp_next_custom/js/site_survey_list.js",
-    "/assets/erp_next_custom/js/mto_list.js",
-    "/assets/erp_next_custom/js/quotation_list.js",
-    "/assets/erp_next_custom/js/item_list.js",
-    "/assets/erp_next_custom/js/item_form.js",
-    "/assets/erp_next_custom/js/stock_entry.js",
-    "/assets/erp_next_custom/js/stock_entry_form.js",
-    "/assets/erp_next_custom/js/desk_home.js",
+    "/assets/erp_next_custom/js/core/ui/sidebar_hover.js",
+    "/assets/erp_next_custom/js/core/offline/offline_cache_v2.js",
+    "/assets/erp_next_custom/js/core/grid/grid_core.js",
+    "/assets/erp_next_custom/js/core/grid/tabbed_grid.js",
+    "/assets/erp_next_custom/js/doctypes/prospect/prospect_mobile.js",
+    "/assets/erp_next_custom/js/core/ui/drawing.js",
+    "/assets/erp_next_custom/js/core/ui/annotations.js",
+    "/assets/erp_next_custom/js/pages/desk/overview_offline.js",
+    "/assets/erp_next_custom/js/core/ui/quick_launch.js",
+    "/assets/erp_next_custom/js/doctypes/contact/contact_list.js",
+    "/assets/erp_next_custom/js/doctypes/crm_log/crm_log_list.js",
+    "/assets/erp_next_custom/js/doctypes/lead/lead_list.js",
+    "/assets/erp_next_custom/js/doctypes/prospect/prospect_list.js",
+    "/assets/erp_next_custom/js/doctypes/site_survey/site_survey_list.js",
+    "/assets/erp_next_custom/js/doctypes/measurement_take_off/measurement_take_off_list.js",
+    "/assets/erp_next_custom/js/doctypes/quotation/quotation_list.js",
+    "/assets/erp_next_custom/js/doctypes/item/item_list.js",
+    "/assets/erp_next_custom/js/doctypes/item/item_form.js",
+    "/assets/erp_next_custom/js/doctypes/stock_entry/stock_entry_form.js",
+    "/assets/erp_next_custom/js/doctypes/stock_entry/stock_entry_list.js",
+    "/assets/erp_next_custom/js/pages/desk/desk_home.js",
 ];
 
 const STATIC_PREFIXES = [

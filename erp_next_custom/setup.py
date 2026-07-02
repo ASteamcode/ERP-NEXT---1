@@ -1,6 +1,10 @@
 import frappe
 
-from erp_next_custom.customize import contact, item, lead, prospect, quotation
+from erp_next_custom.customize.doctypes.contact import custom_fields as contact
+from erp_next_custom.customize.doctypes.item import custom_fields as item
+from erp_next_custom.customize.doctypes.lead import custom_fields as lead
+from erp_next_custom.customize.doctypes.prospect import custom_fields as prospect
+from erp_next_custom.customize.doctypes.quotation import custom_fields as quotation
 
 _EXTRA_SALUTATIONS = ["Eng", "Arch"]
 
