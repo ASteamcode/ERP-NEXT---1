@@ -346,8 +346,14 @@ function _cl_render(lv) {
             return frappe.db.set_value(CL_DOCTYPE, name, frappe_field, value)
                 .catch(e => frappe.show_alert({ message: "Save failed: " + e, indicator: "red" }, 4));
         },
-        onAddRow(reload) {
+        onAddRow(reload, lv, grid) {
             const row = _cl_newBottomDraftRow();
+            if (grid && grid.appendRow) {
+                grid.appendRow(row);
+                const host = GL.bootstrap(lv, { doctype: CL_DOCTYPE });
+                requestAnimationFrame(() => _cl_focusDraftFirst(host, row.name, true));
+                return;
+            }
             _cl_pendingDraftFocus = row.name;
             reload();
         },
