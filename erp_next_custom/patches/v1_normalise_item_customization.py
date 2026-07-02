@@ -2,7 +2,7 @@ import frappe
 
 # Old fieldnames created via Customize Form UI (auto-generated names with double
 # underscores, missing suffixes, or random hash suffixes). These conflict with the
-# clean names defined in customize/item.py and must be removed so Frappe rebuilds
+# clean names defined in customize/doctypes/item/custom_fields.py and must be removed so Frappe rebuilds
 # the form from a known-good state.
 _STALE_CUSTOM_FIELDS = [
     "Item-custom_section_break_kwrfa",   # → custom_identification_section
@@ -30,5 +30,5 @@ def execute():
     frappe.db.commit()
 
     # 3. Rebuild from scratch using the canonical definition
-    from erp_next_custom.customize import item
+    from erp_next_custom.customize.doctypes.item import custom_fields as item
     item.setup()

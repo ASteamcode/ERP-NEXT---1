@@ -26,10 +26,19 @@
 (function () {
     "use strict";
 
-    // ── Style version — bump when BASE_CSS changes ────────────────────────────
+    // ========================================================================
+    // Behavior: Base Grid Styling
+    // Function: Owns shared GL styling tokens and injects/hides native Frappe
+    // list chrome for custom grid-hosted ListViews.
+    // ========================================================================
+    // Style version - bump when BASE_CSS changes
     const STYLE_VERSION = "gl-v16";
 
-    // ── SVG icon library ──────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Shared Icons
+    // Function: Provides inline icons used by generic cells and grid actions.
+    // ========================================================================
+    // SVG icon library
     const SVG = {
         paperclip: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
         trash:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
@@ -42,7 +51,12 @@
         file:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
     };
 
-    // ── CSS injection ──────────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Frappe Chrome Suppression
+    // Function: Injects base styles and hides the native ListView rows so custom
+    // grids can occupy the result area cleanly.
+    // ========================================================================
+    // CSS injection
     function injectBaseStyles() {
         const existing = document.getElementById("gl-base-styles");
         if (existing?.dataset.v === STYLE_VERSION) return;
@@ -75,7 +89,12 @@
         document.head.appendChild(s);
     }
 
-    // ── Listview helpers ───────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: ListView Lifecycle Helpers
+    // Function: Stops native refresh behavior, prepares the custom host, and
+    // keeps Frappe routing compatible with custom grid rendering.
+    // ========================================================================
+    // Listview helpers
     function suppressRefresh(listview) {
         if (listview.auto_refresh) {
             try { clearInterval(listview.auto_refresh); } catch { /* */ }
@@ -111,7 +130,11 @@
         return host;
     }
 
-    // ── Grid template ──────────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Generic Grid Template
+    // Function: Builds the simpler GL table template used by shared grid helpers.
+    // ========================================================================
+    // Grid template
     function gridTpl(cols, colWidths) {
     const tracks = cols.map(c => {
         const key = c.field || c.key;
@@ -1826,7 +1849,11 @@
 .gl-del-sel-btn { white-space: nowrap; }
 `;
 
-    // ── Public API ─────────────────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: GL Public API
+    // Function: Exposes reusable Frappe/grid helpers consumed by DocType list
+    // files and by the GridShell render pipeline.
+    // ========================================================================
     window.GL = {
         // Icons
         SVG,
@@ -1901,7 +1928,11 @@
         pgRender,
     };
 
-    // ── Shared PG list helpers ────────────────────────────────────────────────
+    // ========================================================================
+    // Behavior: Shared GridShell List Pipeline
+    // Function: Fetches documents, maps them into rows, mounts GridShell, renders
+    // stats, and wires common delete/add/reload actions for list files.
+    // ========================================================================
 
     // Hides all Frappe native chrome for any list view
     function hideChrome(lv) {
@@ -1917,7 +1948,7 @@
         ].join(",")).hide();
     }
 
-    // Standard PG render loop: fetch → map → mount → stats
+    // Standard GridShell render loop: fetch -> map -> mount -> stats
     // opts: { doctype, fields, orderBy, mapFn(raw,i)→row, cfg, statsFn(raw)→cards[], addDoc }
     function pgRender(lv, opts) {
         const host = GL.bootstrap(lv, { doctype: opts.doctype });
@@ -1963,8 +1994,9 @@
                         });
                     },
                 });
-                PG.mount(host, cfg);
-                if (opts.statsFn) PG.renderStats(host, opts.statsFn(raw));
+                const shell = window.GridShell || window.PG;
+                shell.mount(host, cfg);
+                if (opts.statsFn) shell.renderStats(host, opts.statsFn(raw));
                 if (opts.afterMount) opts.afterMount(host, cfg, rows, raw, lv);
             },
         });

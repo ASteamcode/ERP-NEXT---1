@@ -1,10 +1,23 @@
-// crm_log_list.js — CRM Log list view powered by PG
+// crm_log_list.js - CRM Log ListView configuration and data behavior
 // Flow: who called → interaction details → contact info → site → notes → links
+
 (function () {
 "use strict";
 
+
+// ============================================================================
+// Behavior: Screen Ownership
+// Function: Defines what the CRM Log ListView shows, how log records map to
+// GridShell rows, and which log-specific actions run around the shared UI.
+// ============================================================================
 const CL_DOCTYPE = "CRM Log";
 
+
+// ============================================================================
+// Behavior: Grid Schema
+// Function: Declares CRM Log tabs, fixed columns, editable fields, cell types,
+// field mappings, and GridShell options.
+// ============================================================================
 const _CL_CFG = {
     tabs: ["Log Details", "Contact Info", "Site", "Notes & Outcome", "Links"],
 
@@ -98,6 +111,11 @@ const _CL_CFG = {
     colWidthKey: "crm_log_pg_col_widths",
 };
 
+
+// ============================================================================
+// Behavior: Data Fetch Contract
+// Function: Lists the Frappe fields required to build each CRM Log grid row.
+// ============================================================================
 const _CL_FIELDS = [
     "name","status","date","prefix","first_name","last_name","company_name",
     "log_type","category","assigned_to","owner",
@@ -107,6 +125,11 @@ const _CL_FIELDS = [
     "crm_lead","crm_contact","crm_customer",
 ];
 
+
+// ============================================================================
+// Behavior: Draft Rows And Quick Entry
+// Function: Manages unsaved client-side log rows before they become CRM Log docs.
+// ============================================================================
 let _cl_draftRow = null;
 let _cl_draftExtra = {};
 let _cl_bottomDraftRows = [];
@@ -193,6 +216,12 @@ function _cl_focusDraftFirst(host, draftName = "__draft__top", scrollToRow = fal
     }, 250);
 }
 
+
+// ============================================================================
+// Behavior: Location Display And Autofill
+// Function: Joins location fields for display and updates related cells after
+// location autocomplete or Maps-derived edits.
+// ============================================================================
 function _cl_joinLocation(row) {
     return [row.loc_country, row.loc_dist, row.loc_city, row.loc_street]
         .map(v => (v || "").trim())
@@ -269,6 +298,12 @@ frappe.listview_settings["CRM Log"] = {
     refresh(lv) { GL.hideChrome(lv); _cl_render(lv); },
 };
 
+
+// ============================================================================
+// Behavior: Fetch, Map, And Render
+// Function: Fetches CRM Log documents, maps them into GridShell rows, computes
+// stats, and wires log-specific save/delete actions.
+// ============================================================================
 function _cl_render(lv) {
     GL.pgRender(lv, {
         doctype: CL_DOCTYPE,
@@ -421,6 +456,11 @@ function _cl_render(lv) {
     });
 }
 
+// ============================================================================
+// Behavior: CRM Log List Styling
+// Function: Adds only CRM Log-specific CSS. Shared table styling stays in
+// core/grid/tabbed_grid.js.
+// ============================================================================
 (function () {
     if (document.getElementById("cl-pg-styles")) return;
     const s = document.createElement("style"); s.id = "cl-pg-styles";

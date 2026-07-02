@@ -6,6 +6,8 @@ This folder is organized by ownership and responsibility. Do not add new one-off
 
 - core/: shared systems used by more than one DocType or page.
 - core/grid/: reusable grid/table engine code.
+  - grid_core.js: shared list/grid data helpers, editing behavior, cell renderers, and Frappe ListView integration.
+  - tabbed_grid.js: shared pill-tab spreadsheet shell, quick stats strip, table layout, and GridShell/PG public API.
 - core/offline/: offline caching and offline status behavior.
 - core/ui/: global Desk UI helpers and shared UI tools.
 - core/tracking/: shared tracking/location behavior.

@@ -1,7 +1,17 @@
-// prospect_list.js — Prospect list view powered by PG (prospect_grid.js)
+// prospect_list.js - Prospect ListView configuration and data behavior
 "use strict";
 
-// Draft row state - one permanent top quick-entry row plus Add Row drafts at the bottom
+// ============================================================================
+// Behavior: Screen Ownership
+// Function: Defines what the Prospect ListView shows, how rows map to fields,
+// and which Prospect-specific actions run around the shared GridShell UI.
+// ============================================================================
+
+// ============================================================================
+// Behavior: Draft Rows And Quick Entry
+// Function: Manages unsaved client-side rows before they become Prospect docs.
+// Includes the permanent top entry row and Add Row drafts at the bottom.
+// ============================================================================
 let _draftRow = null;
 let _draftExtra = {};
 let _bottomDraftRows = [];
@@ -80,6 +90,12 @@ function _focusDraftCell(host, draftName = "__draft__top", scrollToRow = false) 
     });
 }
 
+
+// ============================================================================
+// Behavior: Location Autofill
+// Function: Reads coordinates from Maps URLs and fills country/district/city/
+// street cells without making each cell save independently.
+// ============================================================================
 function _extractMapsCoords(url) {
     // @lat,lng,zoom  or  @lat,lng
     const m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
@@ -129,6 +145,11 @@ function _geocodeAndFillLocation(name, url, row) {
     .catch(() => {});
 }
 
+// ============================================================================
+// Behavior: Grid Schema
+// Function: Declares Prospect tabs, fixed columns, editable fields, cell types,
+// field mappings, status badges, and GridShell options.
+// ============================================================================
 const _PROSPECT_CFG = {
     tabs: ["Profile & Contact", "Site Info", "Scope & Specs", "Site Team", "Social & Web"],
     fixed: [
@@ -206,7 +227,10 @@ const _PROSPECT_CFG = {
     colWidthKey: "prospect_pg_col_widths",
 };
 
-// ── Listview hook ──────────────────────────────────────────────────
+// ============================================================================
+// Behavior: Frappe ListView Hook
+// Function: Connects the Prospect route to our custom render pipeline.
+// ============================================================================
 frappe.provide("frappe.listview_settings.Prospect");
 
 frappe.listview_settings.Prospect = {
@@ -234,7 +258,11 @@ function _pl_hide_chrome(listview) {
 const _PL_LIMIT = 500;
 let _pl_allRows = [];   // accumulates rows across load-more calls
 
-// ── Render ─────────────────────────────────────────────────────────
+// ============================================================================
+// Behavior: Fetch, Map, And Render
+// Function: Fetches Prospect documents, maps them into GridShell rows, computes
+// stats, and wires Prospect-specific save/delete/export actions.
+// ============================================================================
 function _pl_render(listview) {
     _pl_allRows = [];
     _pl_fetch(listview, 0);
@@ -258,7 +286,8 @@ function _pl_fetch(listview, offset) {
             const rows = _pl_allRows;
             const hasMore = newRows.length === _PL_LIMIT;
 
-            // ── Quick stats (computed here, rendered after PG.mount) ─────
+            // Behavior: Stats Calculation
+            // Function: Compute Prospect numbers here; GridShell only renders the cards.
             const _qs_total     = rows.length;
             const _qs_leads     = rows.filter(d => (d.custom_prospect_status || "") === "Lead").length;
             const _qs_converted = rows.filter(d => (d.custom_prospect_status || "") === "Converted").length;
@@ -289,7 +318,8 @@ function _pl_fetch(listview, offset) {
                 onReload() { _pl_render(listview); },
 
                 onEdit(name, frappe_field, value) {
-                    // ── Draft row handling ──────────────────────────────
+                    // Behavior: Draft Save
+                        // Function: First edit on a draft row creates the real Prospect document.
                     if (_isDraftName(name)) {
                         if (_draftSaving.has(name)) return;
                         const draftRow = _draftRowFor(name);
@@ -331,11 +361,13 @@ function _pl_fetch(listview, offset) {
                         });
                         return;
                     }
-                    // ── Normal saved row ────────────────────────────────
+                    // Behavior: Saved Row Edit
+                    // Function: Existing Prospect rows save directly through frappe.db.set_value.
                     frappe.db.set_value("Prospect", name, frappe_field, value)
                         .catch(err => frappe.show_alert({ message: "Save failed: " + err, indicator: "red" }, 4));
 
-                    // ── Maps → auto-fill location fields if empty ───────
+                    // Behavior: Maps Location Enrichment
+                    // Function: Maps edits can auto-fill empty location fields.
                     if (frappe_field === "custom_maps_url" && value) {
                         const row = rows.find(r => r.name === name);
                         if (row && !row.site_country) _geocodeAndFillLocation(name, value, row);
@@ -512,8 +544,9 @@ function _pl_fetch(listview, offset) {
                     );
                 },
             });
-            PG.mount(host, cfg);
-            PG.renderStats(host, _qs_cards);
+            const shell = window.GridShell || window.PG;
+            shell.mount(host, cfg);
+            shell.renderStats(host, _qs_cards);
             if (_pendingDraftFocus) {
                 const focusName = _pendingDraftFocus;
                 _pendingDraftFocus = null;
@@ -551,7 +584,11 @@ function _pl_fetch(listview, offset) {
     });
 }
 
-// ── Styles ─────────────────────────────────────────────────────────
+// ============================================================================
+// Behavior: Prospect List Styling
+// Function: Adds only Prospect ListView-specific CSS. Shared table styling stays
+// in core/grid/tabbed_grid.js.
+// ============================================================================
 (function () {
     if (document.getElementById("pl-styles")) return;
     const s = document.createElement("style");

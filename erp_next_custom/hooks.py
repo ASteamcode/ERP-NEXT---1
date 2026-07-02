@@ -30,7 +30,7 @@ app_include_js = [
     "/assets/erp_next_custom/js/core/ui/sidebar_hover.js",
     "/assets/erp_next_custom/js/core/offline/offline_cache_v2.js",
     "/assets/erp_next_custom/js/core/grid/grid_core.js",
-    "/assets/erp_next_custom/js/doctypes/prospect/prospect_grid.js",
+    "/assets/erp_next_custom/js/core/grid/tabbed_grid.js",
     "/assets/erp_next_custom/js/doctypes/prospect/prospect_mobile.js",
     "/assets/erp_next_custom/js/core/ui/drawing.js",
     "/assets/erp_next_custom/js/core/ui/annotations.js",
@@ -173,7 +173,7 @@ role_home_page = {
 
 doc_events = {
     "Prospect": {
-        "before_insert": "erp_next_custom.customize.prospect.set_prospect_name",
+        "before_insert": "erp_next_custom.customize.doctypes.prospect.custom_fields.set_prospect_name",
     }
 }
 

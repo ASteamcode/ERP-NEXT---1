@@ -17,7 +17,7 @@ const PRECACHE_URLS = [
     "/assets/erp_next_custom/js/core/ui/sidebar_hover.js",
     "/assets/erp_next_custom/js/core/offline/offline_cache_v2.js",
     "/assets/erp_next_custom/js/core/grid/grid_core.js",
-    "/assets/erp_next_custom/js/doctypes/prospect/prospect_grid.js",
+    "/assets/erp_next_custom/js/core/grid/tabbed_grid.js",
     "/assets/erp_next_custom/js/doctypes/prospect/prospect_mobile.js",
     "/assets/erp_next_custom/js/core/ui/drawing.js",
     "/assets/erp_next_custom/js/core/ui/annotations.js",
